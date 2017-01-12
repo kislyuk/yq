@@ -1,0 +1,25 @@
+language: python
+python:
+    - 2.7
+    - 3.3
+    - 3.4
+    - 3.5
+    - pypy
+    - pypy3
+
+before_install:
+    - pip install --quiet coverage flake8
+
+install:
+    - python setup.py install
+
+script:
+    - make test
+    - coverage run --omit='*/site-packages/*,*/distutils/*' ./test/test.py
+    - coverage report --show-missing
+
+after_success:
+    - pip install --quiet coveralls
+    - coveralls
+
+sudo: false
