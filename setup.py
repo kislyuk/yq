@@ -4,20 +4,20 @@ import os, glob
 from setuptools import setup, find_packages
 
 setup(
-    name="ddbcli",
-    version="0.0.1",
-    url="https://github.com/kislyuk/ddbcli",
+    name="yq",
+    version="2.0.0",
+    url="https://github.com/kislyuk/yq",
     license="Apache Software License",
     author="Andrey Kislyuk",
     author_email="kislyuk@gmail.com",
-    description="A DynamoDB Command Line Interface with JSON I/O",
+    description="FIXME",
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
-        "boto3 >= 1.4.2, < 2",
-        "awscli"
+        "PyYAML >= 3.11"
     ],
     packages=find_packages(exclude=["test"]),
+    scripts=glob.glob("scripts/*"),
     include_package_data=True,
     platforms=["MacOS X", "Posix"],
     test_suite="test",

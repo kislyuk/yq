@@ -1,3 +1,3 @@
-Version 0.0.1 (2017-01-12)
+Version 1.9.9 (2017-01-14)
 --------------------------
-- Initial release.
+- Placeholder for 2.0.0
