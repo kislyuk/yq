@@ -13,7 +13,8 @@ parser.add_argument("jq_args", nargs=argparse.REMAINDER)
 def main(args=None):
     args = parser.parse_args(args=args)
     try:
-        jq = subprocess.Popen(['jq'] + args.jq_args, stdin=subprocess.PIPE)
+        # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
+        jq = subprocess.Popen(['jq'] + args.jq_args, stdin=subprocess.PIPE, universal_newlines=True)
     except OSError as e:
         parser.exit("yq: Error while starting jq: {}: {}. Is jq installed and available on PATH?".format(type(e).__name__, e))
     try:
