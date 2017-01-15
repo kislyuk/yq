@@ -1,5 +1,7 @@
 """
-yq: FIXME
+yq: Command-line YAML processor - jq wrapper for YAML documents
+
+See https://github.com/kislyuk/yq for more information.
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -7,7 +9,16 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os, sys, argparse, subprocess, json
 import yaml
 
-parser = argparse.ArgumentParser(description=__doc__)
+class Parser(argparse.ArgumentParser):
+    def print_help(self):
+        argparse.ArgumentParser.print_help(self)
+        print()
+        try:
+            subprocess.check_call(["jq", "--help"])
+        except:
+            pass
+
+parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument("jq_args", nargs=argparse.REMAINDER)
 
 def main(args=None):

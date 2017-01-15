@@ -9,6 +9,10 @@ python:
   - pypy
   - pypy3
 
+matrix:
+  allow_failures:
+    - python: pypy3
+
 addons:
   apt:
     packages:
