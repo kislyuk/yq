@@ -13,14 +13,18 @@ Before using ``yq``, you also have to install its dependency, ``jq``. See the `j
 Synopsis
 --------
 
-yq's mode of operation is very basic: it transcodes YAML on standard input to JSON and pipes it to ``jq``, while passing
-all of its command line options to jq.
+yq's mode of operation is simple: it transcodes YAML on standard input to JSON (using ``yaml.safe_load`` to avoid
+dangerous vulnerabilities in YAML/PyYAML design) and pipes it to ``jq``, while passing all of its command line options
+to jq.
 
 .. code-block:: bash
 
     cat input.yml | yq .foo.bar
 
-See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on jq features and options.
+There is no support for specifying input filenames on the command line. There is also no support for transcoding jq's
+JSON output back into fancier-than-JSON YAML; the transformation is one-way only. yq forwards the exit code jq produced,
+unless there was an error in YAML parsing, in which case the exit code is 1. See the `jq manual
+<https://stedolan.github.io/jq/manual/>`_ for more details on jq features and options.
 
 .. admonition:: Compatibility note
 
