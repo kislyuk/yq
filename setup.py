@@ -10,7 +10,7 @@ setup(
     license="Apache Software License",
     author="Andrey Kislyuk",
     author_email="kislyuk@gmail.com",
-    description="yq: Command-line YAML processor - jq wrapper for YAML documents",
+    description="Command-line YAML processor - jq wrapper for YAML documents",
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
