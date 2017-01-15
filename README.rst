@@ -22,6 +22,13 @@ all of its command line options to jq.
 
 See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on jq features and options.
 
+.. admonition:: Compatibility note
+
+ This package's release series available on PyPI begins with version 2.0.0. Versions of ``yq`` prior to 2.0.0 are
+ distributed by https://github.com/abesto/yq and are not related to this package. No guarantees of compatibility are
+ made between abesto/yq and kislyuk/yq. This package follows the `Semantic Versioning 2.0.0 <http://semver.org/>`_
+ standard. To ensure proper operation, declare dependency version ranges according to SemVer.
+
 Authors
 -------
 * Andrey Kislyuk
