@@ -14,7 +14,3 @@ Changes for v2.0.0 (2017-01-14)
    ``Semantic   Versioning 2.0.0 <http://semver.org/>``\ \_ standard. To
    ensure proper operation, declare dependency version ranges according
    to SemVer. See the Readme for more information.
-
-Version 1.9.9 (2017-01-14)
---------------------------
-- Placeholder for 2.0.0
