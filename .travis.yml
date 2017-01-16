@@ -19,7 +19,7 @@ addons:
       - jq
 
 before_install:
-  - pip install --quiet codecov
+  - pip install --quiet --upgrade pip codecov
 
 install:
   - make install

@@ -3,6 +3,8 @@
 import os, glob
 from setuptools import setup, find_packages
 
+tests_require = ["coverage", "flake8", "wheel"]
+
 setup(
     name="yq",
     version="2.0.1",
@@ -16,6 +18,8 @@ setup(
         "setuptools",
         "PyYAML >= 3.11"
     ],
+    tests_require=tests_require,
+    extras_require={"test": tests_require},
     packages=find_packages(exclude=["test"]),
     scripts=glob.glob("scripts/*"),
     include_package_data=True,
