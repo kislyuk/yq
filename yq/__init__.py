@@ -1,6 +1,7 @@
 """
 yq: Command-line YAML processor - jq wrapper for YAML documents
 
+yq transcodes YAML documents to JSON and passes them to jq.
 See https://github.com/kislyuk/yq for more information.
 """
 
@@ -11,8 +12,8 @@ import yaml
 
 class Parser(argparse.ArgumentParser):
     def print_help(self):
-        argparse.ArgumentParser.print_help(self)
-        print()
+        yq_help = argparse.ArgumentParser.format_help(self).splitlines()
+        print("\n".join(["usage: yq [options] <jq filter> [YAML file...]"] + yq_help[1:] + [""]))
         try:
             subprocess.check_call(["jq", "--help"])
         except:
@@ -23,6 +24,8 @@ parser.add_argument("jq_args", nargs=argparse.REMAINDER)
 
 def main(args=None):
     args = parser.parse_args(args=args)
+    if sys.stdin.isatty():
+        return parser.print_help()
     try:
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
         jq = subprocess.Popen(['jq'] + args.jq_args, stdin=subprocess.PIPE, universal_newlines=True)
