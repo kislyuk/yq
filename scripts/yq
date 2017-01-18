@@ -2,4 +2,4 @@
 
 from yq import main
 
-main()
+exit(main())

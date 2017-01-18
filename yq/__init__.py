@@ -1,7 +1,7 @@
 """
 yq: Command-line YAML processor - jq wrapper for YAML documents
 
-yq transcodes YAML documents to JSON and passes them to jq.
+yq transcodes YAML documents to JSON and passes them to jq or JMESPath.
 See https://github.com/kislyuk/yq for more information.
 """
 
@@ -13,19 +13,25 @@ import yaml
 class Parser(argparse.ArgumentParser):
     def print_help(self):
         yq_help = argparse.ArgumentParser.format_help(self).splitlines()
-        print("\n".join(["usage: yq [options] <jq filter> [YAML file...]"] + yq_help[1:] + [""]))
+        print("\n".join(["usage: yq [options] <jq or jmespath filter>"] + yq_help[1:] + [""]))
         try:
             subprocess.check_call(["jq", "--help"])
         except:
             pass
 
 parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument("--jmespath", help="Use jmespath with this expression instead of launching the yq subprocess")
 parser.add_argument("jq_args", nargs=argparse.REMAINDER)
 
 def main(args=None):
     args = parser.parse_args(args=args)
     if sys.stdin.isatty():
-        return parser.print_help()
+        parser.print_help()
+        return os.EX_OK
+    if args.jmespath is not None:
+        import jmespath
+        print(jmespath.search(args.jmespath, yaml.safe_load(sys.stdin)))
+        return os.EX_OK
     try:
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
         jq = subprocess.Popen(['jq'] + args.jq_args, stdin=subprocess.PIPE, universal_newlines=True)
@@ -35,6 +41,6 @@ def main(args=None):
         json.dump(yaml.safe_load(sys.stdin), jq.stdin)
         jq.stdin.close()
         jq.wait()
-        exit(jq.returncode)
+        return jq.returncode
     except Exception as e:
         parser.exit("yq: Error while running jq: {}: {}.".format(type(e).__name__, e))

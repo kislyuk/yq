@@ -16,7 +16,8 @@ setup(
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
-        "PyYAML >= 3.11"
+        "PyYAML >= 3.11",
+        "jmespath >= 0.9.0"
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},

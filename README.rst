@@ -1,5 +1,5 @@
-yq: Command-line YAML processor - jq wrapper for YAML documents
-===============================================================
+yq: Command-line YAML processor - jq and JMESPath wrapper for YAML documents
+============================================================================
 
 Installation
 ------------
@@ -25,6 +25,12 @@ There is no support for specifying input filenames on the command line. There is
 JSON output back into fancier-than-JSON YAML; the transformation is one-way only. yq forwards the exit code jq produced,
 unless there was an error in YAML parsing, in which case the exit code is 1. See the `jq manual
 <https://stedolan.github.io/jq/manual/>`_ for more details on jq features and options.
+
+JMESPath mode
+-------------
+
+In addition to the default, jq wrapper mode, yq supports `JMESPath <http://jmespath.org/>`_ expressions via the
+``--jmespath PATH`` option.
 
 .. admonition:: Compatibility note
 
