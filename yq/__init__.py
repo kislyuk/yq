@@ -61,7 +61,8 @@ def main(args=None):
         if args.yaml_output:
             out, err = jq.communicate(json.dumps(yaml.load(input_stream, Loader=OrderedLoader)))
             out = json.loads(out, object_pairs_hook=OrderedDict)
-            yaml.dump(out, Dumper=OrderedDumper, stream=sys.stdout, default_flow_style=False, width=args.width)
+            yaml.dump(out, stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
+                      allow_unicode=True, default_flow_style=False)
         else:
             json.dump(yaml.load(input_stream, OrderedLoader), jq.stdin)
             jq.stdin.close()
