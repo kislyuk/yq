@@ -1,3 +1,8 @@
+Changes for v2.1.1 (2017-05-02)
+===============================
+
+-  Fix release script. Release is identical to v2.1.0.
+
 Changes for v2.1.0 (2017-05-02)
 ===============================
 
