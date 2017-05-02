@@ -1,3 +1,14 @@
+Changes for v2.1.0 (2017-05-02)
+===============================
+
+-  yq now supports emitting YAML (round-trip YAML support) using "yq
+   -y". Fixes #2.
+
+-  Key order is now preserved in mappings/objects/dictionaries.
+
+-  Passing input files by filename as an argument is now supported (in
+   addition to providing data on standard input).
+
 Changes for v2.0.2 (2017-01-16)
 ===============================
 
