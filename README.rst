@@ -13,7 +13,7 @@ Before using ``yq``, you also have to install its dependency, ``jq``. See the `j
 Synopsis
 --------
 
-yq's mode of operation is simple: it transcodes YAML on standard input to JSON (using ``yaml.safe_load`` to avoid
+``yq``'s mode of operation is simple: it transcodes YAML on standard input to JSON (using ``yaml.safe_load`` to avoid
 dangerous vulnerabilities in YAML/PyYAML design) and pipes it to ``jq``::
 
     cat input.yml | yq .foo.bar
@@ -29,9 +29,9 @@ into YAML (using ``yaml.safe_dump``)::
 
 Use the ``--width``/``-w`` argument to pass the line wrap width for string literals.
 
-All other command line arguments are forwarded to jq. yq forwards the exit code jq produced,
+All other command line arguments are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced,
 unless there was an error in YAML parsing, in which case the exit code is 1. See the `jq manual
-<https://stedolan.github.io/jq/manual/>`_ for more details on jq features and options.
+<https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and options.
 
 .. admonition:: Compatibility note
 
