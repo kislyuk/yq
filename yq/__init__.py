@@ -64,7 +64,7 @@ def main(args=None):
             yaml.dump(out, stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
                       allow_unicode=True, default_flow_style=False)
         else:
-            json.dump(yaml.load(input_stream, OrderedLoader), jq.stdin)
+            json.dump(yaml.load(input_stream, Loader=OrderedLoader), jq.stdin)
             jq.stdin.close()
             jq.wait()
         exit(jq.returncode)
