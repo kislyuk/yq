@@ -1,3 +1,12 @@
+Changes for v2.1.2 (2017-06-27)
+===============================
+
+-  Fix ResourceWarning: unclosed file
+
+-  Internal: Make usage of loader argument consistent
+
+-  Documentation improvements
+
 Changes for v2.1.1 (2017-05-02)
 ===============================
 
