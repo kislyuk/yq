@@ -67,6 +67,7 @@ def main(args=None):
             json.dump(yaml.load(input_stream, Loader=OrderedLoader), jq.stdin)
             jq.stdin.close()
             jq.wait()
+        input_stream.close()
         exit(jq.returncode)
     except Exception as e:
         parser.exit("yq: Error while running jq: {}: {}.".format(type(e).__name__, e))
