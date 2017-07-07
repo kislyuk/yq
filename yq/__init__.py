@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os, sys, argparse, subprocess, json
 from collections import OrderedDict
+from datetime import datetime
 import yaml
 
 class Parser(argparse.ArgumentParser):
@@ -25,6 +26,12 @@ class OrderedLoader(yaml.SafeLoader):
 
 class OrderedDumper(yaml.SafeDumper):
     pass
+
+class JSONDateTimeEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return json.JSONEncoder.default(self, o)
 
 def construct_mapping(loader, node):
     loader.flatten_mapping(node)
@@ -59,12 +66,13 @@ def main(args=None):
     try:
         input_stream = args.file[0] if args.file else sys.stdin
         if args.yaml_output:
-            out, err = jq.communicate(json.dumps(yaml.load(input_stream, Loader=OrderedLoader)))
+            input_payload = yaml.load(input_stream, Loader=OrderedLoader)
+            out, err = jq.communicate(json.dumps(input_payload, cls=JSONDateTimeEncoder))
             out = json.loads(out, object_pairs_hook=OrderedDict)
             yaml.dump(out, stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
                       allow_unicode=True, default_flow_style=False)
         else:
-            json.dump(yaml.load(input_stream, Loader=OrderedLoader), jq.stdin)
+            json.dump(yaml.load(input_stream, Loader=OrderedLoader), jq.stdin, cls=JSONDateTimeEncoder)
             jq.stdin.close()
             jq.wait()
         input_stream.close()

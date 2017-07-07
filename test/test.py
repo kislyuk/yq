@@ -37,5 +37,13 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq('{"понедельник": 1}', ["-y", '.["понедельник"]']), "1\n...\n")
         self.assertEqual(self.run_yq("- понедельник\n- вторник\n", ["-y", "."]), "- понедельник\n- вторник\n")
 
+    def test_yq_err(self):
+        err = 'yq: Error while running jq: ScannerError: while scanning for the next token\nfound character \'%\' that cannot start any token\n  in "<file>", line 1, column 3.'
+        self.run_yq("- %", ["."], expect_exit_code=err)
+
+    def test_datetimes(self):
+        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
+        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36'\n")
+
 if __name__ == '__main__':
     unittest.main()
