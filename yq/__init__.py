@@ -54,6 +54,7 @@ def main(args=None):
     args, jq_args = parser.parse_known_args(args=args)
     if sys.stdin.isatty() and not args.file:
         return parser.print_help()
+
     try:
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
         jq = subprocess.Popen(["jq"] + jq_args + [args.jq_filter],
@@ -61,8 +62,9 @@ def main(args=None):
                               stdout=subprocess.PIPE if args.yaml_output else None,
                               universal_newlines=True)
     except OSError as e:
-        msg = "yq: Error while starting jq: {}: {}. Is jq installed and available on PATH?"
+        msg = "yq: Error starting jq: {}: {}. Is jq installed and available on PATH?"
         parser.exit(msg.format(type(e).__name__, e))
+
     try:
         input_stream = args.file[0] if args.file else sys.stdin
         if args.yaml_output:
@@ -78,4 +80,4 @@ def main(args=None):
         input_stream.close()
         exit(jq.returncode)
     except Exception as e:
-        parser.exit("yq: Error while running jq: {}: {}.".format(type(e).__name__, e))
+        parser.exit("yq: Error running jq: {}: {}.".format(type(e).__name__, e))
