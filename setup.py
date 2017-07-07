@@ -7,7 +7,7 @@ tests_require = ["coverage", "flake8", "wheel"]
 
 setup(
     name="yq",
-    version="2.1.2",
+    version="2.2.0",
     url="https://github.com/kislyuk/yq",
     license="Apache Software License",
     author="Andrey Kislyuk",

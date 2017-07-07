@@ -1,3 +1,8 @@
+Changes for v2.2.0 (2017-07-07)
+===============================
+
+-  Stringify datetimes loaded from YAML. Fixes #5
+
 Changes for v2.1.2 (2017-06-27)
 ===============================
 
