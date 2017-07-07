@@ -11,6 +11,7 @@ import os, sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime
 import yaml
+from .version import __version__
 
 class Parser(argparse.ArgumentParser):
     def print_help(self):
@@ -47,6 +48,7 @@ parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatt
 parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JSON output back into YAML and emit it",
                     action="store_true")
 parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
+parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 parser.add_argument("jq_filter")
 parser.add_argument("file", nargs="*", type=argparse.FileType())
 

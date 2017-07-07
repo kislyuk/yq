@@ -1,6 +1,10 @@
 test_deps:
 	pip install .[test]
 
+version: yq/version.py
+yq/version.py: setup.py
+	echo "__version__ = '$$(python setup.py --version)'" > $@
+
 lint: test_deps
 	./setup.py flake8
 
@@ -13,7 +17,7 @@ init_docs:
 docs:
 	$(MAKE) -C docs html
 
-install: clean
+install: clean version
 	pip install wheel
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
