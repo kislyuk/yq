@@ -1,3 +1,10 @@
+Changes for v2.3.0 (2017-08-27)
+===============================
+
+-  Handle multi-document streams. Fixes #6
+
+-  Report version via yq --version
+
 Changes for v2.2.0 (2017-07-07)
 ===============================
 
