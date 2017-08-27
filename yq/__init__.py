@@ -41,6 +41,12 @@ def construct_mapping(loader, node):
 def represent_dict_order(dumper, data):
     return dumper.represent_mapping("tag:yaml.org,2002:map", data.items())
 
+def decode_docs(jq_output, json_decoder):
+    while jq_output:
+        doc, pos = json_decoder.raw_decode(jq_output)
+        jq_output = jq_output[pos+1:]
+        yield doc
+
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
 OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
@@ -69,14 +75,16 @@ def main(args=None):
 
     try:
         input_stream = args.file[0] if args.file else sys.stdin
+        input_docs = yaml.load_all(input_stream, Loader=OrderedLoader)
         if args.yaml_output:
-            input_payload = yaml.load(input_stream, Loader=OrderedLoader)
-            out, err = jq.communicate(json.dumps(input_payload, cls=JSONDateTimeEncoder))
-            out = json.loads(out, object_pairs_hook=OrderedDict)
-            yaml.dump(out, stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
-                      allow_unicode=True, default_flow_style=False)
+            input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
+            jq_out, jq_err = jq.communicate(input_payload)
+            json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
+            yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
+                          allow_unicode=True, default_flow_style=False)
         else:
-            json.dump(yaml.load(input_stream, Loader=OrderedLoader), jq.stdin, cls=JSONDateTimeEncoder)
+            for doc in input_docs:
+                json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
             jq.stdin.close()
             jq.wait()
         input_stream.close()

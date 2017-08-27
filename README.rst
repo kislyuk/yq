@@ -13,8 +13,8 @@ Before using ``yq``, you also have to install its dependency, ``jq``. See the `j
 Synopsis
 --------
 
-``yq``'s mode of operation is simple: it transcodes YAML on standard input to JSON (using ``yaml.safe_load`` to avoid
-dangerous vulnerabilities in YAML/PyYAML design) and pipes it to ``jq``::
+``yq``'s mode of operation is simple: it transcodes YAML on standard input to JSON (using the key-order-preserving
+equivalent of ``yaml.safe_load_all`` to avoid dangerous vulnerabilities in YAML/PyYAML design) and pipes it to ``jq``::
 
     cat input.yml | yq .foo.bar
 
@@ -23,7 +23,7 @@ Or specify the filename directly::
     yq .foo.bar input.yml
 
 By default, no transcoding of ``jq`` output is done. Specify the ``--yaml-output``/``-y`` option to transcode it back
-into YAML (using ``yaml.safe_dump``)::
+into YAML (using the key-order-preserving equivalent of ``yaml.safe_dump_all``)::
 
     cat input.yml | yq -y .foo.bar
 
