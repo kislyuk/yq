@@ -56,11 +56,11 @@ parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JS
 parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
 parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 parser.add_argument("jq_filter")
-parser.add_argument("file", nargs="*", type=argparse.FileType())
+parser.add_argument("files", nargs="*", type=argparse.FileType())
 
 def main(args=None):
     args, jq_args = parser.parse_known_args(args=args)
-    if sys.stdin.isatty() and not args.file:
+    if sys.stdin.isatty() and not args.files:
         return parser.print_help()
 
     try:
@@ -74,8 +74,10 @@ def main(args=None):
         parser.exit(msg.format(type(e).__name__, e))
 
     try:
-        input_stream = args.file[0] if args.file else sys.stdin
-        input_docs = yaml.load_all(input_stream, Loader=OrderedLoader)
+        input_streams = args.files if args.files else [sys.stdin]
+        input_docs = []
+        for input_stream in input_streams:
+            input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
         if args.yaml_output:
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
