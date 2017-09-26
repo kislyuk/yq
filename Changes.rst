@@ -1,3 +1,9 @@
+Changes for v2.3.1 (2017-09-25)
+===============================
+
+-  Add support for multiple yaml files in arguments. Thanks to
+   @bubbleattic (PR #7)
+
 Changes for v2.3.0 (2017-08-27)
 ===============================
 
