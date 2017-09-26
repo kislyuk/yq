@@ -84,6 +84,8 @@ def main(args=None):
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
             yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
                           allow_unicode=True, default_flow_style=False)
+        for input_stream in input_streams:
+            input_stream.close()
         exit(jq.returncode)
     except Exception as e:
         parser.exit("yq: Error running jq: {}: {}.".format(type(e).__name__, e))
