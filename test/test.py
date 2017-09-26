@@ -48,9 +48,9 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("---\na: b\n---\nc: d", ["-y", "."]), "a: b\n---\nc: d\n")
         from tempfile import TemporaryFile
         with TemporaryFile() as tf, TemporaryFile() as tf2:
-            tf.write('{"a": "b"}')
+            tf.write(b'{"a": "b"}')
             tf.seek(0)
-            tf2.write('{"a": 1}')
+            tf2.write(b'{"a": 1}')
             tf2.seek(0)
             self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), 'b\n--- 1\n...\n')
 
