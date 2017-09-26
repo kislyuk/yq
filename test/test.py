@@ -46,8 +46,7 @@ class TestYq(unittest.TestCase):
 
     def test_multidocs(self):
         self.assertEqual(self.run_yq("---\na: b\n---\nc: d", ["-y", "."]), "a: b\n---\nc: d\n")
-        from tempfile import TemporaryFile
-        with TemporaryFile() as tf, TemporaryFile() as tf2:
+        with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             tf.write(b'{"a": "b"}')
             tf.seek(0)
             tf2.write(b'{"a": 1}')
