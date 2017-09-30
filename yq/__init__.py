@@ -76,6 +76,9 @@ def main(args=None):
     try:
         input_streams = args.files if args.files else [sys.stdin]
         if args.yaml_output:
+            # TODO: enable true streaming in this branch (with asyncio, asyncproc, a multi-shot variant of
+            # subprocess.Popen._communicate, etc.)
+            # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
             input_docs = []
             for input_stream in input_streams:
                 input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
