@@ -87,9 +87,11 @@ def main(args=None):
         else:
             for doc in input_docs:
                 json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
+                jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()
-        input_stream.close()
+        for input_stream in input_streams:
+            input_stream.close()
         exit(jq.returncode)
     except Exception as e:
         parser.exit("yq: Error running jq: {}: {}.".format(type(e).__name__, e))
