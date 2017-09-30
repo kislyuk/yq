@@ -1,3 +1,11 @@
+Changes for v2.3.3 (2017-09-30)
+===============================
+
+-  Avoid buffering all input docs in memory with no -y
+
+-  End all json.dump output with newlines. Close all input streams.
+   Fixes #8. Thanks to @bubbleattic for reporting.
+
 Changes for v2.3.2 (2017-09-25)
 ===============================
 
