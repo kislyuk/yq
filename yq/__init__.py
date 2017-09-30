@@ -75,19 +75,20 @@ def main(args=None):
 
     try:
         input_streams = args.files if args.files else [sys.stdin]
-        input_docs = []
-        for input_stream in input_streams:
-            input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
         if args.yaml_output:
+            input_docs = []
+            for input_stream in input_streams:
+                input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
             yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
                           allow_unicode=True, default_flow_style=False)
         else:
-            for doc in input_docs:
-                json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
-                jq.stdin.write("\n")
+            for input_stream in input_streams:
+                for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
+                    json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
+                    jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()
         for input_stream in input_streams:
