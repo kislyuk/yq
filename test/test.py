@@ -57,5 +57,8 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36'\n")
 
+        self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
+        self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
+
 if __name__ == '__main__':
     unittest.main()
