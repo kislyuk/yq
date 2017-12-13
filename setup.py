@@ -16,7 +16,7 @@ setup(
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
-        "PyYAML >= 3.11"
+        "ruamel.yaml >= 0.15.35"
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},
