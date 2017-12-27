@@ -19,7 +19,7 @@ class Parser(argparse.ArgumentParser):
         print("\n".join(["usage: yq [options] <jq filter> [YAML file...]"] + yq_help[1:] + [""]))
         try:
             subprocess.check_call(["jq", "--help"])
-        except:
+        except Exception:
             pass
 
 class OrderedLoader(yaml.SafeLoader):
