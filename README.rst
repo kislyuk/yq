@@ -14,7 +14,8 @@ Synopsis
 --------
 
 ``yq``'s mode of operation is simple: it transcodes YAML on standard input to JSON (using the key-order-preserving
-equivalent of ``yaml.safe_load_all`` to avoid dangerous vulnerabilities in YAML/PyYAML design) and pipes it to ``jq``::
+equivalent of ``yaml.safe_load_all`` to avoid dangerous vulnerabilities in YAML/PyYAML design) and pipes it to
+`jq <https://stedolan.github.io/jq/>`_::
 
     cat input.yml | yq .foo.bar
 
@@ -50,6 +51,7 @@ Links
 * `Documentation (Read the Docs) <https://yq.readthedocs.io/en/latest/>`_
 * `Package distribution (PyPI) <https://pypi.python.org/pypi/yq>`_
 * `Change log <https://github.com/kislyuk/yq/blob/master/Changes.rst>`_
+* `jq <https://stedolan.github.io/jq/>`_ - the command-line JSON processor utility powering ``yq``
 
 Bugs
 ~~~~
