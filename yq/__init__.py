@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os, sys, argparse, subprocess, json
 from collections import OrderedDict
-from datetime import datetime
-import yaml
+from datetime import datetime, date
+from ruamel import yaml
 from .version import __version__
 
 class Parser(argparse.ArgumentParser):
@@ -30,7 +30,7 @@ class OrderedDumper(yaml.SafeDumper):
 
 class JSONDateTimeEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, datetime):
+        if isinstance(o, (datetime, date)):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
