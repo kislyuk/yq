@@ -1,3 +1,8 @@
+Changes for v2.3.4 (2017-12-26)
+===============================
+
+-  Support bare YAML dates and times. Fixes #10
+
 Changes for v2.3.3 (2017-09-30)
 ===============================
 
