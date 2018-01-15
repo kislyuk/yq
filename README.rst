@@ -23,7 +23,7 @@ Or specify the filename directly::
 
     yq .foo.bar input.yml
 
-By default, no transcoding of ``jq`` output is done. Specify the ``--yaml-output``/``-y`` option to transcode it back
+By default, no transcoding of ``jq`` output is done. Use the ``--yaml-output``/``-y`` argument to transcode it back
 into YAML (using the key-order-preserving equivalent of ``yaml.safe_dump_all``)::
 
     cat input.yml | yq -y .foo.bar
