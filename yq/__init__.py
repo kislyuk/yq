@@ -11,6 +11,7 @@ import os, sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
 import yaml
+import yaml.constructor
 from .version import __version__
 
 class Parser(argparse.ArgumentParser):
@@ -47,7 +48,21 @@ def decode_docs(jq_output, json_decoder):
         jq_output = jq_output[pos+1:]
         yield doc
 
+def default_constructor(loader, tag_suffix, node):
+    if isinstance(node, yaml.ScalarNode):
+        constructor = yaml.constructor.BaseConstructor.construct_scalar
+    elif isinstance(node, yaml.SequenceNode):
+        constructor = yaml.constructor.BaseConstructor.construct_sequence
+    elif isinstance(node, yaml.MappingNode):
+        constructor = yaml.constructor.BaseConstructor.construct_mapping
+    inner = constructor(loader, node)
+    if tag_suffix:
+        return {'__yq_tag_{}'.format(tag_suffix[1:]): inner}
+    else:
+        return inner
+
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+OrderedLoader.add_multi_constructor('', default_constructor)
 OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
 parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
