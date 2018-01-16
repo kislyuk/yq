@@ -57,7 +57,7 @@ def default_constructor(loader, tag_suffix, node):
         constructor = yaml.constructor.BaseConstructor.construct_mapping
     inner = constructor(loader, node)
     if tag_suffix:
-        return {'__yq_tag:{}'.format(tag_suffix): inner}
+        return {'__yq_tag_{}'.format(tag_suffix[1:]): inner}
     else:
         return inner
 
