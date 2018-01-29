@@ -55,11 +55,25 @@ parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JS
                     action="store_true")
 parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
 parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
+
+# jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
+jq_arg_group = parser.add_argument_group("jq_args")
+jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "--argjson": 2, "--slurpfile": 2,
+               "--argfile": 2}
+for arg in jq_arg_spec:
+    jq_arg_group.add_argument(arg, nargs=jq_arg_spec[arg], dest=arg, help=argparse.SUPPRESS)
+
 parser.add_argument("jq_filter")
 parser.add_argument("files", nargs="*", type=argparse.FileType())
 
 def main(args=None):
     args, jq_args = parser.parse_known_args(args=args)
+    for arg in jq_arg_spec:
+        vals = getattr(args, arg, None)
+        if vals is not None:
+            jq_args.append(arg)
+            jq_args.extend(vals)
+
     if sys.stdin.isatty() and not args.files:
         return parser.print_help()
 

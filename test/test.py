@@ -41,6 +41,10 @@ class TestYq(unittest.TestCase):
         err = 'yq: Error running jq: ScannerError: while scanning for the next token\nfound character \'%\' that cannot start any token\n  in "<file>", line 1, column 3.'
         self.run_yq("- %", ["."], expect_exit_code=err)
 
+    def test_yq_arg_passthrough(self):
+        self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--indent", "4", "."]), "")
+        self.run_yq("{}", ["--indent", "9", "."], expect_exit_code=2)
+
     def fd_path(self, fh):
         return "/dev/fd/{}".format(fh.fileno())
 
