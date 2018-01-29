@@ -1,3 +1,9 @@
+Changes for v2.3.5 (2018-01-29)
+===============================
+
+-  Support jq arguments that consume subsequent positionals (such as
+   –arg k v) (#16).
+
 Changes for v2.3.4 (2017-12-26)
 ===============================
 
