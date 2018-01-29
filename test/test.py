@@ -42,7 +42,9 @@ class TestYq(unittest.TestCase):
         self.run_yq("- %", ["."], expect_exit_code=err)
 
     def test_yq_arg_passthrough(self):
-        self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--indent", "4", "."]), "")
+        self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "--indent", "4", "."]), "")
+        self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "-y", "--indent", "4", ".x=$x"]),
+                         "x: y\n")
         self.run_yq("{}", ["--indent", "9", "."], expect_exit_code=2)
 
     def fd_path(self, fh):
