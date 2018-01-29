@@ -1,3 +1,8 @@
+Changes for v2.3.6 (2018-01-29)
+===============================
+
+-  Parse and pass multiple positional-consuming jq args
+
 Changes for v2.3.5 (2018-01-29)
 ===============================
 
