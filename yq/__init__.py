@@ -10,7 +10,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os, sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
+
 import yaml
+
 from .version import __version__
 
 class Parser(argparse.ArgumentParser):
@@ -54,6 +56,9 @@ parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatt
 parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JSON output back into YAML and emit it",
                     action="store_true")
 parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
+parser.add_argument("--xml-converter", nargs="?", choices=["abdera", "badgerfish", "cobra", "gdata", "parker", "yahoo"],
+                    default="badgerfish")
+parser.add_argument("--xml-output", "-x", action="store_true")
 parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
@@ -65,7 +70,7 @@ for arg in jq_arg_spec:
 parser.add_argument("jq_filter")
 parser.add_argument("files", nargs="*", type=argparse.FileType())
 
-def main(args=None):
+def main(args=None, input_format="yaml"):
     args, jq_args = parser.parse_known_args(args=args)
     for arg in jq_arg_spec:
         values = getattr(args, arg, None)
@@ -102,9 +107,17 @@ def main(args=None):
             yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
                           allow_unicode=True, default_flow_style=False)
         else:
-            for input_stream in input_streams:
-                for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
-                    json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
+            if input_format == "yaml":
+                for input_stream in input_streams:
+                    for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
+                        json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
+                        jq.stdin.write("\n")
+            elif input_format == "xml":
+                from defusedxml.ElementTree import parse
+                import xmljson
+                for input_stream in input_streams:
+                    data = getattr(xmljson, args.xml_converter).data(parse(input_stream).getroot())
+                    json.dump(data, jq.stdin)
                     jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()

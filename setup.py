@@ -12,11 +12,13 @@ setup(
     license="Apache Software License",
     author="Andrey Kislyuk",
     author_email="kislyuk@gmail.com",
-    description="Command-line YAML processor - jq wrapper for YAML documents",
+    description="Command-line YAML and XML processor - jq wrapper for YAML and XML documents",
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
-        "PyYAML >= 3.11"
+        "PyYAML >= 3.11",
+        "xmljson >= 0.1.9",
+        "defusedxml >= 0.5.0"
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},
