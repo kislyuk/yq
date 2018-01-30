@@ -12,12 +12,12 @@ USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
 
 class TestYq(unittest.TestCase):
-    def run_yq(self, input_data, args, expect_exit_code=os.EX_OK):
+    def run_yq(self, input_data, args, expect_exit_code=os.EX_OK, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
         try:
             sys.stdin = io.StringIO(input_data)
             sys.stdout = io.BytesIO() if USING_PYTHON2 else io.StringIO()
-            main(args)
+            main(args, input_format=input_format)
         except SystemExit as e:
             self.assertEqual(e.code, expect_exit_code)
         finally:
@@ -84,6 +84,21 @@ class TestYq(unittest.TestCase):
         """
         self.assertEqual(self.run_yq("11:12:13", ["."]), "")
         self.assertEqual(self.run_yq("11:12:13", ["-y", "."]), "'11:12:13'\n")
+
+    def test_xq(self):
+        self.assertEqual(self.run_yq("<foo/>", ["."], input_format="xml"), "")
+        self.assertEqual(self.run_yq("<foo/>", ["-x", ".foo.x=1"], input_format="xml"),
+                         '<foo>\n  <x>1</x>\n</foo>\n')
+        with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
+            tf.write(b'<a><b/></a>')
+            tf.seek(0)
+            tf2.write(b'<a><c/></a>')
+            tf2.seek(0)
+            self.assertEqual(
+                self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
+                '<b></b>\n<c></c>\n'
+            )
+
 
 if __name__ == '__main__':
     unittest.main()

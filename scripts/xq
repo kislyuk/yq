@@ -2,4 +2,4 @@
 
 from yq import main
 
-main(input_format="yaml")
+main(input_format="xml")

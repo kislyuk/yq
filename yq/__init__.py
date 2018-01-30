@@ -10,7 +10,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os, sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
+
 import yaml
+
 from .version import __version__
 
 class Parser(argparse.ArgumentParser):
@@ -50,10 +52,16 @@ def decode_docs(jq_output, json_decoder):
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
 OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
-parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JSON output back into YAML and emit it",
-                    action="store_true")
-parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
+USING_XQ = True if os.path.basename(sys.argv[0]) == "xq" else False
+
+parser = Parser(description=__doc__.replace("yq", "xq").replace("YAML", "XML") if USING_XQ else __doc__,
+                formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument("--yaml-output", "--yml-output", "-y", action="store_true",
+                    help=argparse.SUPPRESS if USING_XQ else "Transcode jq JSON output back into YAML and emit it")
+parser.add_argument("--width", "-w", type=int,
+                    help=argparse.SUPPRESS if USING_XQ else "When using --yaml-output, specify string wrap width")
+parser.add_argument("--xml-output", "-x", action="store_true",
+                    help="Transcode jq JSON output back into XML and emit it" if USING_XQ else argparse.SUPPRESS)
 parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
@@ -65,7 +73,7 @@ for arg in jq_arg_spec:
 parser.add_argument("jq_filter")
 parser.add_argument("files", nargs="*", type=argparse.FileType())
 
-def main(args=None):
+def main(args=None, input_format="yaml"):
     args, jq_args = parser.parse_known_args(args=args)
     for arg in jq_arg_spec:
         values = getattr(args, arg, None)
@@ -85,7 +93,7 @@ def main(args=None):
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
         jq = subprocess.Popen(["jq"] + jq_args,
                               stdin=subprocess.PIPE,
-                              stdout=subprocess.PIPE if args.yaml_output else None,
+                              stdout=subprocess.PIPE if args.yaml_output or args.xml_output else None,
                               universal_newlines=True)
     except OSError as e:
         msg = "yq: Error starting jq: {}: {}. Is jq installed and available on PATH?"
@@ -93,22 +101,38 @@ def main(args=None):
 
     try:
         input_streams = args.files if args.files else [sys.stdin]
-        if args.yaml_output:
+        if args.yaml_output or args.xml_output:
             # TODO: enable true streaming in this branch (with asyncio, asyncproc, a multi-shot variant of
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
             input_docs = []
             for input_stream in input_streams:
-                input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
+                if input_format == "yaml":
+                    input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
+                elif input_format == "xml":
+                    import xmltodict
+                    input_docs.append(xmltodict.parse(input_stream.read()))
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
-            yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
-                          allow_unicode=True, default_flow_style=False)
+            if args.yaml_output:
+                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
+                              allow_unicode=True, default_flow_style=False)
+            elif args.xml_output:
+                import xmltodict
+                for doc in decode_docs(jq_out, json_decoder):
+                    xmltodict.unparse(doc, output=sys.stdout, full_document=False, pretty=True, indent="  ")
+                    sys.stdout.write(b"\n" if sys.version_info < (3, 0) else "\n")
         else:
-            for input_stream in input_streams:
-                for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
-                    json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
+            if input_format == "yaml":
+                for input_stream in input_streams:
+                    for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
+                        json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
+                        jq.stdin.write("\n")
+            elif input_format == "xml":
+                import xmltodict
+                for input_stream in input_streams:
+                    json.dump(xmltodict.parse(input_stream.read()), jq.stdin)
                     jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()
