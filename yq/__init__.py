@@ -52,11 +52,15 @@ def decode_docs(jq_output, json_decoder):
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
 OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
-parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JSON output back into YAML and emit it",
-                    action="store_true")
+USING_XQ = True if os.path.basename(sys.argv[0]) == "xq" else False
+
+parser = Parser(description=__doc__.replace("yq", "xq").replace("YAML", "XML") if USING_XQ else __doc__,
+                formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument("--yaml-output", "--yml-output", "-y", action="store_true",
+                    help=argparse.SUPPRESS if USING_XQ else "Transcode jq JSON output back into YAML and emit it")
 parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
-parser.add_argument("--xml-output", "-x", action="store_true")
+parser.add_argument("--xml-output", "-x", action="store_true",
+                    help="Transcode jq JSON output back into XML and emit it" if USING_XQ else argparse.SUPPRESS)
 parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
