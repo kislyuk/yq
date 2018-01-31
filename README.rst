@@ -1,6 +1,3 @@
-FIXME: use https://github.com/martinblech/xmltodict
-
-
 yq: Command-line YAML processor - jq wrapper for YAML documents
 ===============================================================
 

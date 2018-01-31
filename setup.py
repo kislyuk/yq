@@ -17,8 +17,7 @@ setup(
     install_requires=[
         "setuptools",
         "PyYAML >= 3.11",
-        "xmljson >= 0.1.9",
-        "defusedxml >= 0.5.0"
+        "xmltodict >= 0.11.0"
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},

@@ -56,8 +56,6 @@ parser = Parser(description=__doc__, formatter_class=argparse.RawTextHelpFormatt
 parser.add_argument("--yaml-output", "--yml-output", "-y", help="Transcode jq JSON output back into YAML and emit it",
                     action="store_true")
 parser.add_argument("--width", "-w", type=int, help="When using --yaml-output, specify string wrap width")
-parser.add_argument("--xml-converter", nargs="?", choices=["abdera", "badgerfish", "cobra", "gdata", "parker", "yahoo"],
-                    default="badgerfish")
 parser.add_argument("--xml-output", "-x", action="store_true")
 parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
@@ -117,11 +115,9 @@ def main(args=None, input_format="yaml"):
                         json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
                         jq.stdin.write("\n")
             elif input_format == "xml":
-                from defusedxml.ElementTree import parse
-                import xmljson
+                import xmltodict
                 for input_stream in input_streams:
-                    data = getattr(xmljson, args.xml_converter).data(parse(input_stream).getroot())
-                    json.dump(data, jq.stdin)
+                    json.dump(xmltodict.parse(input_stream), jq.stdin)
                     jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()
