@@ -88,7 +88,7 @@ def main(args=None, input_format="yaml"):
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
         jq = subprocess.Popen(["jq"] + jq_args,
                               stdin=subprocess.PIPE,
-                              stdout=subprocess.PIPE if args.yaml_output else None,
+                              stdout=subprocess.PIPE if args.yaml_output or args.xml_output else None,
                               universal_newlines=True)
     except OSError as e:
         msg = "yq: Error starting jq: {}: {}. Is jq installed and available on PATH?"
@@ -96,18 +96,28 @@ def main(args=None, input_format="yaml"):
 
     try:
         input_streams = args.files if args.files else [sys.stdin]
-        if args.yaml_output:
+        if args.yaml_output or args.xml_output:
             # TODO: enable true streaming in this branch (with asyncio, asyncproc, a multi-shot variant of
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
             input_docs = []
             for input_stream in input_streams:
-                input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
+                if input_format == "yaml":
+                    input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
+                elif input_format == "xml":
+                    import xmltodict
+                    input_docs.append(xmltodict.parse(input_stream.read()))
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
-            yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
-                          allow_unicode=True, default_flow_style=False)
+            if args.yaml_output:
+                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
+                              allow_unicode=True, default_flow_style=False)
+            elif args.xml_output:
+                import xmltodict
+                for doc in decode_docs(jq_out, json_decoder):
+                    xmltodict.unparse(doc, output=sys.stdout)
+                    sys.stdout.write(b"\n" if sys.version_info < (3, 0) else "\n")
         else:
             if input_format == "yaml":
                 for input_stream in input_streams:
@@ -117,7 +127,7 @@ def main(args=None, input_format="yaml"):
             elif input_format == "xml":
                 import xmltodict
                 for input_stream in input_streams:
-                    json.dump(xmltodict.parse(input_stream), jq.stdin)
+                    json.dump(xmltodict.parse(input_stream.read()), jq.stdin)
                     jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()
