@@ -50,6 +50,14 @@ class TestYq(unittest.TestCase):
                                                                                ": '<fdopen>'." if USING_PYPY else ".")
         self.run_yq("{}", ["--indent", "9", "."], expect_exit_code=err)
 
+        with tempfile.NamedTemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
+            tf.write(b'.a')
+            tf.seek(0)
+            tf2.write(b'{"a": 1}')
+            for arg in "--from-file", "-f":
+                tf2.seek(0)
+                self.assertEqual(self.run_yq("", ["-y", arg, tf.name, self.fd_path(tf2)]), '1\n...\n')
+
     def fd_path(self, fh):
         return "/dev/fd/{}".format(fh.fileno())
 

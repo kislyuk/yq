@@ -73,13 +73,17 @@ def main(args=None):
             for value_group in values:
                 jq_args.append(arg)
                 jq_args.extend(value_group)
+    if getattr(args, "--from-file") or getattr(args, "-f"):
+        args.files.insert(0, argparse.FileType()(args.jq_filter))
+    else:
+        jq_args.append(args.jq_filter)
 
     if sys.stdin.isatty() and not args.files:
         return parser.print_help()
 
     try:
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
-        jq = subprocess.Popen(["jq"] + jq_args + [args.jq_filter],
+        jq = subprocess.Popen(["jq"] + jq_args,
                               stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE if args.yaml_output else None,
                               universal_newlines=True)
