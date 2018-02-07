@@ -1,3 +1,9 @@
+Changes for v2.3.7 (2018-02-07)
+===============================
+
+-  Fix for the –from-file/-f argument: Re-route jq_filter to files when
+   using –from-file. Fixes #19.
+
 Changes for v2.3.6 (2018-01-29)
 ===============================
 
