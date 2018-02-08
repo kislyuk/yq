@@ -120,7 +120,7 @@ def main(args=None, input_format="yaml"):
             elif args.xml_output:
                 import xmltodict
                 for doc in decode_docs(jq_out, json_decoder):
-                    xmltodict.unparse(doc, output=sys.stdout)
+                    xmltodict.unparse(doc, output=sys.stdout, full_document=False, pretty=True, indent="  ")
                     sys.stdout.write(b"\n" if sys.version_info < (3, 0) else "\n")
         else:
             if input_format == "yaml":

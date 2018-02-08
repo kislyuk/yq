@@ -1,5 +1,5 @@
-yq: Command-line YAML processor - jq wrapper for YAML documents
-===============================================================
+yq: Command-line YAML/XML processor - jq wrapper for YAML and XML documents
+===========================================================================
 
 Installation
 ------------
@@ -33,6 +33,13 @@ Use the ``--width``/``-w`` argument to pass the line wrap width for string liter
 All other command line arguments are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced,
 unless there was an error in YAML parsing, in which case the exit code is 1. See the `jq manual
 <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and options.
+
+XML support
+-----------
+``yq`` also supports XML. The ``yq`` package installs an executable, ``xq``, which
+`transcodes XML to JSON <https://www.xml.com/pub/a/2006/05/31/converting-between-xml-and-json.html>`_ using
+`xmltodict <https://github.com/martinblech/xmltodict>`_ and pipes it to ``jq``. Roundtrip transcoding is available with
+the ``xq -x`` option. Multiple XML documents can be passed in separate files/streams as ``xq a.xml b.xml``.
 
 .. admonition:: Compatibility note
 
