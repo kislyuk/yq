@@ -1,3 +1,8 @@
+Changes for v2.4.0 (2018-02-08)
+===============================
+
+-  Support XML parsing with xmltodict
+
 Changes for v2.3.7 (2018-02-07)
 ===============================
 
