@@ -46,7 +46,7 @@ def represent_dict_order(dumper, data):
 def decode_docs(jq_output, json_decoder):
     while jq_output:
         doc, pos = json_decoder.raw_decode(jq_output)
-        jq_output = jq_output[pos+1:]
+        jq_output = jq_output[pos + 1:]
         yield doc
 
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
@@ -116,11 +116,13 @@ def main(args=None, input_format="yaml"):
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
             if args.yaml_output:
-                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper, width=args.width,
-                              allow_unicode=True, default_flow_style=False)
+                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper,
+                              width=args.width, allow_unicode=True, default_flow_style=False)
             elif args.xml_output:
                 import xmltodict
                 for doc in decode_docs(jq_out, json_decoder):
+                    if not isinstance(doc, OrderedDict):
+                        parser.exit("yq: Error converting JSON to XML: cannot represent non-object types at top level")
                     xmltodict.unparse(doc, output=sys.stdout, full_document=False, pretty=True, indent="  ")
                     sys.stdout.write(b"\n" if sys.version_info < (3, 0) else "\n")
         else:

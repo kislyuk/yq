@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, glob
+import glob
 from setuptools import setup, find_packages
 
 tests_require = ["coverage", "flake8", "wheel"]
