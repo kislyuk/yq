@@ -111,7 +111,7 @@ def main(args=None, input_format="yaml"):
                     input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
                 elif input_format == "xml":
                     import xmltodict
-                    input_docs.append(xmltodict.parse(input_stream.read()))
+                    input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True))
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
@@ -134,7 +134,7 @@ def main(args=None, input_format="yaml"):
             elif input_format == "xml":
                 import xmltodict
                 for input_stream in input_streams:
-                    json.dump(xmltodict.parse(input_stream.read()), jq.stdin)
+                    json.dump(xmltodict.parse(input_stream.read(), disable_entities=True), jq.stdin)
                     jq.stdin.write("\n")
             jq.stdin.close()
             jq.wait()

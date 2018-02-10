@@ -40,7 +40,7 @@ XML support
 `transcodes XML to JSON <https://www.xml.com/pub/a/2006/05/31/converting-between-xml-and-json.html>`_ using
 `xmltodict <https://github.com/martinblech/xmltodict>`_ and pipes it to ``jq``. Roundtrip transcoding is available with
 the ``xq --xml-output``/``xq -x`` option. Multiple XML documents can be passed in separate files/streams as
-``xq a.xml b.xml``.
+``xq a.xml b.xml``. Entity expansion and DTD resolution is disabled to avoid XML parsing vulnerabilities.
 
 .. admonition:: Compatibility note
 
