@@ -1,3 +1,12 @@
+Changes for v2.4.1 (2018-02-13)
+===============================
+
+-  Ignore unrecognized YAML tags instead of crashing
+
+-  Explicitly disable XML entity expansion and mention in docs
+
+-  xq -x: Raise understandable error on non-dict conversion failure
+
 Changes for v2.4.0 (2018-02-08)
 ===============================
 
