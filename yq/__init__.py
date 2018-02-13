@@ -36,6 +36,9 @@ class JSONDateTimeEncoder(json.JSONEncoder):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
+def default_constructor(loader, tag_suffix, node):
+    pass  # Ignore all unrecognized tags
+
 def construct_mapping(loader, node):
     loader.flatten_mapping(node)
     return OrderedDict(loader.construct_pairs(node))
@@ -50,6 +53,7 @@ def decode_docs(jq_output, json_decoder):
         yield doc
 
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+OrderedLoader.add_multi_constructor('', default_constructor)
 OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
 USING_XQ = True if os.path.basename(sys.argv[0]) == "xq" else False

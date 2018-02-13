@@ -77,6 +77,11 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
         self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
 
+    def test_unrecognized_tags(self):
+        self.assertEqual(self.run_yq("!!foo bar\n", ["."]), "")
+        self.assertEqual(self.run_yq("!!foo bar\n", ["-y", "."]), "null\n...\n")
+        self.assertEqual(self.run_yq("x: !!foo bar\n", ["-y", "."]), "x: null\n")
+
     @unittest.expectedFailure
     def test_times(self):
         """
