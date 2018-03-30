@@ -11,6 +11,27 @@ from yq import main # noqa
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
 
+yaml_with_tags = """
+foo: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  3766343436323632623130303
+xyz: !!mytag
+  foo: bar
+  baz: 1
+xyzzt: !binary
+  - 1
+  - 2
+  - 3
+scalar-red: !color FF0000
+scalar-orange: !color FFFF00
+mapping-red: !color-mapping {r: 255, g: 0, b: 0}
+mapping-orange:
+  !color-mapping
+  r: 255
+  g: 255
+  b: 0
+"""
+
 class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_code=os.EX_OK, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
@@ -79,8 +100,13 @@ class TestYq(unittest.TestCase):
 
     def test_unrecognized_tags(self):
         self.assertEqual(self.run_yq("!!foo bar\n", ["."]), "")
-        self.assertEqual(self.run_yq("!!foo bar\n", ["-y", "."]), "null\n...\n")
-        self.assertEqual(self.run_yq("x: !!foo bar\n", ["-y", "."]), "x: null\n")
+        self.assertEqual(self.run_yq("!!foo bar\n", ["-y", "."]), "bar\n...\n")
+        self.assertEqual(self.run_yq("x: !foo bar\n", ["-y", "."]), "x: bar\n")
+        self.assertEqual(self.run_yq("x: !!foo bar\n", ["-y", "."]), "x: bar\n")
+        with tempfile.TemporaryFile() as tf:
+            tf.write(yaml_with_tags.encode())
+            tf.seek(0)
+            self.assertEqual(self.run_yq("", ["-y", ".xyz.foo", self.fd_path(tf)]), 'bar\n...\n')
 
     @unittest.expectedFailure
     def test_times(self):

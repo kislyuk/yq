@@ -49,8 +49,16 @@ def decode_docs(jq_output, json_decoder):
         jq_output = jq_output[pos + 1:]
         yield doc
 
+def parse_unknown_tags(loader, tag_suffix, node):
+    if isinstance(node, yaml.nodes.ScalarNode):
+        return loader.construct_scalar(node)
+    elif isinstance(node, yaml.nodes.SequenceNode):
+        return loader.construct_sequence(node)
+    elif isinstance(node, yaml.nodes.MappingNode):
+        return construct_mapping(loader, node)
+
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
-OrderedLoader.add_multi_constructor('', lambda loader, tag_suffix, node: None)  # Ignore all unrecognized tags
+OrderedLoader.add_multi_constructor('', parse_unknown_tags)
 OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
 USING_XQ = True if os.path.basename(sys.argv[0]) == "xq" else False
