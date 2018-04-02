@@ -28,7 +28,8 @@ into YAML (using the key-order-preserving equivalent of ``yaml.safe_dump_all``):
 
     cat input.yml | yq -y .foo.bar
 
-Use the ``--width``/``-w`` argument to pass the line wrap width for string literals.
+Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. YAML
+`tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ are ignored (any nested data is treated as untagged).
 
 All other command line arguments are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced,
 unless there was an error in YAML parsing, in which case the exit code is 1. See the `jq manual
