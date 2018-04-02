@@ -82,6 +82,9 @@ for arg in jq_arg_spec:
 parser.add_argument("jq_filter")
 parser.add_argument("files", nargs="*", type=argparse.FileType())
 
+def xq_cli():
+    main(input_format="xml")
+
 def main(args=None, input_format="yaml"):
     args, jq_args = parser.parse_known_args(args=args)
     for arg in jq_arg_spec:

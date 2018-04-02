@@ -22,8 +22,12 @@ setup(
     tests_require=tests_require,
     extras_require={"test": tests_require},
     packages=find_packages(exclude=["test"]),
-    scripts=glob.glob("scripts/*"),
     include_package_data=True,
+    entry_points = '''
+        [console_scripts]
+        yq=yq:main
+        xq=yq:xq_cli
+    ''',
     test_suite="test",
     classifiers=[
         "Intended Audience :: Developers",
