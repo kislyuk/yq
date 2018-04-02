@@ -1,3 +1,8 @@
+Changes for v2.5.0 (2018-04-02)
+===============================
+
+-  Parse unrecognized tags instead of dropping them. Fixes #23
+
 Changes for v2.4.1 (2018-02-13)
 ===============================
 
