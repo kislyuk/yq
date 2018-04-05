@@ -23,11 +23,12 @@ setup(
     extras_require={"test": tests_require},
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
-    entry_points = '''
-        [console_scripts]
-        yq=yq:main
-        xq=yq:xq_cli
-    ''',
+    entry_points={
+        'console_scripts': [
+            'yq=yq:main',
+            'xq=yq:xq_cli'
+        ],
+    },
     test_suite="test",
     classifiers=[
         "Intended Audience :: Developers",
