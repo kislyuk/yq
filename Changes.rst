@@ -1,3 +1,10 @@
+Changes for v2.6.0 (2018-04-28)
+===============================
+
+-  Packaging: Replace scripts with entry-points
+
+-  Packaging: Package the license file
+
 Changes for v2.5.0 (2018-04-02)
 ===============================
 
