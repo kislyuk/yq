@@ -13,27 +13,25 @@ Before using ``yq``, you also have to install its dependency, ``jq``. See the `j
 Synopsis
 --------
 
-``yq``'s mode of operation is simple: it transcodes YAML on standard input to JSON (using the key-order-preserving
-equivalent of ``yaml.safe_load_all`` to avoid dangerous vulnerabilities in YAML/PyYAML design) and pipes it to
-`jq <https://stedolan.github.io/jq/>`_::
+``yq`` takes YAML input, converts it to JSON, and pipes it to `jq <https://stedolan.github.io/jq/>`_::
 
     cat input.yml | yq .foo.bar
 
-Or specify the filename directly::
+Like in ``jq``, you can also specify input filename(s) as arguments::
 
     yq .foo.bar input.yml
 
-By default, no transcoding of ``jq`` output is done. Use the ``--yaml-output``/``-y`` argument to transcode it back
-into YAML (using the key-order-preserving equivalent of ``yaml.safe_dump_all``)::
+By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``-y`` argument to convert it back into YAML::
 
     cat input.yml | yq -y .foo.bar
 
-Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. YAML
-`tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ are ignored (any nested data is treated as untagged).
+Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. All other command line arguments are
+forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which case
+the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and
+options.
 
-All other command line arguments are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced,
-unless there was an error in YAML parsing, in which case the exit code is 1. See the `jq manual
-<https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and options.
+YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ in the input are ignored (any nested data is treated as
+untagged). Key order is preserved.
 
 XML support
 -----------
