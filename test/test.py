@@ -33,14 +33,14 @@ mapping-orange:
 """
 
 class TestYq(unittest.TestCase):
-    def run_yq(self, input_data, args, expect_exit_code=os.EX_OK, input_format="yaml"):
+    def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
         try:
             sys.stdin = io.StringIO(input_data)
             sys.stdout = io.BytesIO() if USING_PYTHON2 else io.StringIO()
             main(args, input_format=input_format)
         except SystemExit as e:
-            self.assertEqual(e.code, expect_exit_code)
+            self.assertIn(e.code, expect_exit_codes)
         finally:
             result = sys.stdout.getvalue()
             if USING_PYTHON2:
@@ -61,7 +61,7 @@ class TestYq(unittest.TestCase):
 
     def test_yq_err(self):
         err = 'yq: Error running jq: ScannerError: while scanning for the next token\nfound character \'%\' that cannot start any token\n  in "<file>", line 1, column 3.'
-        self.run_yq("- %", ["."], expect_exit_code=err)
+        self.run_yq("- %", ["."], expect_exit_codes={err, 2})
 
     def test_yq_arg_passthrough(self):
         self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "--indent", "4", "."]), "")
@@ -69,7 +69,7 @@ class TestYq(unittest.TestCase):
                          "x: y\n")
         err = "yq: Error running jq: {}Error: [Errno 32] Broken pipe{}".format("IO" if USING_PYTHON2 else "BrokenPipe",
                                                                                ": '<fdopen>'." if USING_PYPY else ".")
-        self.run_yq("{}", ["--indent", "9", "."], expect_exit_code=err)
+        self.run_yq("{}", ["--indent", "9", "."], expect_exit_codes={err, 2})
 
         with tempfile.NamedTemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             tf.write(b'.a')
