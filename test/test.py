@@ -49,6 +49,7 @@ class TestYq(unittest.TestCase):
         return result
 
     def test_yq(self):
+        self.run_yq("", ["--help"])
         self.assertEqual(self.run_yq("{}", ["."]), "")
         self.assertEqual(self.run_yq("foo:\n bar: 1\n baz: {bat: 3}", [".foo.baz.bat"]), "")
         self.assertEqual(self.run_yq("[1, 2, 3]", ["--yaml-output", "-M", "."]), "- 1\n- 2\n- 3\n")
@@ -129,7 +130,8 @@ class TestYq(unittest.TestCase):
                 self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
                 '<b></b>\n<c></c>\n'
             )
-
+        err = "yq: Error converting JSON to XML: cannot represent non-object types at top level"
+        self.run_yq("[1]", ["-x", "."], expect_exit_codes=[err])
 
 if __name__ == '__main__':
     unittest.main()
