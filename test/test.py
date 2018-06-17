@@ -49,7 +49,11 @@ class TestYq(unittest.TestCase):
         return result
 
     def test_yq(self):
-        self.run_yq("", ["--help"])
+        for input_format in "yaml", "xml":
+            try:
+                main(["--help"], input_format=input_format)
+            except SystemExit as e:
+                self.assertEqual(e.code, 0)
         self.assertEqual(self.run_yq("{}", ["."]), "")
         self.assertEqual(self.run_yq("foo:\n bar: 1\n baz: {bat: 3}", [".foo.baz.bat"]), "")
         self.assertEqual(self.run_yq("[1, 2, 3]", ["--yaml-output", "-M", "."]), "- 1\n- 2\n- 3\n")
