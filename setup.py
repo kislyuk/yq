@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-tests_require = ["coverage", "flake8", "wheel"]
+tests_require = ["coverage", "flake8", "wheel", "pytest"]
 
 setup(
     name="yq",
@@ -11,12 +11,13 @@ setup(
     license="Apache Software License",
     author="Andrey Kislyuk",
     author_email="kislyuk@gmail.com",
-    description="Command-line YAML and XML processor - jq wrapper for YAML and XML documents",
+    description="Command-line YAML/XML/TOML processor - jq wrapper for YAML/XML/TOML documents",
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
         "PyYAML >= 3.11",
-        "xmltodict >= 0.11.0"
+        "xmltodict >= 0.11.0",
+        "toml >= 0.9.4",
     ],
     tests_require=tests_require,
     extras_require={"test": tests_require},
@@ -25,7 +26,8 @@ setup(
     entry_points={
         'console_scripts': [
             'yq=yq:main',
-            'xq=yq:xq_cli'
+            'xq=yq:xq_cli',
+            'tomlq=yq:tomlq_cli'
         ],
     },
     test_suite="test",
