@@ -3,10 +3,16 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, unittest, tempfile, json, io, platform
+import os
+import sys
+import unittest
+import tempfile
+import json
+import io
+import platform
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from yq import main # noqa
+from yq import main  # noqa
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
@@ -32,6 +38,7 @@ mapping-orange:
   b: 0
 """
 
+
 class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
@@ -49,7 +56,7 @@ class TestYq(unittest.TestCase):
         return result
 
     def test_yq(self):
-        for input_format in "yaml", "xml":
+        for input_format in "yaml", "xml", "toml":
             try:
                 main(["--help"], input_format=input_format)
             except SystemExit as e:
@@ -65,7 +72,8 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("- понедельник\n- вторник\n", ["-y", "."]), "- понедельник\n- вторник\n")
 
     def test_yq_err(self):
-        err = 'yq: Error running jq: ScannerError: while scanning for the next token\nfound character \'%\' that cannot start any token\n  in "<file>", line 1, column 3.'
+        err = ('yq: Error running jq: ScannerError: while scanning for the next token\nfound character \'%\' that '
+               'cannot start any token\n  in "<file>", line 1, column 3.')
         self.run_yq("- %", ["."], expect_exit_codes={err, 2})
 
     def test_yq_arg_passthrough(self):
@@ -136,6 +144,20 @@ class TestYq(unittest.TestCase):
             )
         err = "yq: Error converting JSON to XML: cannot represent non-object types at top level"
         self.run_yq("[1]", ["-x", "."], expect_exit_codes=[err])
+
+    def test_tomlq(self):
+        self.assertEqual(self.run_yq("", ["."], input_format="toml"), "")
+        self.assertEqual(self.run_yq("", ["-t", ".foo.x=1"], input_format="toml"),
+                         '[foo]\nx = 1\n')
+
+        self.assertEqual(self.run_yq("[input]\n"
+                                     "test_val = 1234\n",
+                                     ["-t", ".input"], input_format="toml"),
+                         "test_val = 1234\n")
+
+        err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level"
+        self.run_yq('[1]', ["-t", "."], expect_exit_codes=[err])
+
 
 if __name__ == '__main__':
     unittest.main()
