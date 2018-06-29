@@ -38,7 +38,6 @@ mapping-orange:
   b: 0
 """
 
-
 class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
@@ -157,7 +156,6 @@ class TestYq(unittest.TestCase):
 
         err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level"
         self.run_yq('[1]', ["-t", "."], expect_exit_codes=[err])
-
 
 if __name__ == '__main__':
     unittest.main()

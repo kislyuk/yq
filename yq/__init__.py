@@ -18,7 +18,6 @@ import yaml
 
 from .version import __version__
 
-
 class Parser(argparse.ArgumentParser):
     def print_help(self):
         yq_help = argparse.ArgumentParser.format_help(self).splitlines()
@@ -28,14 +27,11 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
-
 class OrderedLoader(yaml.SafeLoader):
     pass
 
-
 class OrderedDumper(yaml.SafeDumper):
     pass
-
 
 class JSONDateTimeEncoder(json.JSONEncoder):
     def default(self, o):
@@ -43,22 +39,18 @@ class JSONDateTimeEncoder(json.JSONEncoder):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
-
 def construct_mapping(loader, node):
     loader.flatten_mapping(node)
     return OrderedDict(loader.construct_pairs(node))
 
-
 def represent_dict_order(dumper, data):
     return dumper.represent_mapping("tag:yaml.org,2002:map", data.items())
-
 
 def decode_docs(jq_output, json_decoder):
     while jq_output:
         doc, pos = json_decoder.raw_decode(jq_output)
         jq_output = jq_output[pos + 1:]
         yield doc
-
 
 def parse_unknown_tags(loader, tag_suffix, node):
     if isinstance(node, yaml.nodes.ScalarNode):
@@ -67,7 +59,6 @@ def parse_unknown_tags(loader, tag_suffix, node):
         return loader.construct_sequence(node)
     elif isinstance(node, yaml.nodes.MappingNode):
         return construct_mapping(loader, node)
-
 
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
 OrderedLoader.add_multi_constructor('', parse_unknown_tags)
@@ -79,7 +70,6 @@ jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "-
 
 # Detection for Python 2
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
-
 
 def get_parser(program_name):
     # By default suppress these help strings and only enable them in the specific programs.
@@ -117,14 +107,11 @@ def get_parser(program_name):
     parser.add_argument("files", nargs="*", type=argparse.FileType())
     return parser
 
-
 def xq_cli():
     main(input_format="xml", program_name="xq")
 
-
 def tomlq_cli():
     main(input_format="toml", program_name="tomlq")
-
 
 def main(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name)
