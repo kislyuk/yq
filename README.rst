@@ -10,6 +10,8 @@ Installation
 Before using ``yq``, you also have to install its dependency, ``jq``. See the `jq installation instructions
 <https://stedolan.github.io/jq/download/>`_ for details and directions specific to your platform.
 
+On macOS, ``yq`` is also available on `Homebrew <https://brew.sh/>`_: use ``brew install python-yq``.
+
 Synopsis
 --------
 
