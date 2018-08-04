@@ -92,8 +92,10 @@ def get_parser(program_name):
         raise Exception("Unknown program name")
 
     description = __doc__.replace("yq", program_name).replace("YAML", replace_yaml)
-
-    parser = Parser(prog=program_name, description=description, formatter_class=argparse.RawTextHelpFormatter)
+    parser_args = dict(prog=program_name, description=description, formatter_class=argparse.RawTextHelpFormatter)
+    if not USING_PYTHON2:
+        parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
+    parser = Parser(**parser_args)
     parser.add_argument("--yaml-output", "--yml-output", "-y", action="store_true", help=yaml_output_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--xml-output", "-x", action="store_true", help=xml_output_help)
