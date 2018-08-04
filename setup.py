@@ -6,7 +6,7 @@ tests_require = ["coverage", "flake8", "wheel", "pytest"]
 
 setup(
     name="yq",
-    version="2.6.0",
+    version="2.7.0",
     url="https://github.com/kislyuk/yq",
     license="Apache Software License",
     author="Andrey Kislyuk",

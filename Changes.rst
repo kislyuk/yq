@@ -1,3 +1,12 @@
+Changes for v2.7.0 (2018-08-04)
+===============================
+
+-  TOML support with the tq executable entry point.
+
+-  Disallow argparse abbreviated options. Fixes #38 on Python 3.5+.
+
+-  Now available in Homebrew as python-yq.
+
 Changes for v2.6.0 (2018-04-28)
 ===============================
 
