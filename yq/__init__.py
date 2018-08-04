@@ -93,7 +93,7 @@ def get_parser(program_name):
 
     description = __doc__.replace("yq", program_name).replace("YAML", replace_yaml)
     parser_args = dict(prog=program_name, description=description, formatter_class=argparse.RawTextHelpFormatter)
-    if not USING_PYTHON2:
+    if sys.version_info >= (3, 5):
         parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
     parser = Parser(**parser_args)
     parser.add_argument("--yaml-output", "--yml-output", "-y", action="store_true", help=yaml_output_help)

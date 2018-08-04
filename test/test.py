@@ -157,7 +157,8 @@ class TestYq(unittest.TestCase):
         err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level"
         self.run_yq('[1]', ["-t", "."], expect_exit_codes=[err])
 
-    @unittest.skipIf(USING_PYTHON2, "argparse opt abbrev interferes w/opt passthrough, can't be disabled in Python 2")
+    @unittest.skipIf(sys.version_info < (3, 5),
+                     "argparse option abbreviation interferes with opt passthrough, can't be disabled until Python 3.5")
     def test_abbrev_opt_collisions(self):
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             self.assertEqual(
