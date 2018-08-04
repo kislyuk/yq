@@ -144,7 +144,7 @@ class TestYq(unittest.TestCase):
         err = "yq: Error converting JSON to XML: cannot represent non-object types at top level"
         self.run_yq("[1]", ["-x", "."], expect_exit_codes=[err])
 
-    def test_tomlq(self):
+    def test_tq(self):
         self.assertEqual(self.run_yq("", ["."], input_format="toml"), "")
         self.assertEqual(self.run_yq("", ["-t", ".foo.x=1"], input_format="toml"),
                          '[foo]\nx = 1\n')

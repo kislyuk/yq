@@ -27,7 +27,7 @@ setup(
         'console_scripts': [
             'yq=yq:main',
             'xq=yq:xq_cli',
-            'tomlq=yq:tomlq_cli'
+            'tq=yq:tq_cli'
         ],
     },
     test_suite="test",

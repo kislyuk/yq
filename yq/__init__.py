@@ -85,7 +85,7 @@ def get_parser(program_name):
     elif program_name == "xq":
         replace_yaml = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
-    elif program_name == "tomlq":
+    elif program_name == "tq":
         replace_yaml = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
     else:
@@ -112,8 +112,8 @@ def get_parser(program_name):
 def xq_cli():
     main(input_format="xml", program_name="xq")
 
-def tomlq_cli():
-    main(input_format="toml", program_name="tomlq")
+def tq_cli():
+    main(input_format="toml", program_name="tq")
 
 def main(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name)
