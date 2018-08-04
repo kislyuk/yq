@@ -65,7 +65,7 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("[1, 2, 3]", ["--yaml-output", "-M", "."]), "- 1\n- 2\n- 3\n")
         self.assertEqual(self.run_yq("foo:\n bar: 1\n baz: {bat: 3}", ["-y", ".foo.baz.bat"]), "3\n...\n")
         self.assertEqual(self.run_yq("[aaaaaaaaaa bbb]", ["-y", "."]), "- aaaaaaaaaa bbb\n")
-        self.assertEqual(self.run_yq("[aaaaaaaaaa bbb]", ["-y", "-w8", "."]), "- aaaaaaaaaa\n  bbb\n")
+        self.assertEqual(self.run_yq("[aaaaaaaaaa bbb]", ["-y", "-w", "8", "."]), "- aaaaaaaaaa\n  bbb\n")
         self.assertEqual(self.run_yq('{"понедельник": 1}', ['.["понедельник"]']), "")
         self.assertEqual(self.run_yq('{"понедельник": 1}', ["-y", '.["понедельник"]']), "1\n...\n")
         self.assertEqual(self.run_yq("- понедельник\n- вторник\n", ["-y", "."]), "- понедельник\n- вторник\n")
@@ -156,6 +156,14 @@ class TestYq(unittest.TestCase):
 
         err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level"
         self.run_yq('[1]', ["-t", "."], expect_exit_codes=[err])
+
+    @unittest.skipIf(USING_PYTHON2, "argparse opt abbrev interferes w/opt passthrough, can't be disabled in Python 2")
+    def test_abbrev_opt_collisions(self):
+        with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
+            self.assertEqual(
+                self.run_yq("", ["-y", "-e", "--slurp", ".[0] == .[1]", "-", self.fd_path(tf), self.fd_path(tf2)]),
+                "true\n...\n"
+            )
 
 if __name__ == '__main__':
     unittest.main()
