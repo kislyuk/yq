@@ -11,23 +11,24 @@ setup(
     license="Apache Software License",
     author="Andrey Kislyuk",
     author_email="kislyuk@gmail.com",
-    description="Command-line YAML/XML/TOML processor - jq wrapper for YAML/XML/TOML documents",
+    description="Command-line YAML/XML processor - jq wrapper for YAML/XML documents",
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
         "PyYAML >= 3.11",
-        "xmltodict >= 0.11.0",
-        "toml >= 0.9.4",
+        "xmltodict >= 0.11.0"
     ],
     tests_require=tests_require,
-    extras_require={"test": tests_require},
+    extras_require={
+        "test": tests_require,
+        "toml": ["toml >= 0.9.4"]
+    },
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
     entry_points={
         'console_scripts': [
             'yq=yq:main',
-            'xq=yq:xq_cli',
-            'tq=yq:tq_cli'
+            'xq=yq:xq_cli'
         ],
     },
     test_suite="test",
