@@ -137,12 +137,26 @@ class TestYq(unittest.TestCase):
             tf.seek(0)
             tf2.write(b'<a><c/></a>')
             tf2.seek(0)
-            self.assertEqual(
-                self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
-                '<b></b>\n<c></c>\n'
-            )
-        err = "yq: Error converting JSON to XML: cannot represent non-object types at top level"
+            self.assertEqual(self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
+                             '<b></b>\n<c></c>\n')
+        err = ("yq: Error converting JSON to XML: cannot represent non-object types at top level. "
+               "Use --xml-root=name to envelope your output with a root element.")
         self.run_yq("[1]", ["-x", "."], expect_exit_codes=[err])
+
+    def test_xq_dtd(self):
+        with tempfile.TemporaryFile() as tf:
+            tf.write(b'<a><b c="d">e</b><b>f</b></a>')
+            tf.seek(0)
+            self.assertEqual(self.run_yq("", ["-x", ".a", self.fd_path(tf)], input_format="xml"),
+                             '<b c="d">e</b><b>f</b>\n')
+            tf.seek(0)
+            self.assertEqual(self.run_yq("", ["-x", "--xml-dtd", ".a", self.fd_path(tf)], input_format="xml"),
+                             '<?xml version="1.0" encoding="utf-8"?>\n<b c="d">e</b>\n')
+            tf.seek(0)
+            self.assertEqual(
+                self.run_yq("", ["-x", "--xml-dtd", "--xml-root=g", ".a", self.fd_path(tf)], input_format="xml"),
+                '<?xml version="1.0" encoding="utf-8"?>\n<g>\n  <b c="d">e</b>\n  <b>f</b>\n</g>\n'
+            )
 
     def test_tq(self):
         self.assertEqual(self.run_yq("", ["."], input_format="toml"), "")
@@ -154,7 +168,7 @@ class TestYq(unittest.TestCase):
                                      ["-t", ".input"], input_format="toml"),
                          "test_val = 1234\n")
 
-        err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level"
+        err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level."
         self.run_yq('[1]', ["-t", "."], expect_exit_codes=[err])
 
     @unittest.skipIf(sys.version_info < (3, 5),

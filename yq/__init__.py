@@ -73,25 +73,26 @@ USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 def get_parser(program_name):
     # By default suppress these help strings and only enable them in the specific programs.
-    yaml_output_help = argparse.SUPPRESS
-    width_help = argparse.SUPPRESS
-    xml_output_help = argparse.SUPPRESS
+    yaml_output_help, width_help = argparse.SUPPRESS, argparse.SUPPRESS
+    xml_output_help, xml_dtd_help, xml_root_help = argparse.SUPPRESS, argparse.SUPPRESS, argparse.SUPPRESS
     toml_output_help = argparse.SUPPRESS
 
     if program_name == "yq":
-        replace_yaml = "YAML"
+        current_language = "YAML"
         yaml_output_help = "Transcode jq JSON output back into YAML and emit it"
         width_help = "When using --yaml-output, specify string wrap width"
     elif program_name == "xq":
-        replace_yaml = "XML"
+        current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
+        xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
+        xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
     elif program_name == "tq":
-        replace_yaml = "TOML"
+        current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
     else:
         raise Exception("Unknown program name")
 
-    description = __doc__.replace("yq", program_name).replace("YAML", replace_yaml)
+    description = __doc__.replace("yq", program_name).replace("YAML", current_language)
     parser_args = dict(prog=program_name, description=description, formatter_class=argparse.RawTextHelpFormatter)
     if sys.version_info >= (3, 5):
         parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
@@ -99,6 +100,8 @@ def get_parser(program_name):
     parser.add_argument("--yaml-output", "--yml-output", "-y", action="store_true", help=yaml_output_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--xml-output", "-x", action="store_true", help=xml_output_help)
+    parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)
+    parser.add_argument("--xml-root", help=xml_root_help)
     parser.add_argument("--toml-output", "-t", action="store_true", help=toml_output_help)
     parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
@@ -172,17 +175,27 @@ def main(args=None, input_format="yaml", program_name="yq"):
             elif args.xml_output:
                 import xmltodict
                 for doc in decode_docs(jq_out, json_decoder):
-                    if not isinstance(doc, OrderedDict):
-                        parser.exit("{}: Error converting JSON to XML: cannot represent non-object types at top level"
-                                    .format(program_name))
-                    xmltodict.unparse(doc, output=sys.stdout, full_document=False, pretty=True, indent="  ")
+                    full_document = False
+                    if args.xml_root:
+                        doc = {args.xml_root: doc}
+                    elif not isinstance(doc, OrderedDict):
+                        msg = ("{}: Error converting JSON to XML: cannot represent non-object types at top level. "
+                               "Use --xml-root=name to envelope your output with a root element.")
+                        parser.exit(msg.format(program_name))
+                    if args.xml_dtd:
+                        full_document = True
+                    try:
+                        xmltodict.unparse(doc, output=sys.stdout, full_document=full_document, pretty=True, indent="  ")
+                    except ValueError as e:
+                        if "Document must have exactly one root" in str(e):
+                            raise Exception(str(e) + " Use --xml-root=name to envelope your output with a root element")
                     sys.stdout.write(b"\n" if sys.version_info < (3, 0) else "\n")
             elif args.toml_output:
                 import toml
                 for doc in decode_docs(jq_out, json_decoder):
                     if not isinstance(doc, OrderedDict):
-                        parser.exit("{}: Error converting JSON to TOML: cannot represent non-object types at top level"
-                                    .format(program_name))
+                        msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
+                        parser.exit(msg.format(program_name))
 
                     if USING_PYTHON2:
                         # For Python 2, dump the string and encode it into bytes.
