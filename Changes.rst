@@ -1,3 +1,10 @@
+Changes for v2.7.1 (2018-11-05)
+===============================
+
+-  xq: Introduce –xml-dtd and –xml-root. Fixes #37.
+
+-  TOML support is optional and experimental
+
 Changes for v2.7.0 (2018-08-04)
 ===============================
 
