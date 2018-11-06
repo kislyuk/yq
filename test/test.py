@@ -150,8 +150,8 @@ class TestYq(unittest.TestCase):
             self.assertEqual(self.run_yq("", ["-x", ".a", self.fd_path(tf)], input_format="xml"),
                              '<b c="d">e</b><b>f</b>\n')
             tf.seek(0)
-            self.assertEqual(self.run_yq("", ["-x", "--xml-dtd", ".a", self.fd_path(tf)], input_format="xml"),
-                             '<?xml version="1.0" encoding="utf-8"?>\n<b c="d">e</b>\n')
+            self.assertEqual(self.run_yq("", ["-x", "--xml-dtd", ".", self.fd_path(tf)], input_format="xml"),
+                             '<?xml version="1.0" encoding="utf-8"?>\n<a>\n  <b c="d">e</b>\n  <b>f</b>\n</a>\n')
             tf.seek(0)
             self.assertEqual(
                 self.run_yq("", ["-x", "--xml-dtd", "--xml-root=g", ".a", self.fd_path(tf)], input_format="xml"),

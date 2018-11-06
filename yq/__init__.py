@@ -175,20 +175,20 @@ def main(args=None, input_format="yaml", program_name="yq"):
             elif args.xml_output:
                 import xmltodict
                 for doc in decode_docs(jq_out, json_decoder):
-                    full_document = False
                     if args.xml_root:
                         doc = {args.xml_root: doc}
                     elif not isinstance(doc, OrderedDict):
                         msg = ("{}: Error converting JSON to XML: cannot represent non-object types at top level. "
                                "Use --xml-root=name to envelope your output with a root element.")
                         parser.exit(msg.format(program_name))
-                    if args.xml_dtd:
-                        full_document = True
+                    full_document = True if args.xml_dtd else False
                     try:
                         xmltodict.unparse(doc, output=sys.stdout, full_document=full_document, pretty=True, indent="  ")
                     except ValueError as e:
                         if "Document must have exactly one root" in str(e):
                             raise Exception(str(e) + " Use --xml-root=name to envelope your output with a root element")
+                        else:
+                            raise
                     sys.stdout.write(b"\n" if sys.version_info < (3, 0) else "\n")
             elif args.toml_output:
                 import toml
