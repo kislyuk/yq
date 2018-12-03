@@ -17,7 +17,7 @@ Synopsis
 
 ``yq`` takes YAML input, converts it to JSON, and pipes it to `jq <https://stedolan.github.io/jq/>`_::
 
-    cat input.yml | yq .foo.bar
+    < input.yml yq .foo.bar
 
 Like in ``jq``, you can also specify input filename(s) as arguments::
 
@@ -25,7 +25,7 @@ Like in ``jq``, you can also specify input filename(s) as arguments::
 
 By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``-y`` argument to convert it back into YAML::
 
-    cat input.yml | yq -y .foo.bar
+    < input.yml yq -y .foo.bar
 
 Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. All other command line arguments are
 forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which case
