@@ -3,13 +3,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os
-import sys
-import unittest
-import tempfile
-import json
-import io
-import platform
+import os, sys, unittest, tempfile, json, io, platform, subprocess
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from yq import main  # noqa
@@ -90,6 +84,11 @@ class TestYq(unittest.TestCase):
             for arg in "--from-file", "-f":
                 tf2.seek(0)
                 self.assertEqual(self.run_yq("", ["-y", arg, tf.name, self.fd_path(tf2)]), '1\n...\n')
+
+    @unittest.skipIf(subprocess.check_output(["jq", "--version"]) < b"jq-1.6", "Test options introduced in jq 1.6")
+    def test_jq16_arg_passthrough(self):
+        self.assertEqual(self.run_yq("{}", ["-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n- a\n- b\n")
+        self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "a", "b"]), "")
 
     def fd_path(self, fh):
         return "/dev/fd/{}".format(fh.fileno())

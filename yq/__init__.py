@@ -7,10 +7,7 @@ See https://github.com/kislyuk/yq for more information.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
-import argparse
-import subprocess
-import json
+import sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
 
@@ -66,7 +63,7 @@ OrderedDumper.add_representer(OrderedDict, represent_dict_order)
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
 jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "--argjson": 2, "--slurpfile": 2,
-               "--argfile": 2}
+               "--argfile": 2, "--rawfile": 2, "--args": argparse.REMAINDER, "--jsonargs": argparse.REMAINDER}
 
 # Detection for Python 2
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
@@ -130,7 +127,12 @@ def main(args=None, input_format="yaml", program_name="yq"):
     if getattr(args, "--from-file") or getattr(args, "-f"):
         args.files.insert(0, argparse.FileType()(args.jq_filter))
     else:
-        jq_args.append(args.jq_filter)
+        jq_filter_arg_loc = len(jq_args)
+        if getattr(args, "--args"):
+            jq_filter_arg_loc = jq_args.index('--args') + 1
+        elif getattr(args, "--jsonargs"):
+            jq_filter_arg_loc = jq_args.index('--jsonargs') + 1
+        jq_args.insert(jq_filter_arg_loc, args.jq_filter)
 
     if sys.stdin.isatty() and not args.files:
         return parser.print_help()
