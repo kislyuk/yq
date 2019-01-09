@@ -1,3 +1,10 @@
+Changes for v2.7.2 (2019-01-09)
+===============================
+
+-  Support options introduced in jq 1.6. Fixes #46
+
+-  xq: Re-raise if exception is unrecognized
+
 Changes for v2.7.1 (2018-11-05)
 ===============================
 
