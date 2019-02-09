@@ -35,6 +35,8 @@ options.
 YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ in the input are ignored (any nested data is treated as
 untagged). Key order is preserved.
 
+Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
+
 XML support
 -----------
 ``yq`` also supports XML. The ``yq`` package installs an executable, ``xq``, which
