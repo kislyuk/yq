@@ -76,6 +76,7 @@ def get_parser(program_name):
 
     if program_name == "yq":
         current_language = "YAML"
+        passthrough_json_help = "Assume input format JSON only instead of parsing as YAML"
         yaml_output_help = "Transcode jq JSON output back into YAML and emit it"
         width_help = "When using --yaml-output, specify string wrap width"
     elif program_name == "xq":
@@ -94,6 +95,7 @@ def get_parser(program_name):
     if sys.version_info >= (3, 5):
         parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
     parser = Parser(**parser_args)
+    parser.add_argument("--passthrough-json", "-p", action="store_true", help=passthrough_json_help)
     parser.add_argument("--yaml-output", "--yml-output", "-y", action="store_true", help=yaml_output_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--xml-output", "-x", action="store_true", help=xml_output_help)
@@ -136,6 +138,9 @@ def main(args=None, input_format="yaml", program_name="yq"):
 
     if sys.stdin.isatty() and not args.files:
         return parser.print_help()
+
+    if args.passthrough_json:
+        input_format = "json"
 
     converting_output = args.yaml_output or args.xml_output or args.toml_output
 
@@ -207,7 +212,10 @@ def main(args=None, input_format="yaml", program_name="yq"):
                         # For Python 3, write the unicode to the buffer directly.
                         toml.dump(doc, sys.stdout)
         else:
-            if input_format == "yaml":
+            if input_format == "json":
+                for input_stream in input_streams:
+                    jq.stdin.write(input_stream.read())
+            elif input_format == "yaml":
                 for input_stream in input_streams:
                     for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
                         json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
