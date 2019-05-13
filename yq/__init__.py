@@ -139,9 +139,6 @@ def main(args=None, input_format="yaml", program_name="yq"):
     if sys.stdin.isatty() and not args.files:
         return parser.print_help()
 
-    if args.passthrough_json:
-        input_format = "json"
-
     converting_output = args.yaml_output or args.xml_output or args.toml_output
 
     try:
@@ -161,19 +158,22 @@ def main(args=None, input_format="yaml", program_name="yq"):
             # TODO: enable true streaming in this branch (with asyncio, asyncproc, a multi-shot variant of
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
-            input_docs = []
-            for input_stream in input_streams:
-                if input_format == "yaml":
-                    input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
-                elif input_format == "xml":
-                    import xmltodict
-                    input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True))
-                elif input_format == "toml":
-                    import toml
-                    input_docs.append(toml.load(input_stream))
-                else:
-                    raise Exception("Unknown input format")
-            input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
+            if args.passthrough_json:
+                input_payload = "\n".join(input_stream.read() for input_stream in input_streams)
+            else:
+                input_docs = []
+                for input_stream in input_streams:
+                    if input_format == "yaml":
+                        input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
+                    elif input_format == "xml":
+                        import xmltodict
+                        input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True))
+                    elif input_format == "toml":
+                        import toml
+                        input_docs.append(toml.load(input_stream))
+                    else:
+                        raise Exception("Unknown input format")
+                input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
             if args.yaml_output:
@@ -212,7 +212,7 @@ def main(args=None, input_format="yaml", program_name="yq"):
                         # For Python 3, write the unicode to the buffer directly.
                         toml.dump(doc, sys.stdout)
         else:
-            if input_format == "json":
+            if args.passthrough_json:
                 for input_stream in input_streams:
                     jq.stdin.write(input_stream.read())
             elif input_format == "yaml":
