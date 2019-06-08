@@ -173,7 +173,7 @@ def main(args=None, input_format="yaml", program_name="yq"):
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
             if args.yaml_output:
                 yaml.dump_all(decode_docs(jq_out, json_decoder), stream=sys.stdout, Dumper=OrderedDumper,
-                              width=args.width, allow_unicode=True, default_flow_style=False)
+                              width=args.width, allow_unicode=True, default_flow_style=False, explicit_start=True)
             elif args.xml_output:
                 import xmltodict
                 for doc in decode_docs(jq_out, json_decoder):
