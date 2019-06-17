@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os, sys, unittest, tempfile, json, io, platform, subprocess
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from yq import main  # noqa
+from yq import yq, cli  # noqa
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
@@ -38,7 +38,7 @@ class TestYq(unittest.TestCase):
         try:
             sys.stdin = io.StringIO(input_data)
             sys.stdout = io.BytesIO() if USING_PYTHON2 else io.StringIO()
-            main(args, input_format=input_format)
+            cli(args, input_format=input_format)
         except SystemExit as e:
             self.assertIn(e.code, expect_exit_codes)
         finally:
@@ -51,7 +51,7 @@ class TestYq(unittest.TestCase):
     def test_yq(self):
         for input_format in "yaml", "xml", "toml":
             try:
-                main(["--help"], input_format=input_format)
+                cli(["--help"], input_format=input_format)
             except SystemExit as e:
                 self.assertEqual(e.code, 0)
         self.assertEqual(self.run_yq("{}", ["."]), "")

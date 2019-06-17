@@ -27,7 +27,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'yq=yq:main',
+            'yq=yq:cli',
             'xq=yq:xq_cli'
         ],
     },
