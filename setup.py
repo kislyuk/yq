@@ -27,6 +27,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
+            'tq=yq:tq_cli [toml]',
             'yq=yq:cli',
             'xq=yq:xq_cli'
         ],
