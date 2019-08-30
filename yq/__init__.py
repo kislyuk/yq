@@ -13,6 +13,7 @@ from datetime import datetime, date, time
 
 import yaml
 
+from . import colorize
 from .version import __version__
 
 class Parser(argparse.ArgumentParser):
@@ -154,6 +155,9 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
     if not exit_func:
         exit_func = sys.exit
     converting_output = True if output_format != "json" else False
+    colorize_output = colorize.styling_available(output_stream, force='-C' in jq_args)
+    if converting_output and '-C' in jq_args:
+        jq_args = [_ for _ in jq_args if _ != '-C']
 
     try:
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
@@ -185,6 +189,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
+            if colorize_output:
+                output_stream = colorize.wraps(output_stream, output_format)
             if output_format == "yaml":
                 yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream, Dumper=OrderedDumper,
                               width=width, allow_unicode=True, default_flow_style=False)
@@ -206,7 +212,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                             raise Exception(str(e) + " Use --xml-root=name to envelope your output with a root element")
                         else:
                             raise
-                    output_stream.write(b"\n" if sys.version_info < (3, 0) else "\n")
+                    if not colorize_output:
+                        output_stream.write(b"\n" if sys.version_info < (3, 0) else "\n")
             elif output_format == "toml":
                 import toml
                 for doc in decode_docs(jq_out, json_decoder):
@@ -247,3 +254,5 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
         exit_func(jq.returncode)
     except Exception as e:
         exit_func("{}: Error running jq: {}: {}.".format(program_name, type(e).__name__, e))
+    finally:
+        output_stream.flush()
