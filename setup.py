@@ -28,7 +28,8 @@ setup(
     entry_points={
         'console_scripts': [
             'yq=yq:cli',
-            'xq=yq:xq_cli'
+            'xq=yq:xq_cli',
+            'tq=yq:tq_cli',
         ],
     },
     test_suite="test",
