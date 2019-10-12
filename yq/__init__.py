@@ -154,6 +154,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
     if not exit_func:
         exit_func = sys.exit
     converting_output = True if output_format != "json" else False
+    if converting_output and '-C' in jq_args:
+        jq_args = [_ for _ in jq_args if _ != '-C']
 
     try:
         # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us

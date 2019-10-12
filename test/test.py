@@ -119,6 +119,9 @@ class TestYq(unittest.TestCase):
             tf.seek(0)
             self.assertEqual(self.run_yq("", ["-y", ".xyz.foo", self.fd_path(tf)]), 'bar\n...\n')
 
+    def test_jq_colorize(self):
+        self.assertEqual(self.run_yq("{}", [".", "-C", "-y", "-C"]), '{}\n', 'issue #71')
+
     @unittest.expectedFailure
     def test_times(self):
         """
