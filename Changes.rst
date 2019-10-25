@@ -1,3 +1,12 @@
+Changes for v2.8.0 (2019-10-25)
+===============================
+
+-  Set default block sequence indentation to 2 spaces, –indentless for 0
+
+-  Make main body of yq callable as a library function
+
+-  Test and release infrastructure updates
+
 Changes for v2.7.2 (2019-01-09)
 ===============================
 
