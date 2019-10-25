@@ -27,8 +27,12 @@ class Parser(argparse.ArgumentParser):
 class OrderedLoader(yaml.SafeLoader):
     pass
 
-class OrderedDumper(yaml.SafeDumper):
+class OrderedIndentlessDumper(yaml.SafeDumper):
     pass
+
+class OrderedDumper(yaml.SafeDumper):
+    def increase_indent(self, flow=False, indentless=False):
+        return super(OrderedDumper, self).increase_indent(flow, False)
 
 class JSONDateTimeEncoder(json.JSONEncoder):
     def default(self, o):
@@ -59,7 +63,9 @@ def parse_unknown_tags(loader, tag_suffix, node):
 
 OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
 OrderedLoader.add_multi_constructor('', parse_unknown_tags)
-OrderedDumper.add_representer(OrderedDict, represent_dict_order)
+
+for dumper in OrderedIndentlessDumper, OrderedDumper:
+    dumper.add_representer(OrderedDict, represent_dict_order)
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
 jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "--argjson": 2, "--slurpfile": 2,
@@ -70,7 +76,7 @@ USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 def get_parser(program_name):
     # By default suppress these help strings and only enable them in the specific programs.
-    yaml_output_help, width_help = argparse.SUPPRESS, argparse.SUPPRESS
+    yaml_output_help, width_help, indentless_help = argparse.SUPPRESS, argparse.SUPPRESS, argparse.SUPPRESS
     xml_output_help, xml_dtd_help, xml_root_help = argparse.SUPPRESS, argparse.SUPPRESS, argparse.SUPPRESS
     toml_output_help = argparse.SUPPRESS
 
@@ -78,6 +84,7 @@ def get_parser(program_name):
         current_language = "YAML"
         yaml_output_help = "Transcode jq JSON output back into YAML and emit it"
         width_help = "When using --yaml-output, specify string wrap width"
+        indentless_help = 'When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2'
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
@@ -98,6 +105,7 @@ def get_parser(program_name):
     parser.add_argument("--yaml-output", "--yml-output", "-y", dest="output_format", action="store_const", const="yaml",
                         help=yaml_output_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
+    parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
     parser.add_argument("--xml-output", "-x", dest="output_format", action="store_const", const="xml",
                         help=xml_output_help)
     parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)
@@ -146,7 +154,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     yq(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
 
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
-       program_name="yq", width=None, xml_root=None, xml_dtd=False, jq_args=frozenset(), exit_func=None):
+       program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False, jq_args=frozenset(),
+       exit_func=None):
     if not input_streams:
         input_streams = [sys.stdin]
     if not output_stream:
@@ -186,7 +195,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
             if output_format == "yaml":
-                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream, Dumper=OrderedDumper,
+                dumper_class = OrderedIndentlessDumper if indentless_lists else OrderedDumper
+                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream, Dumper=dumper_class,
                               width=width, allow_unicode=True, default_flow_style=False)
             elif output_format == "xml":
                 import xmltodict

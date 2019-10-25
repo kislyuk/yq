@@ -87,7 +87,9 @@ class TestYq(unittest.TestCase):
 
     @unittest.skipIf(subprocess.check_output(["jq", "--version"]) < b"jq-1.6", "Test options introduced in jq 1.6")
     def test_jq16_arg_passthrough(self):
-        self.assertEqual(self.run_yq("{}", ["-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n- a\n- b\n")
+        self.assertEqual(self.run_yq("{}", ["--indentless", "-y", ".a=$ARGS.positional", "--args", "a", "b"]),
+                         "a:\n- a\n- b\n")
+        self.assertEqual(self.run_yq("{}", ["-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n  - a\n  - b\n")
         self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "a", "b"]), "")
 
     def fd_path(self, fh):
