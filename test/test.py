@@ -92,6 +92,15 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("{}", ["-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n  - a\n  - b\n")
         self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "a", "b"]), "")
 
+    def test_short_option_separation(self):
+        self.assertEqual(self.run_yq('{"a": 1}', ["-yCcC", "."]), "a: 1\n")
+        self.assertEqual(self.run_yq('{"a": 1}', ["-y", "-CS", "."]), "a: 1\n")
+        self.assertEqual(self.run_yq('{"a": 1}', ["-y", "-CC", "."]), "a: 1\n")
+        self.assertEqual(self.run_yq('{"a": 1}', ["-y", "-cC", "."]), "a: 1\n")
+        self.assertEqual(self.run_yq('{"a": 1}', ["-x", "-cC", "."]), "<a>1</a>\n")
+        self.assertEqual(self.run_yq('{"a": 1}', ["-C", "."]), "")
+        self.assertEqual(self.run_yq('{"a": 1}', ["-Cc", "."]), "")
+
     def fd_path(self, fh):
         return "/dev/fd/{}".format(fh.fileno())
 

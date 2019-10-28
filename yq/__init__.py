@@ -130,6 +130,21 @@ def tq_cli():
 def cli(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name)
     args, jq_args = parser.parse_known_args(args=args)
+
+    for i, arg in enumerate(jq_args):
+        if arg.startswith("-") and not arg.startswith("--"):
+            if "y" in arg:
+                args.output_format = "yaml"
+            elif "x" in arg:
+                args.output_format = "xml"
+            jq_args[i] = arg.replace("x", "").replace("y", "")
+        if args.output_format != "json":
+            jq_args[i] = jq_args[i].replace("C", "")
+            if jq_args[i] == "-":
+                jq_args[i] = None
+
+    jq_args = [arg for arg in jq_args if arg is not None]
+
     for arg in jq_arg_spec:
         values = getattr(args, arg, None)
         delattr(args, arg)
@@ -137,6 +152,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
             for value_group in values:
                 jq_args.append(arg)
                 jq_args.extend(value_group)
+
     if "--from-file" in jq_args or "-f" in jq_args:
         args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
     else:
