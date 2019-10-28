@@ -1,3 +1,8 @@
+Changes for v2.8.1 (2019-10-28)
+===============================
+
+-  Filter out -C and separate commingled yq and jq short options
+
 Changes for v2.8.0 (2019-10-25)
 ===============================
 
