@@ -23,19 +23,80 @@ Like in ``jq``, you can also specify input filename(s) as arguments::
 
     yq .foo.bar input.yml
 
-By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``-y`` argument to convert it back into YAML::
+By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``-y`` option to convert it back into YAML::
 
     cat input.yml | yq -y .foo.bar
 
-Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. All other command line arguments are
-forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which case
-the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and
-options.
+Mapping key order is preserved. By default, custom YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ and
+`styles <https://yaml.org/spec/current.html#id2509255>`_ in the input are ignored. Use the ``--yaml-roundtrip``/``-Y``
+option to preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences
+while in JSON::
 
-YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ in the input are ignored (any nested data is treated as
-untagged). Key order is preserved.
+    yq -Y .foo.bar input.yml
+
+Use the ``--width``/``-w`` option to pass the line wrap width for string literals. All other command line arguments
+are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing,
+in which case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on
+``jq`` features and options.
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
+
+Preserving tags and styles using the ``-Y`` (``--yaml-roundtrip``) option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``-Y`` option helps preserve custom `string styles <https://yaml-multiline.info/>`_ and
+`tags <https://camel.readthedocs.io/en/latest/yamlref.html#tags>`_ in your document. For exmaple, consider the following
+document (an `AWS CloudFormation <https://aws.amazon.com/cloudformation/>`_ template fragment)::
+
+    Resources:
+      ElasticLoadBalancer:
+        Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+        Properties:
+          AvailabilityZones: !GetAZs ''
+          Instances:
+            - !Ref Ec2Instance1
+            - !Ref Ec2Instance2
+          Description: >-
+            Load balancer for Big Important Service.
+
+            Good thing it's managed by this template.
+
+Passing this document through ``yq -y .Resources.ElasticLoadBalancer`` will drop custom tags, such as ``!Ref``,
+and styles, such as the `folded <https://yaml-multiline.info/>`_ style of the ``Description`` field::
+
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      AvailabilityZones: ''
+      Instances:
+        - Ec2Instance1
+        - Ec2Instance2
+      Description: 'Load balancer for Big Important Service.
+
+        Good thing it''s managed by this template.'
+
+By contrast, passing it through ``yq -Y .Resources.ElasticLoadBalancer`` will preserve tags and styles::
+
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      Instances:
+        - !Ref 'Ec2Instance1'
+        - !Ref 'Ec2Instance2'
+      Description: >-
+        Load balancer for Big Important Service.
+
+        Good thing it's managed by this template.
+
+To accomplish this in ``-Y`` mode, yq carries extra metadata (mapping pairs and sequence values) in the JSON
+representation of your document for any custom tags or styles that it finds. When converting the JSON back into YAML, it
+parses this metadata, re-applies the tags and styles, and discards the extra pairs and values.
+
+.. warning ::
+
+ The ``-Y`` option is incompatible with jq filters that do not expect the extra information injected into the document
+ to preserve the YAML formatting. For example, a jq filter that counts entries in the Instances array will come up with
+ 4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
+ metadata keys. You may need to check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
 
 XML support
 -----------
@@ -72,8 +133,8 @@ License
 -------
 Licensed under the terms of the `Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0>`_.
 
-.. image:: https://img.shields.io/travis/kislyuk/yq.svg
-        :target: https://travis-ci.org/kislyuk/yq
+.. image:: https://github.com/kislyuk/yq/workflows/Python%20package/badge.svg
+        :target: https://github.com/kislyuk/yq/actions
 .. image:: https://codecov.io/github/kislyuk/yq/coverage.svg?branch=master
         :target: https://codecov.io/github/kislyuk/yq?branch=master
 .. image:: https://img.shields.io/pypi/v/yq.svg
