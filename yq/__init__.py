@@ -7,7 +7,7 @@ See https://github.com/kislyuk/yq for more information.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys, argparse, subprocess, json
+import sys, argparse, subprocess, json, re
 from collections import OrderedDict
 from datetime import datetime, date, time
 
@@ -41,11 +41,39 @@ class JSONDateTimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 def construct_mapping(loader, node):
-    loader.flatten_mapping(node)
-    return OrderedDict(loader.construct_pairs(node))
+    loader.flatten_mapping(node)      # TODO: is this needed?
+    pairs = []
+    for k_node, v_node in node.value:
+        key = loader.construct_object(k_node)
+        value = loader.construct_object(v_node)
+        pairs.append((key, value))
+        if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
+            pairs.append(("__yq_tag_{}__".format(key), v_node.tag))
+        if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style in {"|", ">"}:
+            pairs.append(("__yq_style_{}__".format(key), v_node.style))
+    return OrderedDict(pairs)
+
+yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$")
 
 def represent_dict_order(dumper, data):
-    return dumper.represent_mapping("tag:yaml.org,2002:map", data.items())
+    pairs, custom_styles, custom_tags = [], {}, {}
+    for k, v in data.items():
+        if isinstance(k, str):
+            value_annotation = yaml_value_annotation_re.match(k)
+            if value_annotation and value_annotation.group("type") == "style":
+                custom_styles[value_annotation.group("key")] = v
+                continue
+            elif value_annotation and value_annotation.group("type") == "tag":
+                custom_tags[value_annotation.group("key")] = v
+                continue
+        pairs.append((k, v))
+    mapping = dumper.represent_mapping("tag:yaml.org,2002:map", pairs)
+    for k, v in mapping.value:
+        if k.value in custom_styles:
+            v.style = custom_styles[k.value]
+        if k.value in custom_tags:
+            v.tag = custom_tags[k.value]
+    return mapping
 
 def decode_docs(jq_output, json_decoder):
     while jq_output:
@@ -54,6 +82,7 @@ def decode_docs(jq_output, json_decoder):
         yield doc
 
 def parse_unknown_tags(loader, tag_suffix, node):
+    print("called parse_unknown_tags with", loader, tag_suffix, node)
     if isinstance(node, yaml.nodes.ScalarNode):
         return loader.construct_scalar(node)
     elif isinstance(node, yaml.nodes.SequenceNode):
