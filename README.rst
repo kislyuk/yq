@@ -27,15 +27,70 @@ By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``
 
     cat input.yml | yq -y .foo.bar
 
-Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. All other command line arguments are
-forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which case
-the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and
-options.
+Mapping key order is preserved. By default, YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ and
+`styles <https://yaml.org/spec/current.html#id2509255>`_ in the input are ignored. Use the ``--yaml-roundtrip``/``-Y``
+argument to preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences
+while in JSON::
 
-YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ in the input are ignored (any nested data is treated as
-untagged). Key order is preserved.
+    yq -Y .foo.bar input.yml
+
+Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. All other command line arguments
+are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing,
+in which case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on
+``jq`` features and options.
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
+
+.. admonition:: The ``-Y`` option
+
+ The ``-Y`` option injects extra mapping pairs and sequence elements into your document if custom tags or styles are
+ found. For exmaple, consider the following document (an `AWS CloudFormation <https://aws.amazon.com/cloudformation/>`_
+ template)::
+
+    Resources:
+      ElasticLoadBalancer:
+        Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+        Properties:
+          AvailabilityZones: !GetAZs ''
+          Instances:
+            - !Ref Ec2Instance1
+            - !Ref Ec2Instance2
+          Description: >-
+            Load balancer for Big Important Service.
+
+            Good thing it's managed by this template.
+
+ Passing this document through ``yq -y .Resources.ElasticLoadBalancer`` will strip out custom tags, such as ``!Ref``,
+ and styles, such as the `folded <https://yaml-multiline.info/>`_ style of the ``Description`` field::
+
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      AvailabilityZones: ''
+      Instances:
+        - Ec2Instance1
+        - Ec2Instance2
+      Description: 'Load balancer for Big Important Service.
+
+        Good thing it''s managed by this template.'
+
+ By contrast, passing it through ``yq -Y .Resources.ElasticLoadBalancer`` will preserve tags and styles::
+
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      Instances:
+        - !Ref 'Ec2Instance1'
+        - !Ref 'Ec2Instance2'
+      Description: >-
+        Load balancer for Big Important Service.
+
+        Good thing it's managed by this template.
+
+ The ``-Y`` option is incompatible with jq filters that do not expect the extra information injected into the document
+ to preserve the YAML formatting. For example, a jq filter that counts entries in the Instances array will come up with
+ 4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
+ metadata keys. You may need to check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
+
 
 XML support
 -----------
