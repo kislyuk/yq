@@ -13,12 +13,11 @@ from datetime import datetime, date, time
 
 import yaml
 
+from .compat import USING_PYTHON2
 from .parser import get_parser, jq_arg_spec
 from .loader import get_loader
 from .dumper import get_dumper
 from .version import __version__  # noqa
-
-USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 class JSONDateTimeEncoder(json.JSONEncoder):
     def default(self, o):
