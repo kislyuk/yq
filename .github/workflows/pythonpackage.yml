@@ -7,7 +7,7 @@ jobs:
 
     runs-on: ubuntu-18.04
     strategy:
-      max-parallel: 4
+      max-parallel: 8
       matrix:
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
