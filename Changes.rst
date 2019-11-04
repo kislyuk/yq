@@ -1,3 +1,8 @@
+Changes for v2.9.0 (2019-11-04)
+===============================
+
+-  Add -Y/–yaml-roundtrip for preserving YAML styles and tags
+
 Changes for v2.8.1 (2019-10-28)
 ===============================
 
