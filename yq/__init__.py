@@ -67,7 +67,7 @@ def get_loader(use_annotations=False):
         if isinstance(node, yaml.nodes.ScalarNode):
             return loader.construct_scalar(node)
         elif isinstance(node, yaml.nodes.SequenceNode):
-            return loader.construct_sequence(node)
+            return construct_sequence(loader, node)
         elif isinstance(node, yaml.nodes.MappingNode):
             return construct_mapping(loader, node)
 

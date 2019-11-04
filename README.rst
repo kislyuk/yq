@@ -23,18 +23,18 @@ Like in ``jq``, you can also specify input filename(s) as arguments::
 
     yq .foo.bar input.yml
 
-By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``-y`` argument to convert it back into YAML::
+By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``-y`` option to convert it back into YAML::
 
     cat input.yml | yq -y .foo.bar
 
 Mapping key order is preserved. By default, YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ and
 `styles <https://yaml.org/spec/current.html#id2509255>`_ in the input are ignored. Use the ``--yaml-roundtrip``/``-Y``
-argument to preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences
+option to preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences
 while in JSON::
 
     yq -Y .foo.bar input.yml
 
-Use the ``--width``/``-w`` argument to pass the line wrap width for string literals. All other command line arguments
+Use the ``--width``/``-w`` option to pass the line wrap width for string literals. All other command line arguments
 are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing,
 in which case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on
 ``jq`` features and options.
@@ -46,7 +46,7 @@ The ``-Y`` option
 
 The ``-Y`` option injects extra mapping pairs and sequence elements into your document if custom tags or styles are
 found. For exmaple, consider the following document (an `AWS CloudFormation <https://aws.amazon.com/cloudformation/>`_
-template)::
+template fragment)::
 
     Resources:
       ElasticLoadBalancer:
