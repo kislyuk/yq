@@ -33,6 +33,7 @@ mapping-orange:
 """
 
 class TestYq(unittest.TestCase):
+    maxDiff = None
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
         try:
