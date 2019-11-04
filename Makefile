@@ -9,7 +9,7 @@ lint: test_deps
 	./setup.py flake8
 
 test: test_deps lint
-	coverage run --source=$$(python setup.py --name) ./test/test.py
+	coverage run --source=$$(python setup.py --name) ./test/test.py -v
 
 init_docs:
 	cd docs; sphinx-quickstart
