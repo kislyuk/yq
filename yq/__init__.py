@@ -8,6 +8,8 @@ See https://github.com/kislyuk/yq for more information.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import sys, argparse, subprocess, json, re
+from hashlib import sha224
+from base64 import b64encode
 from collections import OrderedDict
 from datetime import datetime, date, time
 
@@ -24,8 +26,55 @@ class Parser(argparse.ArgumentParser):
         except Exception:
             pass
 
+def hash_key(key):
+    return b64encode(sha224(key.encode()).digest()).decode()
+
 class OrderedLoader(yaml.SafeLoader):
     pass
+
+def get_loader(use_annotations=False):
+    def construct_sequence(loader, node):
+        annotations = []
+        for i, v_node in enumerate(node.value):
+            if not use_annotations:
+                break
+            if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
+                annotations.append("__yq_tag_{}_{}__".format(i, v_node.tag))
+            if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
+                annotations.append("__yq_style_{}_{}__".format(i, v_node.style))
+            elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
+                annotations.append("__yq_style_{}_{}__".format(i, "flow"))
+        return [loader.construct_object(i) for i in node.value] + annotations
+
+    def construct_mapping(loader, node):
+        loader.flatten_mapping(node)  # TODO: is this needed?
+        pairs = []
+        for k_node, v_node in node.value:
+            key = loader.construct_object(k_node)
+            value = loader.construct_object(v_node)
+            pairs.append((key, value))
+            if not use_annotations:
+                continue
+            if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
+                pairs.append(("__yq_tag_{}__".format(hash_key(key)), v_node.tag))
+            if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
+                pairs.append(("__yq_style_{}__".format(hash_key(key)), v_node.style))
+            elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
+                pairs.append(("__yq_style_{}__".format(hash_key(key)), "flow"))
+        return OrderedDict(pairs)
+
+    def parse_unknown_tags(loader, tag_suffix, node):
+        if isinstance(node, yaml.nodes.ScalarNode):
+            return loader.construct_scalar(node)
+        elif isinstance(node, yaml.nodes.SequenceNode):
+            return loader.construct_sequence(node)
+        elif isinstance(node, yaml.nodes.MappingNode):
+            return construct_mapping(loader, node)
+
+    OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+    OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
+    OrderedLoader.add_multi_constructor('', parse_unknown_tags)
+    return OrderedLoader
 
 class OrderedIndentlessDumper(yaml.SafeDumper):
     pass
@@ -40,61 +89,69 @@ class JSONDateTimeEncoder(json.JSONEncoder):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
-def construct_mapping(loader, node):
-    loader.flatten_mapping(node)      # TODO: is this needed?
-    pairs = []
-    for k_node, v_node in node.value:
-        key = loader.construct_object(k_node)
-        value = loader.construct_object(v_node)
-        pairs.append((key, value))
-        if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
-            pairs.append(("__yq_tag_{}__".format(key), v_node.tag))
-        if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style in {"|", ">"}:
-            pairs.append(("__yq_style_{}__".format(key), v_node.style))
-    return OrderedDict(pairs)
+def get_dumper(use_annotations=False, indentless=False):
+    yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$")
+    yaml_item_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>\d+)_(?P<value>.+)__$")
 
-yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$")
+    def represent_dict_order(dumper, data):
+        pairs, custom_styles, custom_tags = [], {}, {}
+        for k, v in data.items():
+            if use_annotations and isinstance(k, str):
+                value_annotation = yaml_value_annotation_re.match(k)
+                if value_annotation and value_annotation.group("type") == "style":
+                    custom_styles[value_annotation.group("key")] = v
+                    continue
+                elif value_annotation and value_annotation.group("type") == "tag":
+                    custom_tags[value_annotation.group("key")] = v
+                    continue
+            pairs.append((k, v))
+        mapping = dumper.represent_mapping("tag:yaml.org,2002:map", pairs)
+        if use_annotations:
+            for k, v in mapping.value:
+                hashed_key = hash_key(k.value)
+                if hashed_key in custom_styles:
+                    if isinstance(v, yaml.nodes.ScalarNode):
+                        v.style = custom_styles[hashed_key]
+                    elif custom_styles[hashed_key] == "flow":
+                        v.flow_style = True
+                if hashed_key in custom_tags:
+                    v.tag = custom_tags[hashed_key]
+        return mapping
 
-def represent_dict_order(dumper, data):
-    pairs, custom_styles, custom_tags = [], {}, {}
-    for k, v in data.items():
-        if isinstance(k, str):
-            value_annotation = yaml_value_annotation_re.match(k)
-            if value_annotation and value_annotation.group("type") == "style":
-                custom_styles[value_annotation.group("key")] = v
-                continue
-            elif value_annotation and value_annotation.group("type") == "tag":
-                custom_tags[value_annotation.group("key")] = v
-                continue
-        pairs.append((k, v))
-    mapping = dumper.represent_mapping("tag:yaml.org,2002:map", pairs)
-    for k, v in mapping.value:
-        if k.value in custom_styles:
-            v.style = custom_styles[k.value]
-        if k.value in custom_tags:
-            v.tag = custom_tags[k.value]
-    return mapping
+    def represent_list(dumper, data):
+        raw_list, custom_styles, custom_tags = [], {}, {}
+        for v in data:
+            if use_annotations and isinstance(v, str):
+                annotation = yaml_item_annotation_re.match(v)
+                if annotation and annotation.group("type") == "style":
+                    custom_styles[annotation.group("key")] = annotation.group("value")
+                    continue
+                elif annotation and annotation.group("type") == "tag":
+                    custom_tags[annotation.group("key")] = annotation.group("value")
+                    continue
+            raw_list.append(v)
+        sequence = dumper.represent_list(raw_list)
+        if use_annotations:
+            for i, v in enumerate(sequence.value):
+                if str(i) in custom_styles:
+                    if isinstance(v, yaml.nodes.ScalarNode):
+                        v.style = custom_styles[str(i)]
+                    elif custom_styles[str(i)] == "flow":
+                        v.flow_style = True
+                if str(i) in custom_tags:
+                    v.tag = custom_tags[str(i)]
+        return sequence
+
+    dumper = OrderedIndentlessDumper if indentless else OrderedDumper
+    dumper.add_representer(OrderedDict, represent_dict_order)
+    dumper.add_representer(list, represent_list)
+    return dumper
 
 def decode_docs(jq_output, json_decoder):
     while jq_output:
         doc, pos = json_decoder.raw_decode(jq_output)
         jq_output = jq_output[pos + 1:]
         yield doc
-
-def parse_unknown_tags(loader, tag_suffix, node):
-    print("called parse_unknown_tags with", loader, tag_suffix, node)
-    if isinstance(node, yaml.nodes.ScalarNode):
-        return loader.construct_scalar(node)
-    elif isinstance(node, yaml.nodes.SequenceNode):
-        return loader.construct_sequence(node)
-    elif isinstance(node, yaml.nodes.MappingNode):
-        return construct_mapping(loader, node)
-
-OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
-OrderedLoader.add_multi_constructor('', parse_unknown_tags)
-
-for dumper in OrderedIndentlessDumper, OrderedDumper:
-    dumper.add_representer(OrderedDict, represent_dict_order)
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
 jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "--argjson": 2, "--slurpfile": 2,
@@ -105,15 +162,21 @@ USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 def get_parser(program_name):
     # By default suppress these help strings and only enable them in the specific programs.
-    yaml_output_help, width_help, indentless_help = argparse.SUPPRESS, argparse.SUPPRESS, argparse.SUPPRESS
+    yaml_output_help, yaml_roundtrip_help, width_help, indentless_help = (argparse.SUPPRESS, argparse.SUPPRESS,
+                                                                          argparse.SUPPRESS, argparse.SUPPRESS)
     xml_output_help, xml_dtd_help, xml_root_help = argparse.SUPPRESS, argparse.SUPPRESS, argparse.SUPPRESS
     toml_output_help = argparse.SUPPRESS
 
     if program_name == "yq":
         current_language = "YAML"
         yaml_output_help = "Transcode jq JSON output back into YAML and emit it"
+        yaml_roundtrip_help = """Transcode jq JSON output back into YAML and emit it.
+Preserve YAML tags and styles by representing them as extra items
+in their enclosing mappings and sequences while in JSON. This option
+is incompatible with jq filters that do not expect these extra items."""
         width_help = "When using --yaml-output, specify string wrap width"
-        indentless_help = 'When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2'
+        indentless_help = """When using --yaml-output, indent block style lists (sequences)
+with 0 spaces instead of 2"""
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
@@ -133,6 +196,8 @@ def get_parser(program_name):
     parser.add_argument("--output-format", default="json", help=argparse.SUPPRESS)
     parser.add_argument("--yaml-output", "--yml-output", "-y", dest="output_format", action="store_const", const="yaml",
                         help=yaml_output_help)
+    parser.add_argument("--yaml-roundtrip", "--yml-roundtrip", "-Y", dest="output_format", action="store_const",
+                        const="annotated_yaml", help=yaml_roundtrip_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
     parser.add_argument("--xml-output", "-x", dest="output_format", action="store_const", const="xml",
@@ -164,9 +229,11 @@ def cli(args=None, input_format="yaml", program_name="yq"):
         if arg.startswith("-") and not arg.startswith("--"):
             if "y" in arg:
                 args.output_format = "yaml"
+            elif "Y" in arg:
+                args.output_format = "annotated_yaml"
             elif "x" in arg:
                 args.output_format = "xml"
-            jq_args[i] = arg.replace("x", "").replace("y", "")
+            jq_args[i] = arg.replace("x", "").replace("y", "").replace("Y", "")
         if args.output_format != "json":
             jq_args[i] = jq_args[i].replace("C", "")
             if jq_args[i] == "-":
@@ -199,8 +266,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     yq(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
 
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
-       program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False, jq_args=frozenset(),
-       exit_func=None):
+       program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False,
+       jq_args=frozenset(), exit_func=None):
     if not input_streams:
         input_streams = [sys.stdin]
     if not output_stream:
@@ -224,10 +291,12 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             # TODO: enable true streaming in this branch (with asyncio, asyncproc, a multi-shot variant of
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
+            use_annotations = True if output_format == "annotated_yaml" else False
             input_docs = []
             for input_stream in input_streams:
                 if input_format == "yaml":
-                    input_docs.extend(yaml.load_all(input_stream, Loader=OrderedLoader))
+                    loader = get_loader(use_annotations=use_annotations)
+                    input_docs.extend(yaml.load_all(input_stream, Loader=loader))
                 elif input_format == "xml":
                     import xmltodict
                     input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True))
@@ -239,9 +308,9 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
             jq_out, jq_err = jq.communicate(input_payload)
             json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
-            if output_format == "yaml":
-                dumper_class = OrderedIndentlessDumper if indentless_lists else OrderedDumper
-                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream, Dumper=dumper_class,
+            if output_format == "yaml" or output_format == "annotated_yaml":
+                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream,
+                              Dumper=get_dumper(use_annotations=use_annotations, indentless=indentless_lists),
                               width=width, allow_unicode=True, default_flow_style=False)
             elif output_format == "xml":
                 import xmltodict
@@ -278,8 +347,9 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                         toml.dump(doc, output_stream)
         else:
             if input_format == "yaml":
+                loader = get_loader(use_annotations=False)
                 for input_stream in input_streams:
-                    for doc in yaml.load_all(input_stream, Loader=OrderedLoader):
+                    for doc in yaml.load_all(input_stream, Loader=loader):
                         json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
                         jq.stdin.write("\n")
             elif input_format == "xml":
