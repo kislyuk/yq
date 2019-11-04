@@ -41,7 +41,8 @@ in which case the exit code is 1. See the `jq manual <https://stedolan.github.io
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
 
-.. admonition:: The ``-Y`` option
+The ``-Y`` option
+~~~~~~~~~~~~~~~~~
 
  The ``-Y`` option injects extra mapping pairs and sequence elements into your document if custom tags or styles are
  found. For exmaple, consider the following document (an `AWS CloudFormation <https://aws.amazon.com/cloudformation/>`_
@@ -60,7 +61,7 @@ Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to
 
             Good thing it's managed by this template.
 
- Passing this document through ``yq -y .Resources.ElasticLoadBalancer`` will strip out custom tags, such as ``!Ref``,
+ Passing this document through ``yq -y .Resources.ElasticLoadBalancer`` will drop custom tags, such as ``!Ref``,
  and styles, such as the `folded <https://yaml-multiline.info/>`_ style of the ``Description`` field::
 
     Type: AWS::ElasticLoadBalancing::LoadBalancer
