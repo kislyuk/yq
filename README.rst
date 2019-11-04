@@ -27,7 +27,7 @@ By default, no conversion of ``jq`` output is done. Use the ``--yaml-output``/``
 
     cat input.yml | yq -y .foo.bar
 
-Mapping key order is preserved. By default, custom YAML `tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ and
+Mapping key order is preserved. By default, custom `YAML tags <http://www.yaml.org/spec/1.2/spec.html#id2764295>`_ and
 `styles <https://yaml.org/spec/current.html#id2509255>`_ in the input are ignored. Use the ``--yaml-roundtrip``/``-Y``
 option to preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences
 while in JSON::
