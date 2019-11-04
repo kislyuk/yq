@@ -87,10 +87,12 @@ By contrast, passing it through ``yq -Y .Resources.ElasticLoadBalancer`` will pr
 
         Good thing it's managed by this template.
 
-The ``-Y`` option is incompatible with jq filters that do not expect the extra information injected into the document
-to preserve the YAML formatting. For example, a jq filter that counts entries in the Instances array will come up with
-4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
-metadata keys. You may need to check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
+.. warning ::
+
+ The ``-Y`` option is incompatible with jq filters that do not expect the extra information injected into the document
+ to preserve the YAML formatting. For example, a jq filter that counts entries in the Instances array will come up with
+ 4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
+ metadata keys. You may need to check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
 
 XML support
 -----------
