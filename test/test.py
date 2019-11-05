@@ -132,7 +132,7 @@ class TestYq(unittest.TestCase):
             self.assertEqual(self.run_yq("", ["-y", ".xyz.foo", self.fd_path(tf)]), 'bar\n...\n')
 
     def test_roundtrip_yaml(self):
-        cfn_filename = os.path.join(os.path.dirname(__file__), "cfn.yaml")
+        cfn_filename = os.path.join(os.path.dirname(__file__), "cfn.yml")
         with io.open(cfn_filename) as fh:
             self.assertEqual(self.run_yq("", ["-Y", ".", cfn_filename]), fh.read())
 
