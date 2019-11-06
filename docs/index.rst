@@ -1,21 +1,17 @@
 .. include:: ../README.rst
 
-API documentation
-=================
+CLI usage
+=========
 
-.. automodule:: yq
-   :members:
-
-Release Notes
-=============
-.. include:: ../Changes.rst
-
+.. literalinclude:: cli-doc.txt
 
 Table of Contents
 =================
 
 .. toctree::
    :maxdepth: 5
+
+   changelog
 
 * :ref:`genindex`
 * :ref:`modindex`
