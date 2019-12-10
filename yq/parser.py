@@ -12,6 +12,7 @@ class Parser(argparse.ArgumentParser):
     def print_help(self):
         yq_help = argparse.ArgumentParser.format_help(self).splitlines()
         print("\n".join(["usage: yq [options] <jq filter> [YAML file...]"] + yq_help[1:] + [""]))
+        sys.stdout.flush()
         try:
             subprocess.check_call(["jq", "--help"])
         except Exception:
