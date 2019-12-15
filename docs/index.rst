@@ -5,14 +5,10 @@ CLI usage
 
 .. literalinclude:: cli-doc.txt
 
-Table of Contents
-=================
+Change log
+==========
 
 .. toctree::
    :maxdepth: 5
 
    changelog
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

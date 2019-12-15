@@ -11,9 +11,6 @@ __pycache__/
 /dist/
 /.eggs/
 
-# Sphinx documentation
-/docs/_build/
-
 # IDE project files
 /.pydevproject
 

@@ -1,19 +1,20 @@
 SHELL=/bin/bash -eo pipefail
 
-release_major:
+release-major:
 	$(eval export TAG=$(shell git describe --tags --match 'v*.*.*' | perl -ne '/^v(\d+)\.(\d+)\.(\d+)/; print "v@{[$$1+1]}.0.0"'))
 	$(MAKE) release
 
-release_minor:
+release-minor:
 	$(eval export TAG=$(shell git describe --tags --match 'v*.*.*' | perl -ne '/^v(\d+)\.(\d+)\.(\d+)/; print "v$$1.@{[$$2+1]}.0"'))
 	$(MAKE) release
 
-release_patch:
+release-patch:
 	$(eval export TAG=$(shell git describe --tags --match 'v*.*.*' | perl -ne '/^v(\d+)\.(\d+)\.(\d+)/; print "v$$1.$$2.@{[$$3+1]}"'))
 	$(MAKE) release
 
 release:
-	@if [[ -z $$TAG ]]; then echo "Use release_{major,minor,patch}"; exit 1; fi
+	@if ! git diff --cached --exit-code; then echo "Commit staged files before proceeding"; exit 1; fi
+	@if [[ -z $$TAG ]]; then echo "Use release-{major,minor,patch}"; exit 1; fi
 	@if ! type -P pandoc; then echo "Please install pandoc"; exit 1; fi
 	@if ! type -P sponge; then echo "Please install moreutils"; exit 1; fi
 	@if ! type -P http; then echo "Please install httpie"; exit 1; fi
@@ -42,10 +43,21 @@ release:
 	$(MAKE) install
 	http --check-status --auth ${GH_AUTH} POST ${UPLOADS_API}/$$(http --auth ${GH_AUTH} ${RELEASES_API}/latest | jq .id)/assets \
 	    name==$$(basename dist/*.whl) label=="Python Wheel" < dist/*.whl
-	$(MAKE) pypi_release
+	$(MAKE) release-pypi
+	$(MAKE) release-docs
 
-pypi_release:
+release-pypi:
 	python setup.py sdist bdist_wheel
 	twine upload dist/*.tar.gz dist/*.whl --sign --verbose
+
+release-docs:
+	$(MAKE) docs
+	git branch -D gh-pages
+	git checkout -B gh-pages-stage
+	touch docs/html/.nojekyll
+	git add --force docs/html
+	git commit -m "Docs for ${TAG}"
+	git push --force origin $$(git subtree split --prefix docs/html --branch gh-pages):refs/heads/gh-pages
+	git checkout -
 
 .PHONY: release

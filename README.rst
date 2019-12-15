@@ -120,7 +120,7 @@ Authors
 Links
 -----
 * `Project home page (GitHub) <https://github.com/kislyuk/yq>`_
-* `Documentation (Read the Docs) <https://yq.readthedocs.io/en/latest/>`_
+* `Documentation <https://kislyuk.github.io/yq/>`_
 * `Package distribution (PyPI) <https://pypi.python.org/pypi/yq>`_
 * `Change log <https://github.com/kislyuk/yq/blob/master/Changes.rst>`_
 * `jq <https://stedolan.github.io/jq/>`_ - the command-line JSON processor utility powering ``yq``
@@ -141,5 +141,3 @@ Licensed under the terms of the `Apache License, Version 2.0 <http://www.apache.
         :target: https://pypi.python.org/pypi/yq
 .. image:: https://img.shields.io/pypi/l/yq.svg
         :target: https://pypi.python.org/pypi/yq
-.. image:: https://readthedocs.org/projects/yq/badge/?version=latest
-        :target: https://yq.readthedocs.io/

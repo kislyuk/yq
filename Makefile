@@ -11,11 +11,8 @@ lint: test_deps
 test: test_deps lint
 	coverage run --source=$$(python setup.py --name) ./test/test.py -v
 
-init_docs:
-	cd docs; sphinx-quickstart
-
 docs:
-	$(MAKE) -C docs html
+	sphinx-build docs docs/html
 
 install: clean version
 	pip install wheel
