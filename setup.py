@@ -16,7 +16,8 @@ setup(
     install_requires=[
         "setuptools",
         "PyYAML >= 3.11",
-        "xmltodict >= 0.11.0"
+        "xmltodict >= 0.11.0",
+        "argcomplete >= 1.8.1"
     ],
     tests_require=tests_require,
     extras_require={
@@ -39,10 +40,10 @@ setup(
         "Operating System :: POSIX",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Software Development :: Libraries :: Python Modules"
     ]
 )

@@ -5,13 +5,15 @@ yq transcodes YAML documents to JSON and passes them to jq.
 See https://github.com/kislyuk/yq for more information.
 """
 
+# PYTHON_ARGCOMPLETE_OK
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
 
-import yaml
+import yaml, argcomplete
 
 from .compat import USING_PYTHON2
 from .parser import get_parser, jq_arg_spec
@@ -39,6 +41,7 @@ def tq_cli():
 
 def cli(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name, __doc__)
+    argcomplete.autocomplete(parser)
     args, jq_args = parser.parse_known_args(args=args)
 
     for i, arg in enumerate(jq_args):
