@@ -52,7 +52,7 @@ release-pypi:
 
 release-docs:
 	$(MAKE) docs
-	git branch -D gh-pages
+	-git branch -D gh-pages
 	git checkout -B gh-pages-stage
 	touch docs/html/.nojekyll
 	git add --force docs/html
