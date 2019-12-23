@@ -1,3 +1,12 @@
+Changes for v2.10.0 (2019-12-23)
+================================
+
+-  Add support for in-place editing (yq -yi)
+
+-  Add argcomplete integration
+
+-  Docs: Migrate from RTD to gh-pages
+
 Changes for v2.9.2 (2019-11-04)
 ===============================
 
