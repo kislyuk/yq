@@ -136,6 +136,24 @@ class TestYq(unittest.TestCase):
         with io.open(cfn_filename) as fh:
             self.assertEqual(self.run_yq("", ["-Y", ".", cfn_filename]), fh.read())
 
+    @unittest.skipIf(sys.version_info < (3, 5), "Skipping feature incompatible with Python 2")
+    def test_in_place(self):
+        with tempfile.NamedTemporaryFile() as tf, tempfile.NamedTemporaryFile() as tf2:
+            tf.write(b"- foo\n- bar\n")
+            tf.seek(0)
+            tf2.write(b"- foo\n- bar\n")
+            tf2.seek(0)
+            self.run_yq("", ["-i", "-y", ".[0]", tf.name, tf2.name])
+            self.assertEqual(tf.read(), b'foo\n...\n')
+            self.assertEqual(tf2.read(), b'foo\n...\n')
+
+            # Files do not get overwritten on error (DeferredOutputStream logic)
+            self.run_yq("", ["-i", "-y", tf.name, tf2.name], expect_exit_codes=[3])
+            tf.seek(0)
+            tf2.seek(0)
+            self.assertEqual(tf.read(), b'foo\n...\n')
+            self.assertEqual(tf2.read(), b'foo\n...\n')
+
     @unittest.expectedFailure
     def test_times(self):
         """

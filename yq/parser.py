@@ -63,6 +63,7 @@ with 0 spaces instead of 2"""
     parser.add_argument("--xml-root", help=xml_root_help)
     parser.add_argument("--toml-output", "-t", dest="output_format", action="store_const", const="toml",
                         help=toml_output_help)
+    parser.add_argument("--in-place", "-i", action="store_true", help="Edit files in place (no backup - use caution)")
     parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
     for arg in jq_arg_spec:

@@ -15,7 +15,7 @@ from datetime import datetime, date, time
 
 import yaml, argcomplete
 
-from .compat import USING_PYTHON2
+from .compat import USING_PYTHON2, open
 from .parser import get_parser, jq_arg_spec
 from .loader import get_loader
 from .dumper import get_dumper
@@ -39,6 +39,29 @@ def xq_cli():
 def tq_cli():
     cli(input_format="toml", program_name="tq")
 
+class DeferredOutputStream:
+    def __init__(self, name, mode="w"):
+        self.name = name
+        self.mode = mode
+        self._fh = None
+
+    @property
+    def fh(self):
+        if self._fh is None:
+            self._fh = open(self.name, self.mode)
+        return self._fh
+
+    def flush(self):
+        if self._fh is not None:
+            return self.fh.flush()
+
+    def close(self):
+        if self._fh is not None:
+            return self.fh.close()
+
+    def __getattr__(self, a):
+        return getattr(self.fh, a)
+
 def cli(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name, __doc__)
     argcomplete.autocomplete(parser)
@@ -46,13 +69,15 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 
     for i, arg in enumerate(jq_args):
         if arg.startswith("-") and not arg.startswith("--"):
+            if "i" in arg:
+                args.in_place = True
             if "y" in arg:
                 args.output_format = "yaml"
             elif "Y" in arg:
                 args.output_format = "annotated_yaml"
             elif "x" in arg:
                 args.output_format = "xml"
-            jq_args[i] = arg.replace("x", "").replace("y", "").replace("Y", "")
+            jq_args[i] = arg.replace("i", "").replace("x", "").replace("y", "").replace("Y", "")
         if args.output_format != "json":
             jq_args[i] = jq_args[i].replace("C", "")
             if jq_args[i] == "-":
@@ -78,11 +103,31 @@ def cli(args=None, input_format="yaml", program_name="yq"):
             jq_filter_arg_loc = jq_args.index('--jsonargs') + 1
         jq_args.insert(jq_filter_arg_loc, args.jq_filter)
     delattr(args, "jq_filter")
+    in_place = args.in_place
+    delattr(args, "in_place")
 
     if sys.stdin.isatty() and not args.input_streams:
         return parser.print_help()
 
-    yq(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
+    yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
+    if in_place:
+        if USING_PYTHON2:
+            sys.exit("{}: -i/--in-place is not compatible with Python 2".format(program_name))
+        if args.output_format not in {"yaml", "annotated_yaml"}:
+            sys.exit("{}: -i/--in-place can only be used with -y/-Y".format(program_name))
+        input_streams = yq_args.pop("input_streams")
+        if len(input_streams) == 1 and input_streams[0].name == "<stdin>":
+            msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
+            sys.exit(msg.format(program_name))
+        for i, input_stream in enumerate(input_streams):
+            def exit_handler(arg=None):
+                if arg:
+                    sys.exit(arg)
+            if i < len(input_streams):
+                yq_args["exit_func"] = exit_handler
+            yq(input_streams=[input_stream], output_stream=DeferredOutputStream(input_stream.name), **yq_args)
+    else:
+        yq(**yq_args)
 
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
        program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False,

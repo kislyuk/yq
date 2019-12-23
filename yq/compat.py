@@ -1,10 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
+import sys, io
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 if USING_PYTHON2:
     str = unicode  # noqa
+    open = io.open
 else:
     str = str
+    open = open
