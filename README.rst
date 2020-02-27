@@ -45,7 +45,7 @@ Preserving tags and styles using the ``-Y`` (``--yaml-roundtrip``) option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``-Y`` option helps preserve custom `string styles <https://yaml-multiline.info/>`_ and
-`tags <https://camel.readthedocs.io/en/latest/yamlref.html#tags>`_ in your document. For exmaple, consider the following
+`tags <https://camel.readthedocs.io/en/latest/yamlref.html#tags>`_ in your document. For example, consider the following
 document (an `AWS CloudFormation <https://aws.amazon.com/cloudformation/>`_ template fragment)::
 
     Resources:
