@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, unittest, tempfile, json, io, platform, subprocess
+import os, sys, unittest, tempfile, json, io, platform, subprocess, yaml
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from yq import yq, cli  # noqa
@@ -116,7 +116,10 @@ class TestYq(unittest.TestCase):
 
     def test_datetimes(self):
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
-        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36'\n")
+        if yaml.__version__ < '5.3':
+            self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36'\n")
+        else:
+            self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36+00:00'\n")
 
         self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
         self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
