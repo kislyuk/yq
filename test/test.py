@@ -157,6 +157,12 @@ class TestYq(unittest.TestCase):
             self.assertEqual(tf.read(), b'foo\n...\n')
             self.assertEqual(tf2.read(), b'foo\n...\n')
 
+    def test_explicit_doc_markers(self):
+        test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
+        self.assertTrue(self.run_yq("", ["-y", ".", test_doc]).startswith("yaml_struct"))
+        self.assertTrue(self.run_yq("", ["-y", "--explicit-start", ".", test_doc]).startswith("---"))
+        self.assertTrue(self.run_yq("", ["-y", "--explicit-end", ".", test_doc]).endswith("...\n"))
+
     @unittest.expectedFailure
     def test_times(self):
         """

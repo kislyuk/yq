@@ -131,7 +131,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
        program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False,
-       jq_args=frozenset(), exit_func=None):
+       explicit_start=False, explicit_end=False, jq_args=frozenset(), exit_func=None):
     if not input_streams:
         input_streams = [sys.stdin]
     if not output_stream:
@@ -175,7 +175,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             if output_format == "yaml" or output_format == "annotated_yaml":
                 yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream,
                               Dumper=get_dumper(use_annotations=use_annotations, indentless=indentless_lists),
-                              width=width, allow_unicode=True, default_flow_style=False)
+                              width=width, allow_unicode=True, default_flow_style=False,
+                              explicit_start=explicit_start, explicit_end=explicit_end)
             elif output_format == "xml":
                 import xmltodict
                 for doc in decode_docs(jq_out, json_decoder):

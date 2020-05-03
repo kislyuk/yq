@@ -58,6 +58,8 @@ with 0 spaces instead of 2"""
                         const="annotated_yaml", help=yaml_roundtrip_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
+    parser.add_argument("--explicit-start", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--explicit-end", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--xml-output", "-x", dest="output_format", action="store_const", const="xml",
                         help=xml_output_help)
     parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)

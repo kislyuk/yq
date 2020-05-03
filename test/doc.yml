@@ -1,0 +1,18 @@
+---
+yaml_struct:
+  - key_1: '$.*?/|\^(){}+@[]&_-'
+    key_2:
+      - '$.*?/|\^(){}+@[]&_-'
+      - "{\_}"
+      - value23
+    key_3: value31
+    key_4:
+      - value41
+      - value42
+    key_5: value51
+  - key_1_: value12
+    _key_2:
+      - value24
+      - value25
+    _key__3: '$.*?/|\^(){}+@[]&_-'
+...
