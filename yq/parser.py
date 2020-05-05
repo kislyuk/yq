@@ -22,7 +22,8 @@ def get_parser(program_name, description):
     # By default suppress these help strings and only enable them in the specific programs.
     yaml_output_help, yaml_roundtrip_help, width_help, indentless_help = (argparse.SUPPRESS, argparse.SUPPRESS,
                                                                           argparse.SUPPRESS, argparse.SUPPRESS)
-    xml_output_help, xml_dtd_help, xml_root_help = argparse.SUPPRESS, argparse.SUPPRESS, argparse.SUPPRESS
+    xml_output_help, xml_dtd_help, xml_root_help, xml_force_list_help = (argparse.SUPPRESS, argparse.SUPPRESS,
+                                                                         argparse.SUPPRESS, argparse.SUPPRESS)
     toml_output_help = argparse.SUPPRESS
 
     if program_name == "yq":
@@ -40,6 +41,7 @@ with 0 spaces instead of 2"""
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
         xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
+        xml_force_list_help = "Tag name to pass to force_list parameter of xmltodict.parse(). Can be used multiple times."
     elif program_name == "tq":
         current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
@@ -64,6 +66,7 @@ with 0 spaces instead of 2"""
                         help=xml_output_help)
     parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)
     parser.add_argument("--xml-root", help=xml_root_help)
+    parser.add_argument("--xml-force-list", dest="xml_force_list", action="append", help=xml_force_list_help)
     parser.add_argument("--toml-output", "-t", dest="output_format", action="store_const", const="toml",
                         help=toml_output_help)
     parser.add_argument("--in-place", "-i", action="store_true", help="Edit files in place (no backup - use caution)")

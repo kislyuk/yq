@@ -130,7 +130,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
         yq(**yq_args)
 
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
-       program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False,
+       program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False, xml_force_list=frozenset(),
        explicit_start=False, explicit_end=False, jq_args=frozenset(), exit_func=None):
     if not input_streams:
         input_streams = [sys.stdin]
@@ -163,7 +163,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                     input_docs.extend(yaml.load_all(input_stream, Loader=loader))
                 elif input_format == "xml":
                     import xmltodict
-                    input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True))
+                    input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True,
+                                                      force_list=xml_force_list))
                 elif input_format == "toml":
                     import toml
                     input_docs.append(toml.load(input_stream))
@@ -220,7 +221,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             elif input_format == "xml":
                 import xmltodict
                 for input_stream in input_streams:
-                    json.dump(xmltodict.parse(input_stream.read(), disable_entities=True), jq.stdin)
+                    json.dump(xmltodict.parse(input_stream.read(), disable_entities=True,
+                                              force_list=xml_force_list), jq.stdin)
                     jq.stdin.write("\n")
             elif input_format == "toml":
                 import toml
