@@ -41,7 +41,8 @@ with 0 spaces instead of 2"""
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
         xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
-        xml_force_list_help = "Tag name to pass to force_list parameter of xmltodict.parse(). Can be used multiple times."
+        xml_force_list_help = ("Tag name to pass to force_list parameter of xmltodict.parse(). "
+                               "Can be used multiple times.")
     elif program_name == "tq":
         current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
