@@ -29,13 +29,13 @@ def get_parser(program_name, description):
     if program_name == "yq":
         current_language = "YAML"
         yaml_output_help = "Transcode jq JSON output back into YAML and emit it"
-        yaml_roundtrip_help = """Transcode jq JSON output back into YAML and emit it.
-Preserve YAML tags and styles by representing them as extra items
-in their enclosing mappings and sequences while in JSON. This option
-is incompatible with jq filters that do not expect these extra items."""
+        yaml_roundtrip_help = ("Transcode jq JSON output back into YAML and emit it. "
+                               "Preserve YAML tags and styles by representing them as extra items "
+                               "in their enclosing mappings and sequences while in JSON. This option "
+                               "is incompatible with jq filters that do not expect these extra items.")
         width_help = "When using --yaml-output, specify string wrap width"
-        indentless_help = """When using --yaml-output, indent block style lists (sequences)
-with 0 spaces instead of 2"""
+        indentless_help = ("When using --yaml-output, indent block style lists (sequences) "
+                           "with 0 spaces instead of 2")
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
