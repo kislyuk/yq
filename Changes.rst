@@ -1,3 +1,12 @@
+Changes for v2.10.1 (2020-05-11)
+================================
+
+-  Add support for xmltodict force_list definition for xq CLI (#95)
+
+-  Support explicit doc markers (#93)
+
+-  Ensure proper ordering of help messages (#90)
+
 Changes for v2.10.0 (2019-12-23)
 ================================
 

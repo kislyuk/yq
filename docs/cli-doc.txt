@@ -16,15 +16,11 @@ optional arguments:
   --yaml-output, --yml-output, -y
                         Transcode jq JSON output back into YAML and emit it
   --yaml-roundtrip, --yml-roundtrip, -Y
-                        Transcode jq JSON output back into YAML and emit it.
-                        Preserve YAML tags and styles by representing them as extra items
-                        in their enclosing mappings and sequences while in JSON. This option
-                        is incompatible with jq filters that do not expect these extra items.
+                        Transcode jq JSON output back into YAML and emit it. Preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences while in JSON. This option is incompatible with jq filters that do not expect these extra items.
   --width WIDTH, -w WIDTH
                         When using --yaml-output, specify string wrap width
   --indentless-lists, --indentless
-                        When using --yaml-output, indent block style lists (sequences)
-                        with 0 spaces instead of 2
+                        When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2
   --in-place, -i        Edit files in place (no backup - use caution)
   --version             show program's version number and exit
 
