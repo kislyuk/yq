@@ -175,6 +175,12 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("<foo/>", ["."], input_format="xml"), "")
         self.assertEqual(self.run_yq("<foo/>", ["-x", ".foo.x=1"], input_format="xml"),
                          '<foo>\n  <x>1</x>\n</foo>\n')
+
+        self.assertEqual(self.run_yq("<a><b/></a>", ["-y", "."], input_format="xml"),
+                         "a:\n  b: null\n")
+        self.assertEqual(self.run_yq("<a><b/></a>", ["-y", "--xml-force-list", "b", "."], input_format="xml"),
+                         "a:\n  b:\n    - null\n")
+
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             tf.write(b'<a><b/></a>')
             tf.seek(0)
