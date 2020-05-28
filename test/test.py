@@ -49,7 +49,7 @@ class TestYq(unittest.TestCase):
         return result
 
     def test_yq(self):
-        for input_format in "yaml", "xml", "toml":
+        for input_format in "yaml", "xml":
             try:
                 cli(["--help"], input_format=input_format)
             except SystemExit as e:
@@ -206,19 +206,6 @@ class TestYq(unittest.TestCase):
                 self.run_yq("", ["-x", "--xml-dtd", "--xml-root=g", ".a", self.fd_path(tf)], input_format="xml"),
                 '<?xml version="1.0" encoding="utf-8"?>\n<g>\n  <b c="d">e</b>\n  <b>f</b>\n</g>\n'
             )
-
-    def test_tq(self):
-        self.assertEqual(self.run_yq("", ["."], input_format="toml"), "")
-        self.assertEqual(self.run_yq("", ["-t", ".foo.x=1"], input_format="toml"),
-                         '[foo]\nx = 1\n')
-
-        self.assertEqual(self.run_yq("[input]\n"
-                                     "test_val = 1234\n",
-                                     ["-t", ".input"], input_format="toml"),
-                         "test_val = 1234\n")
-
-        err = "yq: Error converting JSON to TOML: cannot represent non-object types at top level."
-        self.run_yq('[1]', ["-t", "."], expect_exit_codes=[err])
 
     @unittest.skipIf(sys.version_info < (3, 5),
                      "argparse option abbreviation interferes with opt passthrough, can't be disabled until Python 3.5")
