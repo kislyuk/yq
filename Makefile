@@ -1,5 +1,5 @@
 test_deps:
-	pip install .[test,toml]
+	pip install .[test]
 
 version: yq/version.py
 yq/version.py: setup.py
