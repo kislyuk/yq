@@ -21,8 +21,7 @@ setup(
     ],
     tests_require=tests_require,
     extras_require={
-        "test": tests_require,
-        "toml": ["toml >= 0.9.4"]
+        "test": tests_require
     },
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
