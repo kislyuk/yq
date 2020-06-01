@@ -10,6 +10,7 @@ from yq import yq, cli  # noqa
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
+TEST = 1
 
 yaml_with_tags = """
 foo: !vault |
