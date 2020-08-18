@@ -76,6 +76,6 @@ def get_parser(program_name, description):
     for arg in jq_arg_spec:
         parser.add_argument(arg, nargs=jq_arg_spec[arg], dest=arg, action="append", help=argparse.SUPPRESS)
 
-    parser.add_argument("jq_filter")
-    parser.add_argument("input_streams", nargs="*", type=argparse.FileType(), metavar="files", default=[sys.stdin])
+    parser.add_argument("jq_filter", nargs="?")
+    parser.add_argument("input_streams", nargs="*", type=argparse.FileType(), metavar="files", default=[])
     return parser
