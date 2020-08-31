@@ -108,7 +108,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     delattr(args, "in_place")
 
     if sys.stdin.isatty() and not args.input_streams:
-        return parser.print_help()
+        parser.print_help()
+        sys.exit(2)
     elif not args.input_streams:
         args.input_streams = [sys.stdin]
 
