@@ -93,21 +93,25 @@ def cli(args=None, input_format="yaml", program_name="yq"):
                 jq_args.append(arg)
                 jq_args.extend(value_group)
 
-    if "--from-file" in jq_args or "-f" in jq_args:
-        args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
-    else:
-        jq_filter_arg_loc = len(jq_args)
-        if "--args" in jq_args:
-            jq_filter_arg_loc = jq_args.index('--args') + 1
-        elif "--jsonargs" in jq_args:
-            jq_filter_arg_loc = jq_args.index('--jsonargs') + 1
-        jq_args.insert(jq_filter_arg_loc, args.jq_filter)
+    if args.jq_filter:
+        if "--from-file" in jq_args or "-f" in jq_args:
+            args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
+        else:
+            jq_filter_arg_loc = len(jq_args)
+            if "--args" in jq_args:
+                jq_filter_arg_loc = jq_args.index('--args') + 1
+            elif "--jsonargs" in jq_args:
+                jq_filter_arg_loc = jq_args.index('--jsonargs') + 1
+            jq_args.insert(jq_filter_arg_loc, args.jq_filter)
     delattr(args, "jq_filter")
     in_place = args.in_place
     delattr(args, "in_place")
 
     if sys.stdin.isatty() and not args.input_streams:
-        return parser.print_help()
+        parser.print_help()
+        sys.exit(2)
+    elif not args.input_streams:
+        args.input_streams = [sys.stdin]
 
     yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
     if in_place:

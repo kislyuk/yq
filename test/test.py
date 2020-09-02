@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os, sys, unittest, tempfile, json, io, platform, subprocess, yaml
+from unittest import mock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from yq import yq, cli  # noqa
@@ -36,7 +37,10 @@ class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
         try:
-            sys.stdin = io.StringIO(input_data)
+            if isinstance(input_data, str):
+                sys.stdin = io.StringIO(input_data)
+            else:
+                sys.stdin = input_data
             sys.stdout = io.BytesIO() if USING_PYTHON2 else io.StringIO()
             cli(args, input_format=input_format)
         except SystemExit as e:
@@ -68,6 +72,26 @@ class TestYq(unittest.TestCase):
         err = ('yq: Error running jq: ScannerError: while scanning for the next token\nfound character \'%\' that '
                'cannot start any token\n  in "<file>", line 1, column 3.')
         self.run_yq("- %", ["."], expect_exit_codes={err, 2})
+
+    def test_yq_arg_handling(self):
+        test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
+        test_filter = os.path.join(os.path.dirname(__file__), "filter.jq")
+        unusable_non_tty_input = mock.Mock()
+        unusable_non_tty_input.isatty = mock.Mock(return_value=False)
+        unusable_tty_input = mock.Mock()
+        unusable_tty_input.isatty = mock.Mock(return_value=True)
+
+        self.run_yq("{}", [])
+        self.run_yq("{}", ["."])
+        self.run_yq(unusable_non_tty_input, [".", test_doc])
+        self.run_yq(unusable_non_tty_input, [".", test_doc, test_doc])
+        self.run_yq("{}", ["-f", test_filter])
+        self.run_yq(unusable_non_tty_input, ["-f", test_filter, test_doc])
+        self.run_yq(unusable_non_tty_input, ["-f", test_filter, test_doc, test_doc])
+
+        self.run_yq(unusable_tty_input, [], expect_exit_codes={2})
+        self.run_yq(unusable_tty_input, ["."], expect_exit_codes={2})
+        self.run_yq(unusable_tty_input, ["-f", test_filter], expect_exit_codes={2})
 
     def test_yq_arg_passthrough(self):
         self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "--indent", "4", "."]), "")
