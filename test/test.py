@@ -4,7 +4,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os, sys, unittest, tempfile, json, io, platform, subprocess, yaml
-from unittest import mock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from yq import yq, cli  # noqa
@@ -73,7 +72,10 @@ class TestYq(unittest.TestCase):
                'cannot start any token\n  in "<file>", line 1, column 3.')
         self.run_yq("- %", ["."], expect_exit_codes={err, 2})
 
+    @unittest.skipIf(sys.version_info < (3, 5), "Skipping test incompatible with Python 2")
     def test_yq_arg_handling(self):
+        from unittest import mock
+
         test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
         test_filter = os.path.join(os.path.dirname(__file__), "filter.jq")
         unusable_non_tty_input = mock.Mock()
