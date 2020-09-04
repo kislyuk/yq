@@ -6,7 +6,7 @@ yq/version.py: setup.py
 	echo "__version__ = '$$(python setup.py --version)'" > $@
 
 lint: test_deps
-	./setup.py flake8
+	flake8 $$(python setup.py --name)
 
 test: test_deps lint
 	coverage run --source=$$(python setup.py --name) ./test/test.py -v
