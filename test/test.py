@@ -36,7 +36,8 @@ class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
         try:
-            if isinstance(input_data, str):
+            str_type = unicode if USING_PYTHON2 else str
+            if isinstance(input_data, str_type):
                 sys.stdin = io.StringIO(input_data)
             else:
                 sys.stdin = input_data

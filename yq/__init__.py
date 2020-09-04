@@ -236,7 +236,10 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             else:
                 raise Exception("Unknown input format")
 
-            jq.stdin.close()
+            try:
+                jq.stdin.close()
+            except Exception:
+                pass
             jq.wait()
         for input_stream in input_streams:
             input_stream.close()
