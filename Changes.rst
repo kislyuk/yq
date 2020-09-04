@@ -1,3 +1,10 @@
+Changes for v2.11.0 (2020-09-03)
+================================
+
+-  Better handling of jq_filter and files arguments (#102)
+
+-  Create **main**.py (#82)
+
 Changes for v2.10.1 (2020-05-11)
 ================================
 

@@ -1,6 +1,6 @@
 usage: yq [options] <jq filter> [YAML file...]
           [--indentless-lists] [--in-place] [--version]
-          jq_filter [files [files ...]]
+          [jq_filter] [files [files ...]]
 
 yq: Command-line YAML processor - jq wrapper for YAML documents
 
