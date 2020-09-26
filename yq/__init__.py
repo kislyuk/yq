@@ -93,7 +93,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
                 jq_args.append(arg)
                 jq_args.extend(value_group)
 
-    if args.jq_filter:
+    if args.jq_filter is not None:
         if "--from-file" in jq_args or "-f" in jq_args:
             args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
         else:
