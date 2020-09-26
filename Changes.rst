@@ -1,3 +1,8 @@
+Changes for v2.11.1 (2020-09-26)
+================================
+
+Parse correctly when empty string is passed as jq_filter
+
 Changes for v2.11.0 (2020-09-03)
 ================================
 
