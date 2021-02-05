@@ -7,15 +7,12 @@ See https://github.com/kislyuk/yq for more information.
 
 # PYTHON_ARGCOMPLETE_OK
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
 
 import yaml, argcomplete
 
-from .compat import USING_PYTHON2, open
 from .parser import get_parser, jq_arg_spec
 from .loader import get_loader
 from .dumper import get_dumper
@@ -37,7 +34,7 @@ def xq_cli():
     cli(input_format="xml", program_name="xq")
 
 def tq_cli():
-    cli(input_format="toml", program_name="tq")
+    cli(input_format="toml", program_name="tomlq")
 
 class DeferredOutputStream:
     def __init__(self, name, mode="w"):
@@ -115,8 +112,6 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 
     yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
     if in_place:
-        if USING_PYTHON2:
-            sys.exit("{}: -i/--in-place is not compatible with Python 2".format(program_name))
         if args.output_format not in {"yaml", "annotated_yaml"}:
             sys.exit("{}: -i/--in-place can only be used with -y/-Y".format(program_name))
         input_streams = yq_args.pop("input_streams")
@@ -207,14 +202,7 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                     if not isinstance(doc, OrderedDict):
                         msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
                         exit_func(msg.format(program_name))
-
-                    if USING_PYTHON2:
-                        # For Python 2, dump the string and encode it into bytes.
-                        output = toml.dumps(doc)
-                        output_stream.write(output.encode("utf-8"))
-                    else:
-                        # For Python 3, write the unicode to the buffer directly.
-                        toml.dump(doc, output_stream)
+                    toml.dump(doc, output_stream)
         else:
             if input_format == "yaml":
                 loader = get_loader(use_annotations=False)

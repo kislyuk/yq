@@ -11,7 +11,7 @@ jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "-
 class Parser(argparse.ArgumentParser):
     def print_help(self):
         yq_help = argparse.ArgumentParser.format_help(self).splitlines()
-        print("\n".join(["usage: yq [options] <jq filter> [YAML file...]"] + yq_help[1:] + [""]))
+        print("\n".join(["usage: {} [options] <jq filter> [input file...]".format(self.prog)] + yq_help[2:] + [""]))
         sys.stdout.flush()
         try:
             subprocess.check_call(["jq", "--help"])
@@ -43,7 +43,7 @@ def get_parser(program_name, description):
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
         xml_force_list_help = ("Tag name to pass to force_list parameter of xmltodict.parse(). "
                                "Can be used multiple times.")
-    elif program_name == "tq":
+    elif program_name == "tomlq":
         current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
     else:

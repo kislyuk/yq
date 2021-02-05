@@ -17,6 +17,7 @@ setup(
         "setuptools",
         "PyYAML >= 3.11",
         "xmltodict >= 0.11.0",
+        "toml >= 0.10.0",
         "argcomplete >= 1.8.1"
     ],
     tests_require=tests_require,
@@ -28,7 +29,8 @@ setup(
     entry_points={
         'console_scripts': [
             'yq=yq:cli',
-            'xq=yq:xq_cli'
+            'xq=yq:xq_cli',
+            'tomlq=yq:tq_cli'
         ],
     },
     test_suite="test",
@@ -38,11 +40,11 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Software Development :: Libraries :: Python Modules"
     ]
 )

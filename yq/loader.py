@@ -1,11 +1,7 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import yaml
 from base64 import b64encode
 from collections import OrderedDict
 from hashlib import sha224
-
-from .compat import str
 
 def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()

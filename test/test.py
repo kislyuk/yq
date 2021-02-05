@@ -1,14 +1,10 @@
 #!/usr/bin/env python
-# coding: utf-8
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import os, sys, unittest, tempfile, json, io, platform, subprocess, yaml
+import os, sys, unittest, tempfile, io, platform, subprocess, yaml
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from yq import yq, cli  # noqa
 
-USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
 
 yaml_with_tags = """
@@ -36,19 +32,16 @@ class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
         try:
-            str_type = unicode if USING_PYTHON2 else str
-            if isinstance(input_data, str_type):
+            if isinstance(input_data, str):
                 sys.stdin = io.StringIO(input_data)
             else:
                 sys.stdin = input_data
-            sys.stdout = io.BytesIO() if USING_PYTHON2 else io.StringIO()
+            sys.stdout = io.StringIO()
             cli(args, input_format=input_format)
         except SystemExit as e:
             self.assertIn(e.code, expect_exit_codes)
         finally:
             result = sys.stdout.getvalue()
-            if USING_PYTHON2:
-                result = result.decode("utf-8")
             sys.stdin, sys.stdout = stdin, stdout
         return result
 
@@ -100,8 +93,7 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "--indent", "4", "."]), "")
         self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "-y", "--indent", "4", ".x=$x"]),
                          "x: y\n")
-        err = "yq: Error running jq: {}Error: [Errno 32] Broken pipe{}".format("IO" if USING_PYTHON2 else "BrokenPipe",
-                                                                               ": '<fdopen>'." if USING_PYPY else ".")
+        err = "yq: Error running jq: BrokenPipeError: [Errno 32] Broken pipe" + (": '<fdopen>'." if USING_PYPY else ".")
         self.run_yq("{}", ["--indent", "9", "."], expect_exit_codes={err, 2})
 
         with tempfile.NamedTemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
@@ -233,6 +225,10 @@ class TestYq(unittest.TestCase):
                 self.run_yq("", ["-x", "--xml-dtd", "--xml-root=g", ".a", self.fd_path(tf)], input_format="xml"),
                 '<?xml version="1.0" encoding="utf-8"?>\n<g>\n  <b c="d">e</b>\n  <b>f</b>\n</g>\n'
             )
+
+    def test_tomlq(self):
+        self.assertEqual(self.run_yq("[foo]\nbar = 1", ["."], input_format="toml"), "")
+        self.assertEqual(self.run_yq("[foo]\nbar = 1", ["-t", ".foo"], input_format="toml"), "bar = 1\n")
 
     @unittest.skipIf(sys.version_info < (3, 5),
                      "argparse option abbreviation interferes with opt passthrough, can't be disabled until Python 3.5")

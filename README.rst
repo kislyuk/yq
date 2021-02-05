@@ -106,6 +106,12 @@ XML support
 the ``xq --xml-output``/``xq -x`` option. Multiple XML documents can be passed in separate files/streams as
 ``xq a.xml b.xml``. Entity expansion and DTD resolution is disabled to avoid XML parsing vulnerabilities.
 
+TOML support
+------------
+``yq`` supports `TOML <https://toml.io/>`_ as well. The ``yq`` package installs an executable, ``tomlq``, which uses the
+`toml library <https://github.com/uiri/toml>`_ to transcode TOML to JSON, then pipes it to ``jq``. Roundtrip transcoding
+is available with the ``tomlq --toml-output``/``tomlq -t`` option.
+
 .. admonition:: Compatibility note
 
  This package's release series available on PyPI begins with version 2.0.0. Versions of ``yq`` prior to 2.0.0 are
