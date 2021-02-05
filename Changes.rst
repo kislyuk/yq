@@ -1,3 +1,10 @@
+Changes for v2.12.0 (2021-02-05)
+================================
+
+-  Add TOML support and the tomlq CLI utility to access it
+
+-  Drop Python 2.7 support
+
 Changes for v2.11.1 (2020-09-26)
 ================================
 
