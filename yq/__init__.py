@@ -167,6 +167,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                 elif input_format == "toml":
                     import toml
                     input_docs.append(toml.load(input_stream))
+                elif input_format == "json":
+                    input_docs.append(json.load(input_stream))
                 else:
                     raise Exception("Unknown input format")
             input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
@@ -221,6 +223,9 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                 for input_stream in input_streams:
                     json.dump(toml.load(input_stream), jq.stdin)
                     jq.stdin.write("\n")
+            elif input_format == "json":
+                for input_stream in input_streams:
+                    print(input_stream.read(), file=jq.stdin)
             else:
                 raise Exception("Unknown input format")
 
