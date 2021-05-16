@@ -54,6 +54,7 @@ def get_parser(program_name, description):
     if sys.version_info >= (3, 5):
         parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
     parser = Parser(**parser_args)
+    parser.add_argument("--input-format", help=argparse.SUPPRESS)
     parser.add_argument("--output-format", default="json", help=argparse.SUPPRESS)
     parser.add_argument("--yaml-output", "--yml-output", "-y", dest="output_format", action="store_const", const="yaml",
                         help=yaml_output_help)
@@ -70,6 +71,7 @@ def get_parser(program_name, description):
     parser.add_argument("--xml-force-list", action="append", help=xml_force_list_help)
     parser.add_argument("--toml-output", "-t", dest="output_format", action="store_const", const="toml",
                         help=toml_output_help)
+    parser.add_argument("--json-input", "-j", dest="input_format", action="store_const", const="json")
     parser.add_argument("--in-place", "-i", action="store_true", help="Edit files in place (no backup - use caution)")
     parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 

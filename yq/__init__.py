@@ -64,6 +64,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     argcomplete.autocomplete(parser)
     args, jq_args = parser.parse_known_args(args=args)
 
+    args.input_format = args.input_format or input_format
+
     for i, arg in enumerate(jq_args):
         if arg.startswith("-") and not arg.startswith("--"):
             if "i" in arg:
@@ -110,7 +112,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     elif not args.input_streams:
         args.input_streams = [sys.stdin]
 
-    yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
+    yq_args = dict(program_name=program_name, jq_args=jq_args, **vars(args))
     if in_place:
         if args.output_format not in {"yaml", "annotated_yaml"}:
             sys.exit("{}: -i/--in-place can only be used with -y/-Y".format(program_name))
