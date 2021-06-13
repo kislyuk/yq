@@ -7,7 +7,7 @@ See https://github.com/kislyuk/yq for more information.
 
 # PYTHON_ARGCOMPLETE_OK
 
-import sys, argparse, subprocess, json
+import os, sys, argparse, subprocess, json
 from collections import OrderedDict
 from datetime import datetime, date, time
 
@@ -63,9 +63,12 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name, __doc__)
     argcomplete.autocomplete(parser)
     args, jq_args = parser.parse_known_args(args=args)
+    null_input = False
 
     for i, arg in enumerate(jq_args):
         if arg.startswith("-") and not arg.startswith("--"):
+            if "n" in arg:
+                null_input = True
             if "i" in arg:
                 args.in_place = True
             if "y" in arg:
@@ -89,7 +92,6 @@ def cli(args=None, input_format="yaml", program_name="yq"):
             for value_group in values:
                 jq_args.append(arg)
                 jq_args.extend(value_group)
-
     if args.jq_filter is not None:
         if "--from-file" in jq_args or "-f" in jq_args:
             args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
@@ -100,6 +102,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
             elif "--jsonargs" in jq_args:
                 jq_filter_arg_loc = jq_args.index('--jsonargs') + 1
             jq_args.insert(jq_filter_arg_loc, args.jq_filter)
+            if null_input:
+                args.input_streams.insert(0, open(os.devnull))
     delattr(args, "jq_filter")
     in_place = args.in_place
     delattr(args, "in_place")

@@ -95,6 +95,7 @@ class TestYq(unittest.TestCase):
                          "x: y\n")
         err = "yq: Error running jq: BrokenPipeError: [Errno 32] Broken pipe" + (": '<fdopen>'." if USING_PYPY else ".")
         self.run_yq("{}", ["--indent", "9", "."], expect_exit_codes={err, 2})
+        self.assertEqual(self.run_yq('', ["true", "-y", "-rn"]), "true\n...\n")
 
         with tempfile.NamedTemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             tf.write(b'.a')
