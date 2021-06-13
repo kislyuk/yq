@@ -1,5 +1,5 @@
 usage: yq [options] <jq filter> [input file...]
-          [jq_filter] [files [files ...]]
+          [jq_filter] [files ...]
 
 yq: Command-line YAML processor - jq wrapper for YAML documents
 
