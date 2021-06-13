@@ -140,10 +140,12 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
     converting_output = True if output_format != "json" else False
 
     try:
-        # Note: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us
+        # Notes: universal_newlines is just a way to induce subprocess to make stdin a text buffer and encode it for us;
+        # close_fds must be false for process substitution to work (yq . t.yml --slurpfile t <(yq . t.yml))
         jq = subprocess.Popen(["jq"] + list(jq_args),
                               stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE if converting_output else None,
+                              close_fds=False,
                               universal_newlines=True)
     except OSError as e:
         msg = "{}: Error starting jq: {}: {}. Is jq installed and available on PATH?"
