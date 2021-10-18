@@ -12,6 +12,9 @@ class OrderedDumper(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(OrderedDumper, self).increase_indent(flow, False)
 
+    def ignore_aliases(self, data):
+        return True
+
 yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$")
 yaml_item_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>\d+)_(?P<value>.+)__$")
 
