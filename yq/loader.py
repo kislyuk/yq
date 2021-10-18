@@ -1,13 +1,23 @@
-import yaml
 from base64 import b64encode
 from collections import OrderedDict
 from hashlib import sha224
+
+import yaml
+# from yaml.tokens import AliasToken, ScalarToken
 
 def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
 
 class OrderedLoader(yaml.SafeLoader):
-    pass
+    def scan_anchor(self, token_class):
+        return self.scan_plain()
+
+#    def check_token(self, *choices):
+#        if choices == (AliasToken, ):
+#            return False
+#        if choices == (ScalarToken, ) and super().check_token(AliasToken):
+#            return True
+#        return super().check_token(*choices)
 
 def get_loader(use_annotations=False):
     def construct_sequence(loader, node):
