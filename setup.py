@@ -15,7 +15,7 @@ setup(
     long_description=open("README.rst").read(),
     install_requires=[
         "setuptools",
-        "PyYAML >= 3.11",
+        "PyYAML >= 5.3.1",
         "xmltodict >= 0.11.0",
         "toml >= 0.10.0",
         "argcomplete >= 1.8.1"
