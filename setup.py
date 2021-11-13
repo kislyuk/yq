@@ -2,8 +2,6 @@
 
 from setuptools import setup, find_packages
 
-tests_require = ["coverage", "flake8", "wheel"]
-
 setup(
     name="yq",
     version="2.12.2",
@@ -20,9 +18,12 @@ setup(
         "toml >= 0.10.0",
         "argcomplete >= 1.8.1"
     ],
-    tests_require=tests_require,
     extras_require={
-        "test": tests_require
+        "tests": [
+            "coverage",
+            "flake8",
+            "wheel"
+        ]
     },
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
