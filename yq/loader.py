@@ -2,7 +2,8 @@ from base64 import b64encode
 from hashlib import sha224
 
 import yaml
-from yaml.tokens import AliasToken, AnchorToken, ScalarToken
+from yaml.tokens import (AliasToken, AnchorToken, ScalarToken, FlowMappingStartToken, FlowMappingEndToken, KeyToken,
+                         ValueToken)
 try:
     from yaml import CSafeLoader as default_loader
 except ImportError:
@@ -15,25 +16,30 @@ def hash_key(key):
 class CustomLoader(yaml.SafeLoader):
     expand_aliases = False
 
+    def emit_yq_kv(self, key, value, original_token):
+        marks = dict(start_mark=original_token.start_mark, end_mark=original_token.end_mark)
+        self.tokens.append(FlowMappingStartToken(**marks))
+        self.tokens.append(KeyToken(**marks))
+        self.tokens.append(ScalarToken(value=key, plain=True, **marks))
+        self.tokens.append(ValueToken(**marks))
+        self.tokens.append(ScalarToken(value=value, plain=True, **marks))
+        self.tokens.append(FlowMappingEndToken(**marks))
+
     def fetch_alias(self):
         if self.expand_aliases:
             return super().fetch_alias()
         self.save_possible_simple_key()
         self.allow_simple_key = False
         alias_token = self.scan_anchor(AliasToken)
-        # FIXME: turning alias into a string is not ideal, but probably the only reasonable solution
-        # FIXME: use magic tags (__yq_alias/__yq_anchor) to preserve with -Y
-        self.tokens.append(ScalarToken(value='*' + alias_token.value,
-                                       plain=True,
-                                       start_mark=alias_token.start_mark,
-                                       end_mark=alias_token.end_mark))
+        self.emit_yq_kv("__yq_alias__", alias_token.value, original_token=alias_token)
 
     def fetch_anchor(self):
         if self.expand_aliases:
             return super().fetch_anchor()
         self.save_possible_simple_key()
         self.allow_simple_key = False
-        self.scan_anchor(AnchorToken)
+        anchor_token = self.scan_anchor(AnchorToken)
+        self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
 
 def get_loader(use_annotations=False, expand_aliases=True):
     def construct_sequence(loader, node):
