@@ -47,7 +47,7 @@ release:
 	$(MAKE) release-docs
 
 release-pypi:
-	python setup.py sdist bdist_wheel
+	python -m build
 	twine upload dist/*.tar.gz dist/*.whl --sign --verbose
 
 release-docs:
