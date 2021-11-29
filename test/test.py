@@ -77,7 +77,6 @@ class TestYq(unittest.TestCase):
         unusable_tty_input = mock.Mock()
         unusable_tty_input.isatty = mock.Mock(return_value=True)
 
-        self.run_yq("{}", [], expect_exit_codes={0} if sys.stdin.isatty() else {2})
         self.run_yq("{}", ["."])
         self.run_yq(unusable_non_tty_input, [".", test_doc])
         self.run_yq(unusable_non_tty_input, [".", test_doc, test_doc])
