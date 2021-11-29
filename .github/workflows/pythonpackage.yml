@@ -19,7 +19,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install
       run: |
-        sudo apt-get install jq
+        [[ $(uname) == Linux ]] && sudo apt-get install --yes jq
+        [[ $(uname) == Darwin ]] && brew install jq
         pip install coverage wheel
         make install
     - name: Test
