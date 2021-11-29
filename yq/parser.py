@@ -63,6 +63,7 @@ def get_parser(program_name, description):
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
     parser.add_argument("--explicit-start", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--explicit-end", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--no-expand-aliases", action="store_false", dest="expand_aliases", help=argparse.SUPPRESS)
     parser.add_argument("--max-expansion-factor", type=int, default=1024, help=argparse.SUPPRESS)
     parser.add_argument("--xml-output", "-x", dest="output_format", action="store_const", const="xml",
                         help=xml_output_help)
