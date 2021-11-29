@@ -155,7 +155,8 @@ def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor
 
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
        program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False, xml_force_list=frozenset(),
-       explicit_start=False, explicit_end=False, max_expansion_factor=1024, jq_args=frozenset(), exit_func=None):
+       explicit_start=False, explicit_end=False, expand_aliases=True, max_expansion_factor=1024, jq_args=frozenset(),
+       exit_func=None):
     if not input_streams:
         input_streams = [sys.stdin]
     if not output_stream:
@@ -185,7 +186,7 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             json_buffer = io.StringIO()
             for input_stream in input_streams:
                 if input_format == "yaml":
-                    loader_class = get_loader(use_annotations=use_annotations)
+                    loader_class = get_loader(use_annotations=use_annotations, expand_aliases=expand_aliases)
                     load_yaml_docs(in_stream=input_stream, out_stream=json_buffer, jq=None, loader_class=loader_class,
                                    max_expansion_factor=max_expansion_factor, exit_func=exit_func, prog=program_name)
                 elif input_format == "xml":
@@ -235,7 +236,7 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                     toml.dump(doc, output_stream)
         else:
             if input_format == "yaml":
-                loader_class = get_loader(use_annotations=False)
+                loader_class = get_loader(use_annotations=False, expand_aliases=expand_aliases)
                 for input_stream in input_streams:
                     load_yaml_docs(in_stream=input_stream, out_stream=jq.stdin, jq=jq, loader_class=loader_class,
                                    max_expansion_factor=max_expansion_factor, exit_func=exit_func, prog=program_name)
