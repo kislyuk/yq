@@ -7,8 +7,7 @@ See https://github.com/kislyuk/yq for more information.
 
 # PYTHON_ARGCOMPLETE_OK
 
-import os, sys, argparse, subprocess, json
-from collections import OrderedDict
+import os, sys, argparse, subprocess, json, io
 from datetime import datetime, date, time
 
 import yaml, argcomplete
@@ -132,9 +131,31 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     else:
         yq(**yq_args)
 
+def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor, exit_func, prog):
+    loader = loader_class(in_stream)
+    last_loader_pos = 0
+    try:
+        while loader.check_node():
+            node = loader.get_node()
+            doc = loader.construct_document(node)
+            loader_pos = node.end_mark.index
+            doc_len = loader_pos - last_loader_pos
+            doc_bytes_written = 0
+            for chunk in JSONDateTimeEncoder().iterencode(doc):
+                doc_bytes_written += len(chunk)
+                if doc_bytes_written > doc_len * max_expansion_factor:
+                    if jq:
+                        jq.kill()
+                    exit_func("{}: Error: detected unsafe YAML entity expansion".format(prog))
+                out_stream.write(chunk)
+            out_stream.write("\n")
+            last_loader_pos = loader_pos
+    finally:
+        loader.dispose()
+
 def yq(input_streams=None, output_stream=None, input_format="yaml", output_format="json",
        program_name="yq", width=None, indentless_lists=False, xml_root=None, xml_dtd=False, xml_force_list=frozenset(),
-       explicit_start=False, explicit_end=False, jq_args=frozenset(), exit_func=None):
+       explicit_start=False, explicit_end=False, max_expansion_factor=1024, jq_args=frozenset(), exit_func=None):
     if not input_streams:
         input_streams = [sys.stdin]
     if not output_stream:
@@ -161,23 +182,26 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
             use_annotations = True if output_format == "annotated_yaml" else False
-            input_docs = []
+            json_buffer = io.StringIO()
             for input_stream in input_streams:
                 if input_format == "yaml":
-                    loader = get_loader(use_annotations=use_annotations)
-                    input_docs.extend(yaml.load_all(input_stream, Loader=loader))
+                    loader_class = get_loader(use_annotations=use_annotations)
+                    load_yaml_docs(in_stream=input_stream, out_stream=json_buffer, jq=None, loader_class=loader_class,
+                                   max_expansion_factor=max_expansion_factor, exit_func=exit_func, prog=program_name)
                 elif input_format == "xml":
                     import xmltodict
-                    input_docs.append(xmltodict.parse(input_stream.read(), disable_entities=True,
-                                                      force_list=xml_force_list))
+                    doc = xmltodict.parse(input_stream.read(), disable_entities=True, force_list=xml_force_list)
+                    json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
+                    json_buffer.write("\n")
                 elif input_format == "toml":
                     import toml
-                    input_docs.append(toml.load(input_stream))
+                    doc = toml.load(input_stream)
+                    json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
+                    json_buffer.write("\n")
                 else:
                     raise Exception("Unknown input format")
-            input_payload = "\n".join(json.dumps(doc, cls=JSONDateTimeEncoder) for doc in input_docs)
-            jq_out, jq_err = jq.communicate(input_payload)
-            json_decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
+            jq_out, jq_err = jq.communicate(json_buffer.getvalue())
+            json_decoder = json.JSONDecoder()
             if output_format == "yaml" or output_format == "annotated_yaml":
                 yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream,
                               Dumper=get_dumper(use_annotations=use_annotations, indentless=indentless_lists),
@@ -188,7 +212,7 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                 for doc in decode_docs(jq_out, json_decoder):
                     if xml_root:
                         doc = {xml_root: doc}
-                    elif not isinstance(doc, OrderedDict):
+                    elif not isinstance(doc, dict):
                         msg = ("{}: Error converting JSON to XML: cannot represent non-object types at top level. "
                                "Use --xml-root=name to envelope your output with a root element.")
                         exit_func(msg.format(program_name))
@@ -205,17 +229,16 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             elif output_format == "toml":
                 import toml
                 for doc in decode_docs(jq_out, json_decoder):
-                    if not isinstance(doc, OrderedDict):
+                    if not isinstance(doc, dict):
                         msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
                         exit_func(msg.format(program_name))
                     toml.dump(doc, output_stream)
         else:
             if input_format == "yaml":
-                loader = get_loader(use_annotations=False)
+                loader_class = get_loader(use_annotations=False)
                 for input_stream in input_streams:
-                    for doc in yaml.load_all(input_stream, Loader=loader):
-                        json.dump(doc, jq.stdin, cls=JSONDateTimeEncoder)
-                        jq.stdin.write("\n")
+                    load_yaml_docs(in_stream=input_stream, out_stream=jq.stdin, jq=jq, loader_class=loader_class,
+                                   max_expansion_factor=max_expansion_factor, exit_func=exit_func, prog=program_name)
             elif input_format == "xml":
                 import xmltodict
                 for input_stream in input_streams:

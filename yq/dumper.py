@@ -1,7 +1,10 @@
 import re
-from collections import OrderedDict
 
 import yaml
+# try:
+#     from yaml import CSafeDumper as default_dumper
+# except ImportError:
+#     from yaml import SafeDumper as default_dumper
 
 from .loader import hash_key
 
@@ -19,6 +22,9 @@ yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$
 yaml_item_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>\d+)_(?P<value>.+)__$")
 
 def get_dumper(use_annotations=False, indentless=False):
+    # if not (use_annotations or indentless):
+    #     return default_dumper
+
     def represent_dict(dumper, data):
         pairs, custom_styles, custom_tags = [], {}, {}
         for k, v in data.items():
@@ -69,6 +75,6 @@ def get_dumper(use_annotations=False, indentless=False):
         return sequence
 
     dumper = OrderedIndentlessDumper if indentless else OrderedDumper
-    dumper.add_representer(OrderedDict, represent_dict)
+    dumper.add_representer(dict, represent_dict)
     dumper.add_representer(list, represent_list)
     return dumper

@@ -1,25 +1,41 @@
 from base64 import b64encode
-from collections import OrderedDict
 from hashlib import sha224
 
 import yaml
-# from yaml.tokens import AliasToken, ScalarToken
+from yaml.tokens import AliasToken, AnchorToken, ScalarToken
+try:
+    from yaml import CSafeLoader as default_loader
+except ImportError:
+    from yaml import SafeLoader as default_loader
 
 def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
 
-class OrderedLoader(yaml.SafeLoader):
-    def scan_anchor(self, token_class):
-        return self.scan_plain()
 
-#    def check_token(self, *choices):
-#        if choices == (AliasToken, ):
-#            return False
-#        if choices == (ScalarToken, ) and super().check_token(AliasToken):
-#            return True
-#        return super().check_token(*choices)
+class CustomLoader(yaml.SafeLoader):
+    expand_aliases = False
 
-def get_loader(use_annotations=False):
+    def fetch_alias(self):
+        if self.expand_aliases:
+            return super().fetch_alias()
+        self.save_possible_simple_key()
+        self.allow_simple_key = False
+        alias_token = self.scan_anchor(AliasToken)
+        # FIXME: turning alias into a string is not ideal, but probably the only reasonable solution
+        # FIXME: use magic tags (__yq_alias/__yq_anchor) to preserve with -Y
+        self.tokens.append(ScalarToken(value='*' + alias_token.value,
+                                       plain=True,
+                                       start_mark=alias_token.start_mark,
+                                       end_mark=alias_token.end_mark))
+
+    def fetch_anchor(self):
+        if self.expand_aliases:
+            return super().fetch_anchor()
+        self.save_possible_simple_key()
+        self.allow_simple_key = False
+        self.scan_anchor(AnchorToken)
+
+def get_loader(use_annotations=False, expand_aliases=True):
     def construct_sequence(loader, node):
         annotations = []
         for i, v_node in enumerate(node.value):
@@ -48,7 +64,7 @@ def get_loader(use_annotations=False):
                 pairs.append(("__yq_style_{}__".format(hash_key(key)), v_node.style))
             elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
                 pairs.append(("__yq_style_{}__".format(hash_key(key)), "flow"))
-        return OrderedDict(pairs)
+        return dict(pairs)
 
     def parse_unknown_tags(loader, tag_suffix, node):
         if isinstance(node, yaml.nodes.ScalarNode):
@@ -58,7 +74,8 @@ def get_loader(use_annotations=False):
         elif isinstance(node, yaml.nodes.MappingNode):
             return construct_mapping(loader, node)
 
-    OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
-    OrderedLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
-    OrderedLoader.add_multi_constructor('', parse_unknown_tags)
-    return OrderedLoader
+    loader_class = default_loader if expand_aliases else CustomLoader
+    loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+    loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
+    loader_class.add_multi_constructor('', parse_unknown_tags)
+    return loader_class
