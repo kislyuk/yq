@@ -28,6 +28,19 @@ mapping-orange:
   b: 0
 """
 
+bomb_yaml = """
+lol1: &lol1 "lol"
+lol2: &lol2 [*lol1,*lol1,*lol1,*lol1,*lol1,*lol1,*lol1,*lol1,*lol1]
+lol3: &lol3 [*lol2,*lol2,*lol2,*lol2,*lol2,*lol2,*lol2,*lol2,*lol2]
+lol4: &lol4 [*lol3,*lol3,*lol3,*lol3,*lol3,*lol3,*lol3,*lol3,*lol3]
+lol5: &lol5 [*lol4,*lol4,*lol4,*lol4,*lol4,*lol4,*lol4,*lol4,*lol4]
+lol6: &lol6 [*lol5,*lol5,*lol5,*lol5,*lol5,*lol5,*lol5,*lol5,*lol5]
+lol7: &lol7 [*lol6,*lol6,*lol6,*lol6,*lol6,*lol6,*lol6,*lol6,*lol6]
+lol8: &lol8 [*lol7,*lol7,*lol7,*lol7,*lol7,*lol7,*lol7,*lol7,*lol7]
+lol9: &lol9 [*lol8,*lol8,*lol8,*lol8,*lol8,*lol8,*lol8,*lol8,*lol8]
+lol10: &lol10 [*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9]
+"""
+
 class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
@@ -66,7 +79,6 @@ class TestYq(unittest.TestCase):
                'cannot start any token\n  in "<file>", line 1, column 3.')
         self.run_yq("- %", ["."], expect_exit_codes={err, 2})
 
-    @unittest.skipIf(sys.version_info < (3, 5), "Skipping test incompatible with Python 2")
     def test_yq_arg_handling(self):
         from unittest import mock
 
@@ -158,7 +170,6 @@ class TestYq(unittest.TestCase):
         with io.open(cfn_filename) as fh:
             self.assertEqual(self.run_yq("", ["-Y", ".", cfn_filename]), fh.read())
 
-    @unittest.skipIf(sys.version_info < (3, 5), "Skipping feature incompatible with Python 2")
     def test_in_place(self):
         with tempfile.NamedTemporaryFile() as tf, tempfile.NamedTemporaryFile() as tf2:
             tf.write(b"- foo\n- bar\n")
@@ -230,14 +241,15 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("[foo]\nbar = 1", ["."], input_format="toml"), "")
         self.assertEqual(self.run_yq("[foo]\nbar = 1", ["-t", ".foo"], input_format="toml"), "bar = 1\n")
 
-    @unittest.skipIf(sys.version_info < (3, 5),
-                     "argparse option abbreviation interferes with opt passthrough, can't be disabled until Python 3.5")
     def test_abbrev_opt_collisions(self):
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             self.assertEqual(
                 self.run_yq("", ["-y", "-e", "--slurp", ".[0] == .[1]", "-", self.fd_path(tf), self.fd_path(tf2)]),
                 "true\n...\n"
             )
+
+    def test_entity_expansion_defense(self):
+        self.run_yq(bomb_yaml, ["."], expect_exit_codes=["yq: Error: detected unsafe YAML entity expansion"])
 
 if __name__ == '__main__':
     unittest.main()
