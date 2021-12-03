@@ -38,8 +38,8 @@ class CustomLoader(yaml.SafeLoader):
             return super().fetch_anchor()
         self.save_possible_simple_key()
         self.allow_simple_key = False
-        anchor_token = self.scan_anchor(AnchorToken)
-        self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
+        anchor_token = self.scan_anchor(AnchorToken)  # noqa: F841
+        # self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
 
 def get_loader(use_annotations=False, expand_aliases=True):
     def construct_sequence(loader, node):
