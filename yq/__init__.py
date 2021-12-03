@@ -204,8 +204,8 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
             jq_out, jq_err = jq.communicate(json_buffer.getvalue())
             json_decoder = json.JSONDecoder()
             if output_format == "yaml" or output_format == "annotated_yaml":
-                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream,
-                              Dumper=get_dumper(use_annotations=use_annotations, indentless=indentless_lists),
+                dumper_class = get_dumper(use_annotations=use_annotations, indentless=indentless_lists)
+                yaml.dump_all(decode_docs(jq_out, json_decoder), stream=output_stream, Dumper=dumper_class,
                               width=width, allow_unicode=True, default_flow_style=False,
                               explicit_start=explicit_start, explicit_end=explicit_end)
             elif output_format == "xml":

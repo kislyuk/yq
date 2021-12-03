@@ -29,6 +29,8 @@ def get_dumper(use_annotations=False, indentless=False):
         pairs, custom_styles, custom_tags = [], {}, {}
         for k, v in data.items():
             if use_annotations and isinstance(k, str):
+                if k == "__yq_alias__":
+                    continue
                 value_annotation = yaml_value_annotation_re.match(k)
                 if value_annotation and value_annotation.group("type") == "style":
                     custom_styles[value_annotation.group("key")] = v
