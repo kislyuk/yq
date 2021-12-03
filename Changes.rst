@@ -1,3 +1,14 @@
+Changes for v2.13.0 (2021-12-02)
+================================
+
+-  Armor against entity expansion attacks
+
+-  Improve YAML loading performance by using CSafeLoader where available
+
+-  Require PyYAML 5.3.1 or newer
+
+-  Test and release infrastructure improvements
+
 Changes for v2.12.2 (2021-06-13)
 ================================
 
