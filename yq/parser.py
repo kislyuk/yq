@@ -2,7 +2,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys, argparse, subprocess
 
-from .version import __version__
+try:
+    from .version import version as __version__
+except ImportError:
+    __version__ = "0.0.0"
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
 jq_arg_spec = {"--indent": 1, "-f": 1, "--from-file": 1, "-L": 1, "--arg": 2, "--argjson": 2, "--slurpfile": 2,

@@ -15,7 +15,11 @@ import yaml, argcomplete
 from .parser import get_parser, jq_arg_spec
 from .loader import get_loader
 from .dumper import get_dumper
-from .version import __version__  # noqa
+
+try:
+    from .version import version as __version__
+except ImportError:
+    __version__ = "0.0.0"
 
 class JSONDateTimeEncoder(json.JSONEncoder):
     def default(self, o):
