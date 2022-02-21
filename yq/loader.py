@@ -84,4 +84,6 @@ def get_loader(use_annotations=False, expand_aliases=True):
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
     loader_class.add_multi_constructor('', parse_unknown_tags)
+    loader_class.yaml_constructors.pop("tag:yaml.org,2002:binary", None)
+    loader_class.yaml_constructors.pop("tag:yaml.org,2002:set", None)
     return loader_class

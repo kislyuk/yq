@@ -251,5 +251,16 @@ class TestYq(unittest.TestCase):
     def test_entity_expansion_defense(self):
         self.run_yq(bomb_yaml, ["."], expect_exit_codes=["yq: Error: detected unsafe YAML entity expansion"])
 
+    def test_yaml_type_tags(self):
+        bin_yaml = "example: !!binary Zm9vYmFyCg=="
+        self.assertEqual(self.run_yq(bin_yaml, ["."]), "")
+        self.assertEqual(self.run_yq(bin_yaml, ["-y", "."]), "example: Zm9vYmFyCg==\n")
+        set_yaml = "example: !!set { Boston Red Sox, Detroit Tigers, New York Yankees }"
+        self.assertEqual(self.run_yq(set_yaml, ["."]), "")
+        self.assertEqual(
+            self.run_yq(set_yaml, ["-y", "."]),
+            "example:\n  Boston Red Sox: null\n  Detroit Tigers: null\n  New York Yankees: null\n"
+        )
+
 if __name__ == '__main__':
     unittest.main()
