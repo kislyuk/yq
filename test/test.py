@@ -149,13 +149,9 @@ class TestYq(unittest.TestCase):
 
     def test_datetimes(self):
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
-        if yaml.__version__ < '5.3':
-            self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36'\n")
-        else:
-            self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36+00:00'\n")
-
+        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- 2016-12-20T22:07:36Z\n")
         self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
-        self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
+        self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "2016-12-20\n...\n")
 
     def test_unrecognized_tags(self):
         self.assertEqual(self.run_yq("!!foo bar\n", ["."]), "")
@@ -263,6 +259,10 @@ class TestYq(unittest.TestCase):
             self.run_yq(set_yaml, ["-y", "."]),
             "example:\n  Boston Red Sox: null\n  Detroit Tigers: null\n  New York Yankees: null\n"
         )
+
+    def test_yaml_1_2(self):
+        self.assertEqual(self.run_yq("on: 1", ["-y", "."]), "on: 1\n")
+        self.assertEqual(self.run_yq("2022-02-22", ["-y", "."]), "2022-02-22\n...\n")
 
 if __name__ == '__main__':
     unittest.main()
