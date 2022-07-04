@@ -1,3 +1,10 @@
+Changes for v3.0.1 (2022-07-04)
+===============================
+
+-  yq now uses the YAML 1.2 grammar when parsing and rendering YAML
+   documents. This means bare literals like “on”, “no”, and “12:34:56”
+   are interpreted as strings. (Fix interrupted release)
+
 Changes for v3.0.0 (2022-07-04)
 ===============================
 
