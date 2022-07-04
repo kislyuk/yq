@@ -1,3 +1,4 @@
+import re
 from base64 import b64encode
 from hashlib import sha224
 
@@ -8,6 +9,36 @@ try:
     from yaml import CSafeLoader as default_loader
 except ImportError:
     from yaml import SafeLoader as default_loader
+
+yaml_1_2_core_resolvers = [
+    {
+        "tag": "tag:yaml.org,2002:bool",
+        "regexp": re.compile(r'^(?:|true|True|TRUE|false|False|FALSE)$', re.X),
+        "start_chars": list('tTfF')
+    }, {
+        "tag": "tag:yaml.org,2002:int",
+        "regexp": re.compile(r'^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$', re.X),
+        "start_chars": list('-+0123456789')
+    }, {
+        "tag": "tag:yaml.org,2002:float",
+        "regexp": re.compile(
+            r'^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$',
+            re.X
+        ),
+        "start_chars": list('-+0123456789.')
+    }, {
+        "tag": "tag:yaml.org,2002:null",
+        "regexp": re.compile(r'^(?:~||null|Null|NULL)$', re.X),
+        "start_chars": ['~', 'n', 'N', '']
+    }
+]
+
+def set_yaml_1_2_grammar(resolver):
+    resolver.yaml_implicit_resolvers = {}
+    for r in yaml_1_2_core_resolvers:
+        for start_char in r["start_chars"]:
+            resolver.yaml_implicit_resolvers.setdefault(start_char, [])
+            resolver.yaml_implicit_resolvers[start_char].append((r["tag"], r["regexp"]))
 
 def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
@@ -86,4 +117,5 @@ def get_loader(use_annotations=False, expand_aliases=True):
     loader_class.add_multi_constructor('', parse_unknown_tags)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:binary", None)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:set", None)
+    set_yaml_1_2_grammar(loader_class)
     return loader_class

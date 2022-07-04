@@ -6,7 +6,7 @@ import yaml
 # except ImportError:
 #     from yaml import SafeDumper as default_dumper
 
-from .loader import hash_key
+from .loader import hash_key, set_yaml_1_2_grammar
 
 class OrderedIndentlessDumper(yaml.SafeDumper):
     pass
@@ -79,4 +79,5 @@ def get_dumper(use_annotations=False, indentless=False):
     dumper = OrderedIndentlessDumper if indentless else OrderedDumper
     dumper.add_representer(dict, represent_dict)
     dumper.add_representer(list, represent_list)
+    set_yaml_1_2_grammar(dumper)
     return dumper

@@ -138,19 +138,6 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor, exit_func, prog):
     loader = loader_class(in_stream)
 
-    # PyYAML does not yet support YAML 1.2 (https://github.com/yaml/pyyaml/pull/555).
-    # Use this hack to avoid interpreting yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF as boolean values,
-    # and avoid interpreting any values as timestamps.
-    for start_char in list(loader.yaml_implicit_resolvers):
-        if start_char in {"y", "Y", "n", "N", "o", "O"}:
-            for i, matcher in enumerate(loader.yaml_implicit_resolvers[start_char]):
-                if matcher[0] == "tag:yaml.org,2002:bool":
-                    del loader.yaml_implicit_resolvers[start_char][i]
-        if start_char in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}:
-            for i, matcher in enumerate(loader.yaml_implicit_resolvers[start_char]):
-                if matcher[0] == "tag:yaml.org,2002:timestamp":
-                    del loader.yaml_implicit_resolvers[start_char][i]
-
     last_loader_pos = 0
     try:
         while loader.check_node():

@@ -41,9 +41,6 @@ See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
 
-yq aims to use YAML 1.2 as the language specification, but due to limitations in PyYAML we still parse int and float
-literals according to the YAML 1.1 specification.
-
 Preserving tags and styles using the ``-Y`` (``--yaml-roundtrip``) option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
