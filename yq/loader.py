@@ -33,9 +33,18 @@ yaml_1_2_core_resolvers = [
     }
 ]
 
-def set_yaml_1_2_grammar(resolver):
+merge_resolver = {
+    "tag": "tag:yaml.org,2002:merge",
+    "regexp": re.compile(r'^(?:<<)$'),
+    "start_chars": ['<']
+}
+
+def set_yaml_grammar(resolver, expand_merge_keys=True):
     resolver.yaml_implicit_resolvers = {}
-    for r in yaml_1_2_core_resolvers:
+    resolvers = yaml_1_2_core_resolvers
+    if expand_merge_keys:
+        resolvers.append(merge_resolver)
+    for r in resolvers:
         for start_char in r["start_chars"]:
             resolver.yaml_implicit_resolvers.setdefault(start_char, [])
             resolver.yaml_implicit_resolvers[start_char].append((r["tag"], r["regexp"]))
@@ -72,7 +81,7 @@ class CustomLoader(yaml.SafeLoader):
         anchor_token = self.scan_anchor(AnchorToken)  # noqa: F841
         # self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
 
-def get_loader(use_annotations=False, expand_aliases=True):
+def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=True):
     def construct_sequence(loader, node):
         annotations = []
         for i, v_node in enumerate(node.value):
@@ -117,5 +126,5 @@ def get_loader(use_annotations=False, expand_aliases=True):
     loader_class.add_multi_constructor('', parse_unknown_tags)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:binary", None)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:set", None)
-    set_yaml_1_2_grammar(loader_class)
+    set_yaml_grammar(loader_class, expand_merge_keys=expand_merge_keys)
     return loader_class

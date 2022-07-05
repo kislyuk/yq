@@ -260,6 +260,10 @@ class TestYq(unittest.TestCase):
             "example:\n  Boston Red Sox: null\n  Detroit Tigers: null\n  New York Yankees: null\n"
         )
 
+    def test_yaml_merge(self):
+        self.assertEqual(self.run_yq("a: &b\n  c: d\ne:\n  <<: *b\n  g: h", ["-y", "."]),
+                         "a:\n  c: d\ne:\n  c: d\n  g: h\n")
+
     def test_yaml_1_2(self):
         self.assertEqual(self.run_yq("on: 12:34:56", ["-y", "."]), "on: 12:34:56\n")
         self.assertEqual(self.run_yq("2022-02-22", ["-y", "."]), "2022-02-22\n...\n")
