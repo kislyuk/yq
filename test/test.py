@@ -261,8 +261,16 @@ class TestYq(unittest.TestCase):
         )
 
     def test_yaml_1_2(self):
-        self.assertEqual(self.run_yq("on: 1", ["-y", "."]), "on: 1\n")
+        self.assertEqual(self.run_yq("on: 12:34:56", ["-y", "."]), "on: 12:34:56\n")
         self.assertEqual(self.run_yq("2022-02-22", ["-y", "."]), "2022-02-22\n...\n")
+        self.assertEqual(self.run_yq("+12345", ["-y", "."]), "12345\n...\n")
+        self.assertEqual(self.run_yq("0b1010_0111", ["-y", "."]), "0b1010_0111\n...\n")
+        self.assertEqual(self.run_yq("0x_0A_74_AE", ["-y", "."]), "0x_0A_74_AE\n...\n")
+        self.assertEqual(self.run_yq("+685_230", ["-y", "."]), "+685_230\n...\n")
+
+    @unittest.expectedFailure
+    def test_yaml_1_2_octals(self):
+        self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "on: -12345\n")
 
 if __name__ == '__main__':
     unittest.main()
