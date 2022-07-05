@@ -1,5 +1,5 @@
 usage: yq [options] <jq filter> [input file...]
-          [jq_filter] [files ...]
+          [jq_filter] [files [files ...]]
 
 yq: Command-line YAML processor - jq wrapper for YAML documents
 
@@ -25,9 +25,9 @@ optional arguments:
 
 jq - commandline JSON processor [version 1.6]
 
-Usage:	jq [options] <jq filter> [file...]
-	jq [options] --args <jq filter> [strings...]
-	jq [options] --jsonargs <jq filter> [JSON_TEXTS...]
+Usage:	/Users/andrey.kislyuk/.asdf/installs/jq/1.6/bin/jq [options] <jq filter> [file...]
+	/Users/andrey.kislyuk/.asdf/installs/jq/1.6/bin/jq [options] --args <jq filter> [strings...]
+	/Users/andrey.kislyuk/.asdf/installs/jq/1.6/bin/jq [options] --jsonargs <jq filter> [JSON_TEXTS...]
 
 jq is a tool for processing JSON inputs, applying the given filter to
 its JSON text inputs and producing the filter's results as JSON on

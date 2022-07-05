@@ -1,3 +1,10 @@
+Changes for v3.0.2 (2022-07-05)
+===============================
+
+-  Expand merge keys (https://yaml.org/type/merge.html). This is a YAML
+   1.1 specific behavior, but will be accommodated in yq due to its
+   widespread use and low likelihood of accidental invocation.
+
 Changes for v3.0.1 (2022-07-04)
 ===============================
 
