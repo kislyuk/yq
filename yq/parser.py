@@ -23,10 +23,8 @@ class Parser(argparse.ArgumentParser):
 
 def get_parser(program_name, description):
     # By default suppress these help strings and only enable them in the specific programs.
-    yaml_output_help, yaml_roundtrip_help, width_help, indentless_help = (argparse.SUPPRESS, argparse.SUPPRESS,
-                                                                          argparse.SUPPRESS, argparse.SUPPRESS)
-    xml_output_help, xml_dtd_help, xml_root_help, xml_force_list_help = (argparse.SUPPRESS, argparse.SUPPRESS,
-                                                                         argparse.SUPPRESS, argparse.SUPPRESS)
+    yaml_output_help, yaml_roundtrip_help, width_help, indentless_help, grammar_help = [argparse.SUPPRESS] * 5
+    xml_output_help, xml_dtd_help, xml_root_help, xml_force_list_help = [argparse.SUPPRESS] * 4
     toml_output_help = argparse.SUPPRESS
 
     if program_name == "yq":
@@ -39,6 +37,9 @@ def get_parser(program_name, description):
         width_help = "When using --yaml-output, specify string wrap width"
         indentless_help = ("When using --yaml-output, indent block style lists (sequences) "
                            "with 0 spaces instead of 2")
+        grammar_help = ("When using --yaml-output, specify output grammar (the default is 1.1 and will be changed "
+                        "to 1.2 in a future version). Setting this to 1.2 will cause strings like 'on' and 'no' to be "
+                        "emitted unquoted.")
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
@@ -62,6 +63,8 @@ def get_parser(program_name, description):
                         help=yaml_output_help)
     parser.add_argument("--yaml-roundtrip", "--yml-roundtrip", "-Y", dest="output_format", action="store_const",
                         const="annotated_yaml", help=yaml_roundtrip_help)
+    parser.add_argument("--yaml-output-grammar-version", "--yml-out-ver", choices=["1.1", "1.2"], default="1.1",
+                        help=grammar_help)
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
     parser.add_argument("--explicit-start", action="store_true", help=argparse.SUPPRESS)

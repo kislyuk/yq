@@ -149,9 +149,12 @@ class TestYq(unittest.TestCase):
 
     def test_datetimes(self):
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
-        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- 2016-12-20T22:07:36Z\n")
+        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36Z'\n")
+        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "--yml-out-ver=1.2", "."]),
+                         "- 2016-12-20T22:07:36Z\n")
         self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
-        self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "2016-12-20\n...\n")
+        self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
+        self.assertEqual(self.run_yq("2016-12-20", ["-y", "--yml-out-ver=1.2", "."]), "2016-12-20\n...\n")
 
     def test_unrecognized_tags(self):
         self.assertEqual(self.run_yq("!!foo bar\n", ["."]), "")
@@ -190,14 +193,6 @@ class TestYq(unittest.TestCase):
         self.assertTrue(self.run_yq("", ["-y", ".", test_doc]).startswith("yaml_struct"))
         self.assertTrue(self.run_yq("", ["-y", "--explicit-start", ".", test_doc]).startswith("---"))
         self.assertTrue(self.run_yq("", ["-y", "--explicit-end", ".", test_doc]).endswith("...\n"))
-
-    @unittest.expectedFailure
-    def test_times(self):
-        """
-        Timestamps are parsed as sexagesimals in YAML 1.1 but not 1.2. No PyYAML support for YAML 1.2 yet. See issue 10
-        """
-        self.assertEqual(self.run_yq("11:12:13", ["."]), "")
-        self.assertEqual(self.run_yq("11:12:13", ["-y", "."]), "'11:12:13'\n")
 
     def test_xq(self):
         self.assertEqual(self.run_yq("<foo/>", ["."], input_format="xml"), "")
@@ -265,16 +260,33 @@ class TestYq(unittest.TestCase):
                          "a:\n  c: d\ne:\n  c: d\n  g: h\n")
 
     def test_yaml_1_2(self):
-        self.assertEqual(self.run_yq("on: 12:34:56", ["-y", "."]), "on: 12:34:56\n")
-        self.assertEqual(self.run_yq("2022-02-22", ["-y", "."]), "2022-02-22\n...\n")
+        self.assertEqual(self.run_yq("11:12:13", ["."]), "")
+        self.assertEqual(self.run_yq("11:12:13", ["-y", "."]), "'11:12:13'\n")
+
+        self.assertEqual(self.run_yq("on: 12:34:56", ["-y", "."]), "'on': '12:34:56'\n")
+        self.assertEqual(self.run_yq("on: 12:34:56", ["-y", "--yml-out-ver=1.2", "."]), "on: 12:34:56\n")
+
+        self.assertEqual(self.run_yq("2022-02-22", ["-y", "."]), "'2022-02-22'\n")
+        self.assertEqual(self.run_yq("2022-02-22", ["-y", "--yml-out-ver=1.2", "."]), "2022-02-22\n...\n")
+
+        self.assertEqual(self.run_yq("0b1010_0111", ["-y", "."]), "'0b1010_0111'\n")
+        self.assertEqual(self.run_yq("0b1010_0111", ["-y", "--yml-out-ver=1.2", "."]), "0b1010_0111\n...\n")
+
+        self.assertEqual(self.run_yq("0x_0A_74_AE", ["-y", "."]), "'0x_0A_74_AE'\n")
+        self.assertEqual(self.run_yq("0x_0A_74_AE", ["-y", "--yml-out-ver=1.2", "."]), "0x_0A_74_AE\n...\n")
+
+        self.assertEqual(self.run_yq("+685_230", ["-y", "."]), "'+685_230'\n")
+        self.assertEqual(self.run_yq("+685_230", ["-y", "--yml-out-ver=1.2", "."]), "+685_230\n...\n")
+
         self.assertEqual(self.run_yq("+12345", ["-y", "."]), "12345\n...\n")
-        self.assertEqual(self.run_yq("0b1010_0111", ["-y", "."]), "0b1010_0111\n...\n")
-        self.assertEqual(self.run_yq("0x_0A_74_AE", ["-y", "."]), "0x_0A_74_AE\n...\n")
-        self.assertEqual(self.run_yq("+685_230", ["-y", "."]), "+685_230\n...\n")
+
+    def test_yaml_1_1_octals(self):
+        self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "'on': -5349\n")
 
     @unittest.expectedFailure
     def test_yaml_1_2_octals(self):
-        self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "on: -12345\n")
+        """YAML 1.2 octals not yet implemented"""
+        self.assertEqual(self.run_yq("on: -012345", ["-y", "--yml-out-ver=1.2", "."]), "on: -12345\n")
 
 if __name__ == '__main__':
     unittest.main()

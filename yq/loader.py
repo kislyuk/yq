@@ -10,28 +10,74 @@ try:
 except ImportError:
     from yaml import SafeLoader as default_loader
 
-yaml_1_2_core_resolvers = [
-    {
-        "tag": "tag:yaml.org,2002:bool",
-        "regexp": re.compile(r'^(?:|true|True|TRUE|false|False|FALSE)$', re.X),
-        "start_chars": list('tTfF')
-    }, {
-        "tag": "tag:yaml.org,2002:int",
-        "regexp": re.compile(r'^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$', re.X),
-        "start_chars": list('-+0123456789')
-    }, {
-        "tag": "tag:yaml.org,2002:float",
-        "regexp": re.compile(
-            r'^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$',
-            re.X
-        ),
-        "start_chars": list('-+0123456789.')
-    }, {
-        "tag": "tag:yaml.org,2002:null",
-        "regexp": re.compile(r'^(?:~||null|Null|NULL)$', re.X),
-        "start_chars": ['~', 'n', 'N', '']
-    }
-]
+
+core_resolvers = {
+    "1.1": [
+        {
+            "tag": "tag:yaml.org,2002:bool",
+            "regexp": re.compile(r'''^(?:yes|Yes|YES|no|No|NO
+            |true|True|TRUE|false|False|FALSE
+            |on|On|ON|off|Off|OFF)$''', re.X),
+            "start_chars": list('yYnNtTfFoO')
+        }, {
+            "tag": "tag:yaml.org,2002:float",
+            "regexp": re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
+            |\.[0-9_]+(?:[eE][-+][0-9]+)?
+            |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
+            |[-+]?\.(?:inf|Inf|INF)
+            |\.(?:nan|NaN|NAN))$''', re.X),
+            "start_chars": list('-+0123456789.')
+        }, {
+            "tag": "tag:yaml.org,2002:int",
+            "regexp": re.compile(r'''^(?:[-+]?0b[0-1_]+
+            |[-+]?0[0-7_]+
+            |[-+]?(?:0|[1-9][0-9_]*)
+            |[-+]?0x[0-9a-fA-F_]+
+            |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
+            "start_chars": list('-+0123456789')
+        }, {
+            "tag": "tag:yaml.org,2002:null",
+            "regexp": re.compile(r'''^(?: ~
+            |null|Null|NULL
+            | )$''', re.X),
+            "start_chars": ['~', 'n', 'N', '']
+        }, {
+            "tag": "tag:yaml.org,2002:timestamp",
+            "regexp": re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
+            |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
+            (?:[Tt]|[ \t]+)[0-9][0-9]?
+            :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
+            (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
+            "start_chars": list('0123456789')
+        }, {
+            "tag": "tag:yaml.org,2002:value",
+            "regexp": re.compile(r'^(?:=)$'),
+            "start_chars": ['=']
+        }
+    ],
+    "1.2": [
+        {
+            "tag": "tag:yaml.org,2002:bool",
+            "regexp": re.compile(r'^(?:|true|True|TRUE|false|False|FALSE)$', re.X),
+            "start_chars": list('tTfF')
+        }, {
+            "tag": "tag:yaml.org,2002:int",
+            "regexp": re.compile(r'^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$', re.X),
+            "start_chars": list('-+0123456789')
+        }, {
+            "tag": "tag:yaml.org,2002:float",
+            "regexp": re.compile(
+                r'^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$',  # noqa
+                re.X
+            ),
+            "start_chars": list('-+0123456789.')
+        }, {
+            "tag": "tag:yaml.org,2002:null",
+            "regexp": re.compile(r'^(?:~||null|Null|NULL)$', re.X),
+            "start_chars": ['~', 'n', 'N', '']
+        }
+    ]
+}
 
 merge_resolver = {
     "tag": "tag:yaml.org,2002:merge",
@@ -39,11 +85,13 @@ merge_resolver = {
     "start_chars": ['<']
 }
 
-def set_yaml_grammar(resolver, expand_merge_keys=True):
-    resolver.yaml_implicit_resolvers = {}
-    resolvers = yaml_1_2_core_resolvers
+def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
+    if grammar_version not in core_resolvers:
+        raise Exception(f"Unknown grammar version {grammar_version}")
+    resolvers = list(core_resolvers[grammar_version])
     if expand_merge_keys:
         resolvers.append(merge_resolver)
+    resolver.yaml_implicit_resolvers = {}
     for r in resolvers:
         for start_char in r["start_chars"]:
             resolver.yaml_implicit_resolvers.setdefault(start_char, [])

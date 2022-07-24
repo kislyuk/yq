@@ -21,7 +21,7 @@ class OrderedDumper(yaml.SafeDumper):
 yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$")
 yaml_item_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>\d+)_(?P<value>.+)__$")
 
-def get_dumper(use_annotations=False, indentless=False):
+def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1"):
     # if not (use_annotations or indentless):
     #     return default_dumper
 
@@ -79,5 +79,5 @@ def get_dumper(use_annotations=False, indentless=False):
     dumper = OrderedIndentlessDumper if indentless else OrderedDumper
     dumper.add_representer(dict, represent_dict)
     dumper.add_representer(list, represent_list)
-    set_yaml_grammar(dumper)
+    set_yaml_grammar(dumper, grammar_version=grammar_version)
     return dumper
