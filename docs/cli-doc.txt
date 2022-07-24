@@ -1,4 +1,5 @@
 usage: yq [options] <jq filter> [input file...]
+          [--indentless-lists] [--in-place] [--version]
           [jq_filter] [files [files ...]]
 
 yq: Command-line YAML processor - jq wrapper for YAML documents
@@ -16,6 +17,8 @@ optional arguments:
                         Transcode jq JSON output back into YAML and emit it
   --yaml-roundtrip, --yml-roundtrip, -Y
                         Transcode jq JSON output back into YAML and emit it. Preserve YAML tags and styles by representing them as extra items in their enclosing mappings and sequences while in JSON. This option is incompatible with jq filters that do not expect these extra items.
+  --yaml-output-grammar-version {1.1,1.2}, --yml-out-ver {1.1,1.2}
+                        When using --yaml-output, specify output grammar (the default is 1.1 and will be changed to 1.2 in a future version). Setting this to 1.2 will cause strings like 'on' and 'no' to be emitted unquoted.
   --width WIDTH, -w WIDTH
                         When using --yaml-output, specify string wrap width
   --indentless-lists, --indentless

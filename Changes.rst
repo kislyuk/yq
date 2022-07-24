@@ -1,3 +1,8 @@
+Changes for v3.1.0 (2022-07-24)
+===============================
+
+-  Use configurable output grammar, compatible with YAML 1.1
+
 Changes for v3.0.2 (2022-07-05)
 ===============================
 
