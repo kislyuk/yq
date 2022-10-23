@@ -201,8 +201,11 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                     json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
                     json_buffer.write("\n")
                 elif input_format == "toml":
-                    import toml
-                    doc = toml.load(input_stream)
+                    if sys.version_info >= (3, 11):
+                        import tomllib
+                    else:
+                        import tomli as tomllib
+                    doc = tomllib.loads(input_stream.read())
                     json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
                     json_buffer.write("\n")
                 else:
@@ -235,12 +238,12 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                             raise
                     output_stream.write(b"\n" if sys.version_info < (3, 0) else "\n")
             elif output_format == "toml":
-                import toml
+                import tomli_w
                 for doc in decode_docs(jq_out, json_decoder):
                     if not isinstance(doc, dict):
                         msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
                         exit_func(msg.format(program_name))
-                    toml.dump(doc, output_stream)
+                    output_stream.write(tomli_w.dumps(doc))
         else:
             if input_format == "yaml":
                 loader_class = get_loader(use_annotations=False, expand_aliases=expand_aliases,
@@ -255,9 +258,12 @@ def yq(input_streams=None, output_stream=None, input_format="yaml", output_forma
                                               force_list=xml_force_list), jq.stdin)
                     jq.stdin.write("\n")
             elif input_format == "toml":
-                import toml
+                if sys.version_info >= (3, 11):
+                    import tomllib
+                else:
+                    import tomli as tomllib
                 for input_stream in input_streams:
-                    json.dump(toml.load(input_stream), jq.stdin)
+                    json.dump(tomllib.loads(input_stream.read()), jq.stdin)
                     jq.stdin.write("\n")
             else:
                 raise Exception("Unknown input format")

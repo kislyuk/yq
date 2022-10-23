@@ -109,7 +109,9 @@ the ``xq --xml-output``/``xq -x`` option. Multiple XML documents can be passed i
 TOML support
 ------------
 ``yq`` supports `TOML <https://toml.io/>`_ as well. The ``yq`` package installs an executable, ``tomlq``, which uses the
-`toml library <https://github.com/uiri/toml>`_ to transcode TOML to JSON, then pipes it to ``jq``. Roundtrip transcoding
+`tomllib module <https://docs.python.org/3.11/library/tomllib.html>` or `tomli library
+<https://github.com/hukkin/tomli>`_ to transcode TOML to JSON, then pipes it to ``jq``. Transcoding to TOML uses the
+`tomli-w <https://github.com/hukkin/toml-w`_ package. Roundtrip transcoding
 is available with the ``tomlq --toml-output``/``tomlq -t`` option.
 
 .. admonition:: Compatibility note
