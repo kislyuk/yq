@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="yq",
@@ -15,28 +15,26 @@ setup(
     use_scm_version={
         "write_to": "yq/version.py",
     },
-    setup_requires=['setuptools_scm >= 3.4.3'],
+    setup_requires=["setuptools_scm >= 3.4.3"],
     install_requires=[
         "PyYAML >= 5.3.1",
         "xmltodict >= 0.11.0",
         "toml >= 0.10.0",
-        "argcomplete >= 1.8.1"
+        "argcomplete >= 1.8.1",
     ],
     extras_require={
         "tests": [
             "coverage",
             "flake8",
-            "wheel"
+            "wheel",
+            "build",
+            "mypy",
         ]
     },
     packages=find_packages(exclude=["test"]),
     include_package_data=True,
     entry_points={
-        'console_scripts': [
-            'yq=yq:cli',
-            'xq=yq:xq_cli',
-            'tomlq=yq:tq_cli'
-        ],
+        "console_scripts": ["yq=yq:cli", "xq=yq:xq_cli", "tomlq=yq:tq_cli"],
     },
     test_suite="test",
     classifiers=[
@@ -51,6 +49,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
-        "Topic :: Software Development :: Libraries :: Python Modules"
-    ]
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
 )
