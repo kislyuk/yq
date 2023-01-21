@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 
-import os, sys, unittest, tempfile, io, platform, subprocess, yaml
+import io
+import os
+import platform
+import subprocess
+import sys
+import tempfile
+import unittest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from yq import yq, cli  # noqa
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from yq import cli, yq  # noqa
 
 USING_PYPY = True if platform.python_implementation() == "PyPy" else False
 
@@ -41,6 +47,7 @@ lol9: &lol9 [*lol8,*lol8,*lol8,*lol8,*lol8,*lol8,*lol8,*lol8,*lol8]
 lol10: &lol10 [*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9]
 """
 
+
 class TestYq(unittest.TestCase):
     def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
         stdin, stdout = sys.stdin, sys.stdout
@@ -75,10 +82,14 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("- понедельник\n- вторник\n", ["-y", "."]), "- понедельник\n- вторник\n")
 
     def test_yq_err(self):
-        err = ('yq: Error running jq: ScannerError: while scanning for the next token\nfound character \'%\' that '
-               'cannot start any token\n  in "<file>", line 1, column 3.')
-        err2 = ('yq: Error running jq: ScannerError: while scanning for the next token\nfound character that '
-                'cannot start any token\n  in "<file>", line 1, column 3.')
+        err = (
+            "yq: Error running jq: ScannerError: while scanning for the next token\nfound character '%' that "
+            'cannot start any token\n  in "<file>", line 1, column 3.'
+        )
+        err2 = (
+            "yq: Error running jq: ScannerError: while scanning for the next token\nfound character that "
+            'cannot start any token\n  in "<file>", line 1, column 3.'
+        )
         self.run_yq("- %", ["."], expect_exit_codes={err, err2, 2})
 
     def test_yq_arg_handling(self):
@@ -104,24 +115,26 @@ class TestYq(unittest.TestCase):
 
     def test_yq_arg_passthrough(self):
         self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "--indent", "4", "."]), "")
-        self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "-y", "--indent", "4", ".x=$x"]),
-                         "x: y\n")
+        self.assertEqual(
+            self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "-y", "--indent", "4", ".x=$x"]), "x: y\n"
+        )
         err = "yq: Error running jq: BrokenPipeError: [Errno 32] Broken pipe" + (": '<fdopen>'." if USING_PYPY else ".")
         self.run_yq("{}", ["--indent", "9", "."], expect_exit_codes={err, 2})
-        self.assertEqual(self.run_yq('', ["true", "-y", "-rn"]), "true\n...\n")
+        self.assertEqual(self.run_yq("", ["true", "-y", "-rn"]), "true\n...\n")
 
         with tempfile.NamedTemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
-            tf.write(b'.a')
+            tf.write(b".a")
             tf.seek(0)
             tf2.write(b'{"a": 1}')
             for arg in "--from-file", "-f":
                 tf2.seek(0)
-                self.assertEqual(self.run_yq("", ["-y", arg, tf.name, self.fd_path(tf2)]), '1\n...\n')
+                self.assertEqual(self.run_yq("", ["-y", arg, tf.name, self.fd_path(tf2)]), "1\n...\n")
 
     @unittest.skipIf(subprocess.check_output(["jq", "--version"]) < b"jq-1.6", "Test options introduced in jq 1.6")
     def test_jq16_arg_passthrough(self):
-        self.assertEqual(self.run_yq("{}", ["--indentless", "-y", ".a=$ARGS.positional", "--args", "a", "b"]),
-                         "a:\n- a\n- b\n")
+        self.assertEqual(
+            self.run_yq("{}", ["--indentless", "-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n- a\n- b\n"
+        )
         self.assertEqual(self.run_yq("{}", ["-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n  - a\n  - b\n")
         self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "a", "b"]), "")
 
@@ -145,13 +158,14 @@ class TestYq(unittest.TestCase):
             tf.seek(0)
             tf2.write(b'{"a": 1}')
             tf2.seek(0)
-            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), 'b\n--- 1\n...\n')
+            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "b\n--- 1\n...\n")
 
     def test_datetimes(self):
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "."]), "- '2016-12-20T22:07:36Z'\n")
-        self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "--yml-out-ver=1.2", "."]),
-                         "- 2016-12-20T22:07:36Z\n")
+        self.assertEqual(
+            self.run_yq("- 2016-12-20T22:07:36Z\n", ["-y", "--yml-out-ver=1.2", "."]), "- 2016-12-20T22:07:36Z\n"
+        )
         self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
         self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
         self.assertEqual(self.run_yq("2016-12-20", ["-y", "--yml-out-ver=1.2", "."]), "2016-12-20\n...\n")
@@ -164,7 +178,7 @@ class TestYq(unittest.TestCase):
         with tempfile.TemporaryFile() as tf:
             tf.write(yaml_with_tags.encode())
             tf.seek(0)
-            self.assertEqual(self.run_yq("", ["-y", ".xyz.foo", self.fd_path(tf)]), 'bar\n...\n')
+            self.assertEqual(self.run_yq("", ["-y", ".xyz.foo", self.fd_path(tf)]), "bar\n...\n")
 
     def test_roundtrip_yaml(self):
         cfn_filename = os.path.join(os.path.dirname(__file__), "cfn.yml")
@@ -178,15 +192,15 @@ class TestYq(unittest.TestCase):
             tf2.write(b"- foo\n- bar\n")
             tf2.seek(0)
             self.run_yq("", ["-i", "-y", ".[0]", tf.name, tf2.name])
-            self.assertEqual(tf.read(), b'foo\n...\n')
-            self.assertEqual(tf2.read(), b'foo\n...\n')
+            self.assertEqual(tf.read(), b"foo\n...\n")
+            self.assertEqual(tf2.read(), b"foo\n...\n")
 
             # Files do not get overwritten on error (DeferredOutputStream logic)
             self.run_yq("", ["-i", "-y", tf.name, tf2.name], expect_exit_codes=[3])
             tf.seek(0)
             tf2.seek(0)
-            self.assertEqual(tf.read(), b'foo\n...\n')
-            self.assertEqual(tf2.read(), b'foo\n...\n')
+            self.assertEqual(tf.read(), b"foo\n...\n")
+            self.assertEqual(tf2.read(), b"foo\n...\n")
 
     def test_explicit_doc_markers(self):
         test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
@@ -196,38 +210,45 @@ class TestYq(unittest.TestCase):
 
     def test_xq(self):
         self.assertEqual(self.run_yq("<foo/>", ["."], input_format="xml"), "")
-        self.assertEqual(self.run_yq("<foo/>", ["-x", ".foo.x=1"], input_format="xml"),
-                         '<foo>\n  <x>1</x>\n</foo>\n')
+        self.assertEqual(self.run_yq("<foo/>", ["-x", ".foo.x=1"], input_format="xml"), "<foo>\n  <x>1</x>\n</foo>\n")
 
-        self.assertEqual(self.run_yq("<a><b/></a>", ["-y", "."], input_format="xml"),
-                         "a:\n  b: null\n")
-        self.assertEqual(self.run_yq("<a><b/></a>", ["-y", "--xml-force-list", "b", "."], input_format="xml"),
-                         "a:\n  b:\n    - null\n")
+        self.assertEqual(self.run_yq("<a><b/></a>", ["-y", "."], input_format="xml"), "a:\n  b: null\n")
+        self.assertEqual(
+            self.run_yq("<a><b/></a>", ["-y", "--xml-force-list", "b", "."], input_format="xml"),
+            "a:\n  b:\n    - null\n",
+        )
 
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
-            tf.write(b'<a><b/></a>')
+            tf.write(b"<a><b/></a>")
             tf.seek(0)
-            tf2.write(b'<a><c/></a>')
+            tf2.write(b"<a><c/></a>")
             tf2.seek(0)
-            self.assertEqual(self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
-                             '<b></b>\n<c></c>\n')
-        err = ("yq: Error converting JSON to XML: cannot represent non-object types at top level. "
-               "Use --xml-root=name to envelope your output with a root element.")
+            self.assertEqual(
+                self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
+                "<b></b>\n<c></c>\n",
+            )
+        err = (
+            "yq: Error converting JSON to XML: cannot represent non-object types at top level. "
+            "Use --xml-root=name to envelope your output with a root element."
+        )
         self.run_yq("[1]", ["-x", "."], expect_exit_codes=[err])
 
     def test_xq_dtd(self):
         with tempfile.TemporaryFile() as tf:
             tf.write(b'<a><b c="d">e</b><b>f</b></a>')
             tf.seek(0)
-            self.assertEqual(self.run_yq("", ["-x", ".a", self.fd_path(tf)], input_format="xml"),
-                             '<b c="d">e</b><b>f</b>\n')
+            self.assertEqual(
+                self.run_yq("", ["-x", ".a", self.fd_path(tf)], input_format="xml"), '<b c="d">e</b><b>f</b>\n'
+            )
             tf.seek(0)
-            self.assertEqual(self.run_yq("", ["-x", "--xml-dtd", ".", self.fd_path(tf)], input_format="xml"),
-                             '<?xml version="1.0" encoding="utf-8"?>\n<a>\n  <b c="d">e</b>\n  <b>f</b>\n</a>\n')
+            self.assertEqual(
+                self.run_yq("", ["-x", "--xml-dtd", ".", self.fd_path(tf)], input_format="xml"),
+                '<?xml version="1.0" encoding="utf-8"?>\n<a>\n  <b c="d">e</b>\n  <b>f</b>\n</a>\n',
+            )
             tf.seek(0)
             self.assertEqual(
                 self.run_yq("", ["-x", "--xml-dtd", "--xml-root=g", ".a", self.fd_path(tf)], input_format="xml"),
-                '<?xml version="1.0" encoding="utf-8"?>\n<g>\n  <b c="d">e</b>\n  <b>f</b>\n</g>\n'
+                '<?xml version="1.0" encoding="utf-8"?>\n<g>\n  <b c="d">e</b>\n  <b>f</b>\n</g>\n',
             )
 
     def test_tomlq(self):
@@ -238,7 +259,7 @@ class TestYq(unittest.TestCase):
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             self.assertEqual(
                 self.run_yq("", ["-y", "-e", "--slurp", ".[0] == .[1]", "-", self.fd_path(tf), self.fd_path(tf2)]),
-                "true\n...\n"
+                "true\n...\n",
             )
 
     def test_entity_expansion_defense(self):
@@ -252,12 +273,13 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq(set_yaml, ["."]), "")
         self.assertEqual(
             self.run_yq(set_yaml, ["-y", "."]),
-            "example:\n  Boston Red Sox: null\n  Detroit Tigers: null\n  New York Yankees: null\n"
+            "example:\n  Boston Red Sox: null\n  Detroit Tigers: null\n  New York Yankees: null\n",
         )
 
     def test_yaml_merge(self):
-        self.assertEqual(self.run_yq("a: &b\n  c: d\ne:\n  <<: *b\n  g: h", ["-y", "."]),
-                         "a:\n  c: d\ne:\n  c: d\n  g: h\n")
+        self.assertEqual(
+            self.run_yq("a: &b\n  c: d\ne:\n  <<: *b\n  g: h", ["-y", "."]), "a:\n  c: d\ne:\n  c: d\n  g: h\n"
+        )
 
     def test_yaml_1_2(self):
         self.assertEqual(self.run_yq("11:12:13", ["."]), "")
@@ -288,5 +310,6 @@ class TestYq(unittest.TestCase):
         """YAML 1.2 octals not yet implemented"""
         self.assertEqual(self.run_yq("on: -012345", ["-y", "--yml-out-ver=1.2", "."]), "on: -12345\n")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

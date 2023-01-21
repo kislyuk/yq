@@ -1,15 +1,18 @@
 import re
 
 import yaml
+
+from .loader import hash_key, set_yaml_grammar
+
 # try:
 #     from yaml import CSafeDumper as default_dumper
 # except ImportError:
 #     from yaml import SafeDumper as default_dumper
 
-from .loader import hash_key, set_yaml_grammar
 
 class OrderedIndentlessDumper(yaml.SafeDumper):
     pass
+
 
 class OrderedDumper(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
@@ -18,8 +21,10 @@ class OrderedDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
+
 yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$")
 yaml_item_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>\d+)_(?P<value>.+)__$")
+
 
 def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1"):
     # if not (use_annotations or indentless):

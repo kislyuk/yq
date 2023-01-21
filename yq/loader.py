@@ -3,87 +3,111 @@ from base64 import b64encode
 from hashlib import sha224
 
 import yaml
-from yaml.tokens import (AliasToken, AnchorToken, ScalarToken, FlowMappingStartToken, FlowMappingEndToken, KeyToken,
-                         ValueToken)
+from yaml.tokens import (
+    AliasToken,
+    AnchorToken,
+    FlowMappingEndToken,
+    FlowMappingStartToken,
+    KeyToken,
+    ScalarToken,
+    ValueToken,
+)
+
 try:
     from yaml import CSafeLoader as default_loader
 except ImportError:
-    from yaml import SafeLoader as default_loader
+    from yaml import SafeLoader as default_loader  # type: ignore
 
 
 core_resolvers = {
     "1.1": [
         {
             "tag": "tag:yaml.org,2002:bool",
-            "regexp": re.compile(r'''^(?:yes|Yes|YES|no|No|NO
+            "regexp": re.compile(
+                r"""^(?:yes|Yes|YES|no|No|NO
             |true|True|TRUE|false|False|FALSE
-            |on|On|ON|off|Off|OFF)$''', re.X),
-            "start_chars": list('yYnNtTfFoO')
-        }, {
+            |on|On|ON|off|Off|OFF)$""",
+                re.X,
+            ),
+            "start_chars": list("yYnNtTfFoO"),
+        },
+        {
             "tag": "tag:yaml.org,2002:float",
-            "regexp": re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
+            "regexp": re.compile(
+                r"""^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
             |\.[0-9_]+(?:[eE][-+][0-9]+)?
             |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
             |[-+]?\.(?:inf|Inf|INF)
-            |\.(?:nan|NaN|NAN))$''', re.X),
-            "start_chars": list('-+0123456789.')
-        }, {
+            |\.(?:nan|NaN|NAN))$""",
+                re.X,
+            ),
+            "start_chars": list("-+0123456789."),
+        },
+        {
             "tag": "tag:yaml.org,2002:int",
-            "regexp": re.compile(r'''^(?:[-+]?0b[0-1_]+
+            "regexp": re.compile(
+                r"""^(?:[-+]?0b[0-1_]+
             |[-+]?0[0-7_]+
             |[-+]?(?:0|[1-9][0-9_]*)
             |[-+]?0x[0-9a-fA-F_]+
-            |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
-            "start_chars": list('-+0123456789')
-        }, {
+            |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$""",
+                re.X,
+            ),
+            "start_chars": list("-+0123456789"),
+        },
+        {
             "tag": "tag:yaml.org,2002:null",
-            "regexp": re.compile(r'''^(?: ~
+            "regexp": re.compile(
+                r"""^(?: ~
             |null|Null|NULL
-            | )$''', re.X),
-            "start_chars": ['~', 'n', 'N', '']
-        }, {
+            | )$""",
+                re.X,
+            ),
+            "start_chars": ["~", "n", "N", ""],
+        },
+        {
             "tag": "tag:yaml.org,2002:timestamp",
-            "regexp": re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
+            "regexp": re.compile(
+                r"""^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
             |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
             (?:[Tt]|[ \t]+)[0-9][0-9]?
             :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
-            (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
-            "start_chars": list('0123456789')
-        }, {
-            "tag": "tag:yaml.org,2002:value",
-            "regexp": re.compile(r'^(?:=)$'),
-            "start_chars": ['=']
-        }
+            (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$""",
+                re.X,
+            ),
+            "start_chars": list("0123456789"),
+        },
+        {"tag": "tag:yaml.org,2002:value", "regexp": re.compile(r"^(?:=)$"), "start_chars": ["="]},
     ],
     "1.2": [
         {
             "tag": "tag:yaml.org,2002:bool",
-            "regexp": re.compile(r'^(?:|true|True|TRUE|false|False|FALSE)$', re.X),
-            "start_chars": list('tTfF')
-        }, {
+            "regexp": re.compile(r"^(?:|true|True|TRUE|false|False|FALSE)$", re.X),
+            "start_chars": list("tTfF"),
+        },
+        {
             "tag": "tag:yaml.org,2002:int",
-            "regexp": re.compile(r'^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$', re.X),
-            "start_chars": list('-+0123456789')
-        }, {
+            "regexp": re.compile(r"^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$", re.X),
+            "start_chars": list("-+0123456789"),
+        },
+        {
             "tag": "tag:yaml.org,2002:float",
             "regexp": re.compile(
-                r'^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$',  # noqa
-                re.X
+                r"^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$",  # noqa
+                re.X,
             ),
-            "start_chars": list('-+0123456789.')
-        }, {
+            "start_chars": list("-+0123456789."),
+        },
+        {
             "tag": "tag:yaml.org,2002:null",
-            "regexp": re.compile(r'^(?:~||null|Null|NULL)$', re.X),
-            "start_chars": ['~', 'n', 'N', '']
-        }
-    ]
+            "regexp": re.compile(r"^(?:~||null|Null|NULL)$", re.X),
+            "start_chars": ["~", "n", "N", ""],
+        },
+    ],
 }
 
-merge_resolver = {
-    "tag": "tag:yaml.org,2002:merge",
-    "regexp": re.compile(r'^(?:<<)$'),
-    "start_chars": ['<']
-}
+merge_resolver = {"tag": "tag:yaml.org,2002:merge", "regexp": re.compile(r"^(?:<<)$"), "start_chars": ["<"]}
+
 
 def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
     if grammar_version not in core_resolvers:
@@ -93,9 +117,10 @@ def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
         resolvers.append(merge_resolver)
     resolver.yaml_implicit_resolvers = {}
     for r in resolvers:
-        for start_char in r["start_chars"]:
+        for start_char in r["start_chars"]:  # type: ignore
             resolver.yaml_implicit_resolvers.setdefault(start_char, [])
             resolver.yaml_implicit_resolvers[start_char].append((r["tag"], r["regexp"]))
+
 
 def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
@@ -128,6 +153,7 @@ class CustomLoader(yaml.SafeLoader):
         self.allow_simple_key = False
         anchor_token = self.scan_anchor(AnchorToken)  # noqa: F841
         # self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
+
 
 def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=True):
     def construct_sequence(loader, node):
@@ -171,7 +197,7 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
     loader_class = default_loader if expand_aliases else CustomLoader
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
-    loader_class.add_multi_constructor('', parse_unknown_tags)
+    loader_class.add_multi_constructor("", parse_unknown_tags)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:binary", None)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:set", None)
     set_yaml_grammar(loader_class, expand_merge_keys=expand_merge_keys)
