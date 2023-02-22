@@ -1,3 +1,10 @@
+Changes for v3.1.1 (2023-02-21)
+===============================
+
+-  Handle TOML datetimes. Fixes #160
+
+-  Test and documentation improvements
+
 Changes for v3.1.0 (2022-07-24)
 ===============================
 
