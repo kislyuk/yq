@@ -330,7 +330,7 @@ def yq(
                 import toml
 
                 for input_stream in input_streams:
-                    json.dump(toml.load(input_stream), jq.stdin)  # type: ignore
+                    json.dump(toml.load(input_stream), jq.stdin, cls=JSONDateTimeEncoder)  # type: ignore
                     jq.stdin.write("\n")  # type: ignore
             else:
                 raise Exception("Unknown input format")

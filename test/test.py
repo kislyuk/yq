@@ -254,6 +254,7 @@ class TestYq(unittest.TestCase):
     def test_tomlq(self):
         self.assertEqual(self.run_yq("[foo]\nbar = 1", ["."], input_format="toml"), "")
         self.assertEqual(self.run_yq("[foo]\nbar = 1", ["-t", ".foo"], input_format="toml"), "bar = 1\n")
+        self.assertEqual(self.run_yq("[foo]\nbar = 2020-02-20", ["."], input_format="toml"), "")
 
     def test_abbrev_opt_collisions(self):
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
