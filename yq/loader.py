@@ -87,7 +87,7 @@ core_resolvers = {
         },
         {
             "tag": "tag:yaml.org,2002:int",
-            "regexp": re.compile(r"^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$", re.X),
+            "regexp": re.compile(r"^(?:|0o[0-7]+|[-+]?(?:0|[1-9][0-9]*)|0x[0-9a-fA-F]+)$", re.X),
             "start_chars": list("-+0123456789"),
         },
         {
