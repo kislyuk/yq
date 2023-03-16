@@ -34,10 +34,14 @@ while in JSON::
 
     yq -Y .foo.bar input.yml
 
-Use the ``--width``/``-w`` option to pass the line wrap width for string literals. With ``-y/-Y``, files can be edited
-in place like with ``sed -i``: ``yq -yi .foo=1 *.yml``. All other command line arguments are forwarded to ``jq``. ``yq``
-forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which case the exit code is 1.
-See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq`` features and options.
+yq can be called as a module if needed. With ``-y/-Y``, files can be edited in place like with ``sed -i``::
+
+    python -m yq -Y --indentless --in-place '.["current-context"] = "staging-cluster"' ~/.kube/config
+
+Use the ``--width``/``-w`` option to pass the line wrap width for string literals. All other command line arguments are
+forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which
+case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq``
+features and options.
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
 
