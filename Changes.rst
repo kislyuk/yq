@@ -1,3 +1,12 @@
+Changes for v3.2.0 (2023-04-03)
+===============================
+
+-  Use tomlkit instead of toml
+
+-  Add security policy
+
+-  Documentation and release infrastructure improvements
+
 Changes for v3.1.1 (2023-02-21)
 ===============================
 
