@@ -19,7 +19,7 @@ setup(
     install_requires=[
         "PyYAML >= 5.3.1",
         "xmltodict >= 0.11.0",
-        "toml >= 0.10.0",
+        "tomlkit >= 0.11.7",
         "argcomplete >= 1.8.1",
     ],
     extras_require={

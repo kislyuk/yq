@@ -246,9 +246,9 @@ def yq(
                     json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
                     json_buffer.write("\n")
                 elif input_format == "toml":
-                    import toml
+                    import tomlkit
 
-                    doc = toml.load(input_stream)  # type: ignore
+                    doc = tomlkit.load(input_stream)  # type: ignore
                     json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
                     json_buffer.write("\n")
                 else:
@@ -295,13 +295,13 @@ def yq(
                             raise
                     output_stream.write(b"\n" if sys.version_info < (3, 0) else "\n")
             elif output_format == "toml":
-                import toml
+                import tomlkit
 
                 for doc in decode_docs(jq_out, json_decoder):
                     if not isinstance(doc, dict):
                         msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
                         exit_func(msg.format(program_name))
-                    toml.dump(doc, output_stream)
+                    tomlkit.dump(doc, output_stream)
         else:
             if input_format == "yaml":
                 loader_class = get_loader(
@@ -327,10 +327,10 @@ def yq(
                     )
                     jq.stdin.write("\n")  # type: ignore
             elif input_format == "toml":
-                import toml
+                import tomlkit
 
                 for input_stream in input_streams:
-                    json.dump(toml.load(input_stream), jq.stdin, cls=JSONDateTimeEncoder)  # type: ignore
+                    json.dump(tomlkit.load(input_stream), jq.stdin, cls=JSONDateTimeEncoder)  # type: ignore
                     jq.stdin.write("\n")  # type: ignore
             else:
                 raise Exception("Unknown input format")
