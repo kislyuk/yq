@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
 lint:
-	flake8
+	ruff $$(dirname */__init__.py)
 	mypy --install-types --non-interactive --check-untyped-defs $$(dirname */__init__.py)
 
 test:
