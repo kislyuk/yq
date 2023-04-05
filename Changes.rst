@@ -1,3 +1,9 @@
+Changes for v3.2.1 (2023-04-04)
+===============================
+
+-  Relax tomlkit dependency version range to preserve Python 3.6
+   compatibility (#165)
+
 Changes for v3.2.0 (2023-04-03)
 ===============================
 
