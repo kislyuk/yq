@@ -1,3 +1,8 @@
+Changes for v3.2.2 (2023-04-22)
+===============================
+
+-  Allow XML documents to be streamed with –xml-item-depth
+
 Changes for v3.2.1 (2023-04-04)
 ===============================
 
