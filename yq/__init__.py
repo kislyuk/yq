@@ -246,7 +246,11 @@ def yq(
                     if xml_item_depth != 0:
                         raise Exception("xml_item_depth is not supported with xq -x")
 
-                    doc = xmltodict.parse(input_stream.buffer, disable_entities=True, force_list=xml_force_list)
+                    doc = xmltodict.parse(
+                        input_stream.buffer if isinstance(input_stream, io.TextIOWrapper) else input_stream.read(),
+                        disable_entities=True,
+                        force_list=xml_force_list,
+                    )
                     json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
                     json_buffer.write("\n")
                 elif input_format == "toml":
@@ -331,7 +335,7 @@ def yq(
 
                 for input_stream in input_streams:
                     doc = xmltodict.parse(
-                        input_stream.buffer,
+                        input_stream.buffer if isinstance(input_stream, io.TextIOWrapper) else input_stream.read(),
                         disable_entities=True,
                         force_list=xml_force_list,
                         item_depth=xml_item_depth,
