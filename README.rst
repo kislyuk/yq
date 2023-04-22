@@ -108,7 +108,10 @@ XML support
 `transcodes XML to JSON <https://www.xml.com/pub/a/2006/05/31/converting-between-xml-and-json.html>`_ using
 `xmltodict <https://github.com/martinblech/xmltodict>`_ and pipes it to ``jq``. Roundtrip transcoding is available with
 the ``xq --xml-output``/``xq -x`` option. Multiple XML documents can be passed in separate files/streams as
-``xq a.xml b.xml``. Entity expansion and DTD resolution is disabled to avoid XML parsing vulnerabilities.
+``xq a.xml b.xml``. Use ``--xml-item-depth`` to descend into large documents, streaming their contents without loading
+the full doc into memory (for example, stream a `Wikipedia database dump <https://dumps.wikimedia.org>`_ with
+``cat enwiki-*.xml.bz2 | bunzip2 | xq . --xml-item-depth=2``). Entity expansion and DTD resolution is disabled to avoid
+XML parsing vulnerabilities.
 
 TOML support
 ------------
