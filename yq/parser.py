@@ -51,7 +51,7 @@ def get_parser(program_name, description):
             "is incompatible with jq filters that do not expect these extra items."
         )
         width_help = "When using --yaml-output, specify string wrap width"
-        indentless_help = "When using --yaml-output, indent block style lists (sequences) " "with 0 spaces instead of 2"
+        indentless_help = "When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2"
         grammar_help = (
             "When using --yaml-output, specify output grammar (the default is 1.1 and will be changed "
             "to 1.2 in a future version). Setting this to 1.2 will cause strings like 'on' and 'no' to be "
@@ -60,12 +60,10 @@ def get_parser(program_name, description):
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
-        xml_item_depth_help = "Specify depth of items to emit from document (use this to stream large documents)"
+        xml_item_depth_help = "Specify depth of items to emit (default 0; use a positive integer to stream large docs)"
         xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
-        xml_force_list_help = (
-            "Tag name to pass to force_list parameter of xmltodict.parse(). " "Can be used multiple times."
-        )
+        xml_force_list_help = "Emit a list for elements with this name even if they occur only once (option can repeat)"
     elif program_name == "tomlq":
         current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
