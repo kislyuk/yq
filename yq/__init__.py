@@ -183,6 +183,7 @@ def yq(
     width=None,
     indentless_lists=False,
     xml_root=None,
+    xml_item_depth=0,
     xml_dtd=False,
     xml_force_list=frozenset(),
     explicit_start=False,
@@ -242,7 +243,10 @@ def yq(
                 elif input_format == "xml":
                     import xmltodict
 
-                    doc = xmltodict.parse(input_stream.read(), disable_entities=True, force_list=xml_force_list)
+                    if xml_item_depth != 0:
+                        raise Exception("xml_item_depth is not supported with xq -x")
+
+                    doc = xmltodict.parse(input_stream.buffer, disable_entities=True, force_list=xml_force_list)
                     json.dump(doc, json_buffer, cls=JSONDateTimeEncoder)
                     json_buffer.write("\n")
                 elif input_format == "toml":
@@ -320,12 +324,21 @@ def yq(
             elif input_format == "xml":
                 import xmltodict
 
-                for input_stream in input_streams:
-                    json.dump(
-                        xmltodict.parse(input_stream.read(), disable_entities=True, force_list=xml_force_list),
-                        jq.stdin,  # type: ignore
-                    )
+                def emit_entry(path, entry):
+                    json.dump(entry, jq.stdin)
                     jq.stdin.write("\n")  # type: ignore
+                    return True
+
+                for input_stream in input_streams:
+                    doc = xmltodict.parse(
+                        input_stream.buffer,
+                        disable_entities=True,
+                        force_list=xml_force_list,
+                        item_depth=xml_item_depth,
+                        item_callback=emit_entry,
+                    )
+                    if doc:
+                        emit_entry(None, doc)
             elif input_format == "toml":
                 import tomlkit
 

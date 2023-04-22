@@ -38,7 +38,7 @@ class Parser(argparse.ArgumentParser):
 def get_parser(program_name, description):
     # By default suppress these help strings and only enable them in the specific programs.
     yaml_output_help, yaml_roundtrip_help, width_help, indentless_help, grammar_help = [argparse.SUPPRESS] * 5
-    xml_output_help, xml_dtd_help, xml_root_help, xml_force_list_help = [argparse.SUPPRESS] * 4
+    xml_output_help, xml_item_depth_help, xml_dtd_help, xml_root_help, xml_force_list_help = [argparse.SUPPRESS] * 5
     toml_output_help = argparse.SUPPRESS
 
     if program_name == "yq":
@@ -60,6 +60,7 @@ def get_parser(program_name, description):
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
+        xml_item_depth_help = "Specify depth of items to emit from document (use this to stream large documents)"
         xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
         xml_force_list_help = (
@@ -107,6 +108,7 @@ def get_parser(program_name, description):
     parser.add_argument(
         "--xml-output", "-x", dest="output_format", action="store_const", const="xml", help=xml_output_help
     )
+    parser.add_argument("--xml-item-depth", type=int, default=0, help=xml_item_depth_help)
     parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)
     parser.add_argument("--xml-root", help=xml_root_help)
     parser.add_argument("--xml-force-list", action="append", help=xml_force_list_help)
