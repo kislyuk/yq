@@ -329,7 +329,7 @@ def yq(
                 import xmltodict
 
                 def emit_entry(path, entry):
-                    json.dump(entry, jq.stdin)
+                    json.dump(entry, jq.stdin)  # type: ignore
                     jq.stdin.write("\n")  # type: ignore
                     return True
 
