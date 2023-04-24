@@ -106,10 +106,10 @@ def get_parser(program_name, description):
     parser.add_argument(
         "--xml-output", "-x", dest="output_format", action="store_const", const="xml", help=xml_output_help
     )
-    parser.add_argument("--xml-item-depth", type=int, default=0, help=xml_item_depth_help)
+    parser.add_argument("--xml-item-depth", type=int, default=0, help=xml_item_depth_help, metavar="123")
     parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)
     parser.add_argument("--xml-root", help=xml_root_help)
-    parser.add_argument("--xml-force-list", action="append", help=xml_force_list_help)
+    parser.add_argument("--xml-force-list", action="append", help=xml_force_list_help, metavar="ELT")
     parser.add_argument(
         "--toml-output", "-t", dest="output_format", action="store_const", const="toml", help=toml_output_help
     )

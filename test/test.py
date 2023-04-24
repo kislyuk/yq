@@ -210,7 +210,12 @@ class TestYq(unittest.TestCase):
 
     def test_xq(self):
         self.assertEqual(self.run_yq("<foo/>", ["."], input_format="xml"), "")
+        self.assertEqual(self.run_yq("<foo/>", ["--xml-item-depth=2", "."], input_format="xml"), "")
+        self.assertEqual(self.run_yq("<foo/>", ["--xml-dtd", "."], input_format="xml"), "")
         self.assertEqual(self.run_yq("<foo/>", ["-x", ".foo.x=1"], input_format="xml"), "<foo>\n  <x>1</x>\n</foo>\n")
+        self.assertTrue(self.run_yq("<foo/>", ["-x", "--xml-dtd", "."], input_format="xml").startswith("<?xml"))
+        self.assertTrue(self.run_yq("<foo/>", ["-x", "--xml-root=R", "."], input_format="xml").startswith("<R>"))
+        self.assertEqual(self.run_yq("<foo/>", ["--xml-force-list=foo", "."], input_format="xml"), "")
 
         self.assertEqual(self.run_yq("<a><b/></a>", ["-y", "."], input_format="xml"), "a:\n  b: null\n")
         self.assertEqual(
