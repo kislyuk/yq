@@ -11,7 +11,7 @@ init_docs:
 	cd docs; sphinx-quickstart
 
 docs:
-	python -m pip install furo
+	python -m pip install furo sphinx-copybutton
 	sphinx-build docs docs/html
 
 install:
