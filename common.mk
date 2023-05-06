@@ -30,6 +30,8 @@ release:
 	    if [[ -f Changes.md ]]; then cat $$TAG_MSG <(echo) Changes.md | sponge Changes.md; git add Changes.md; fi; \
 	    if [[ -f Changes.rst ]]; then cat <(pandoc --from markdown --to rst $$TAG_MSG) <(echo) Changes.rst | sponge Changes.rst; git add Changes.rst; fi; \
             yq --help > docs/cli-doc.txt; git add docs/cli-doc.txt; \
+            xq --help > docs/cli-doc-xq.txt; git add docs/cli-doc-xq.txt; \
+            tomlq --help > docs/cli-doc-tomlq.txt; git add docs/cli-doc-tomlq.txt; \
             git commit -m ${TAG}; \
 	    git tag --sign --annotate --file $$TAG_MSG ${TAG}
 	git push --follow-tags
