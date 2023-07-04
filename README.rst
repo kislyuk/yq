@@ -38,10 +38,11 @@ yq can be called as a module if needed. With ``-y/-Y``, files can be edited in p
 
     python -m yq -Y --indentless --in-place '.["current-context"] = "staging-cluster"' ~/.kube/config
 
-Use the ``--width``/``-w`` option to pass the line wrap width for string literals. All other command line arguments are
-forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error in YAML parsing, in which
-case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more details on ``jq``
-features and options.
+Use the ``--width``/``-w`` option to pass the line wrap width for string literals. Use
+``--explicit-start``/``--explicit-end`` to emit YAML start/end markers even when processing a single document. All other
+command line arguments are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error
+in YAML parsing, in which case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more
+details on ``jq`` features and options.
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
 

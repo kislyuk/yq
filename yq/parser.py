@@ -38,6 +38,7 @@ class Parser(argparse.ArgumentParser):
 def get_parser(program_name, description):
     # By default suppress these help strings and only enable them in the specific programs.
     yaml_output_help, yaml_roundtrip_help, width_help, indentless_help, grammar_help = [argparse.SUPPRESS] * 5
+    explicit_start_help, explicit_end_help = [argparse.SUPPRESS] * 2
     xml_output_help, xml_item_depth_help, xml_dtd_help, xml_root_help, xml_force_list_help = [argparse.SUPPRESS] * 5
     toml_output_help = argparse.SUPPRESS
 
@@ -57,6 +58,8 @@ def get_parser(program_name, description):
             "to 1.2 in a future version). Setting this to 1.2 will cause strings like 'on' and 'no' to be "
             "emitted unquoted."
         )
+        explicit_start_help = 'When using --yaml-output, always emit explicit document start ("---")'
+        explicit_end_help = 'When using --yaml-output, always emit explicit document end ("...")'
     elif program_name == "xq":
         current_language = "XML"
         xml_output_help = "Transcode jq JSON output back into XML and emit it"
@@ -99,8 +102,8 @@ def get_parser(program_name, description):
     )
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
-    parser.add_argument("--explicit-start", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--explicit-end", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--explicit-start", action="store_true", help=explicit_start_help)
+    parser.add_argument("--explicit-end", action="store_true", help=explicit_end_help)
     parser.add_argument("--no-expand-aliases", action="store_false", dest="expand_aliases", help=argparse.SUPPRESS)
     parser.add_argument("--max-expansion-factor", type=int, default=1024, help=argparse.SUPPRESS)
     parser.add_argument(
