@@ -105,6 +105,49 @@ parses this metadata, re-applies the tags and styles, and discards the extra pai
 
 yq does not support passing YAML comments into the JSON representation used by jq, or roundtripping such comments.
 
+Forcing string styles using the ``-z`` (``--yaml-string_styles``) option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``-z`` option will assume that strings might start with some style information.
+This option is only useful when using YAML-output (using ``-y`` or ``-Y``)
+
+To control the string style, the string itself has to be prepanded by additional information.
+Valid control strings are:
+
+* ``__yq_style_'__``: uses single quotes ``'``
+* ``__yq_style_"__``: uses double quotes ``"``
+* ``__yq_style_>__`` uses ``>``, ``>`` or ``>-``, (depending on if the text has trailing break lines)
+* ``__yq_style_|__`` uses ``|``, ``|+`` or ``|-``, (depending on if the text has trailing break lines)
+
+Assume you have some input file ``input.yaml``::
+
+    field1: "I am a\nmultiline string"
+
+Example usage::
+
+    yq -y -z '.field1 |= "__yq_style_|__" + .' input.yaml
+
+This will output::
+
+    field1: |
+        I am a
+        multiline string
+
+The usage can be simplified by adding the function ``style`` to ``~/.jq`` and/or to your scripts::
+
+    # remove existing styles
+    def style: if test("^__yq_style_.__") then .[14:] | style else . end;
+
+    # set a style
+    def style(s):
+        if s | length == 1 then "__yq_style_" + s + "__" + (. | style) # remove previous styles
+        else error("Only valid symbols are \", ', |, >, _")
+        end;
+
+
+This allows to simpify the above example to::
+
+    yq -y -z '.field1 |= style("|")' input.yaml
+
 XML support
 -----------
 ``yq`` also supports XML. The ``yq`` package installs an executable, ``xq``, which

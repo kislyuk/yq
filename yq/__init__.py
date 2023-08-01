@@ -183,6 +183,7 @@ def yq(
     expand_aliases=True,
     max_expansion_factor=1024,
     yaml_output_grammar_version="1.1",
+    yaml_string_styles=False,
     jq_args=frozenset(),
     exit_func=None,
 ):
@@ -261,6 +262,7 @@ def yq(
                     use_annotations=use_annotations,
                     indentless=indentless_lists,
                     grammar_version=yaml_output_grammar_version,
+                    use_string_styles=yaml_string_styles
                 )
                 yaml.dump_all(
                     decode_docs(jq_out, json_decoder),
