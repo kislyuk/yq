@@ -185,7 +185,7 @@ class TestYq(unittest.TestCase):
         with io.open(cfn_filename) as fh:
             self.assertEqual(self.run_yq("", ["-Y", ".", cfn_filename]), fh.read())
 
-    def test_in_place(self):
+    def test_in_place_yaml(self):
         with tempfile.NamedTemporaryFile() as tf, tempfile.NamedTemporaryFile() as tf2:
             tf.write(b"- foo\n- bar\n")
             tf.seek(0)
@@ -201,6 +201,13 @@ class TestYq(unittest.TestCase):
             tf2.seek(0)
             self.assertEqual(tf.read(), b"foo\n...\n")
             self.assertEqual(tf2.read(), b"foo\n...\n")
+
+    def test_in_place_toml(self):
+        with tempfile.NamedTemporaryFile() as tf:
+            tf.write(b'[GLOBAL]\nversion="1.0.0"')
+            tf.seek(0)
+            self.run_yq("", ["-i", "-t", ".GLOBAL.version=1.0.1", tf.name])
+            self.assertEqual(tf.read(), b'[GLOBAL]\nversion="1.0.1"')
 
     def test_explicit_doc_markers(self):
         test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")

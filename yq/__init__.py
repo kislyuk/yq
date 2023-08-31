@@ -131,8 +131,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 
     yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
     if in_place:
-        if args.output_format not in {"yaml", "annotated_yaml"}:
-            sys.exit("{}: -i/--in-place can only be used with -y/-Y".format(program_name))
+        if args.output_format not in {"yaml", "annotated_yaml", "toml"}:
+            sys.exit("{}: -i/--in-place can only be used with -y/-Y/-t".format(program_name))
         input_streams = yq_args.pop("input_streams")
         if len(input_streams) == 1 and input_streams[0].name == "<stdin>":
             msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
