@@ -204,10 +204,10 @@ class TestYq(unittest.TestCase):
 
     def test_in_place_toml(self):
         with tempfile.NamedTemporaryFile() as tf:
-            tf.write(b'[GLOBAL]\nversion="1.0.0"')
+            tf.write(b'[GLOBAL]\nversion="1.0.0"\n')
             tf.seek(0)
-            self.run_yq("", ["-i", "-t", ".GLOBAL.version=1.0.1", tf.name])
-            self.assertEqual(tf.read(), b'[GLOBAL]\nversion="1.0.1"')
+            self.run_yq("", ["-i", "-t", '.GLOBAL.version="1.0.1"', tf.name], input_format="toml")
+            self.assertEqual(tf.read(), b'[GLOBAL]\nversion = "1.0.1"\n')
 
     def test_explicit_doc_markers(self):
         test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
