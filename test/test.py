@@ -136,7 +136,7 @@ class TestYq(unittest.TestCase):
             self.run_yq("{}", ["--indentless", "-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n- a\n- b\n"
         )
         self.assertEqual(self.run_yq("{}", ["-y", ".a=$ARGS.positional", "--args", "a", "b"]), "a:\n  - a\n  - b\n")
-        self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "a", "b"]), "")
+        self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "{}", "{}"]), "")
 
     def test_short_option_separation(self):
         # self.assertEqual(self.run_yq('{"a": 1}', ["-yCcC", "."]), "a: 1\n") - Fails on 2.7 and 3.8
