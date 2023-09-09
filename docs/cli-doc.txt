@@ -1,5 +1,6 @@
 usage: yq [options] <jq filter> [input file...]
-          [--indentless-lists] [--in-place] [--version]
+          [--indentless-lists] [--explicit-start] [--explicit-end]
+          [--in-place] [--version]
           [jq_filter] [files ...]
 
 yq: Command-line YAML processor - jq wrapper for YAML documents
@@ -11,7 +12,7 @@ positional arguments:
   jq_filter
   files
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --yaml-output, --yml-output, -y
                         Transcode jq JSON output back into YAML and emit it
@@ -23,6 +24,8 @@ optional arguments:
                         When using --yaml-output, specify string wrap width
   --indentless-lists, --indentless
                         When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2
+  --explicit-start      When using --yaml-output, always emit explicit document start ("---")
+  --explicit-end        When using --yaml-output, always emit explicit document end ("...")
   --in-place, -i        Edit files in place (no backup - use caution)
   --version             show program's version number and exit
 

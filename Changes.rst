@@ -1,3 +1,12 @@
+Changes for v3.2.3 (2023-09-09)
+===============================
+
+-  test.py: use valid values for jsonargs. Fixes #172
+
+-  Allow editing toml in place (#171)
+
+-  Documentation improvements
+
 Changes for v3.2.2 (2023-04-22)
 ===============================
 

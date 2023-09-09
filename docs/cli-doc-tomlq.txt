@@ -9,7 +9,7 @@ positional arguments:
   jq_filter
   files
 
-optional arguments:
+options:
   -h, --help         show this help message and exit
   --toml-output, -t  Transcode jq JSON output back into TOML and emit it
   --in-place, -i     Edit files in place (no backup - use caution)
