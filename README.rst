@@ -5,6 +5,11 @@ Installation
 ------------
 ::
 
+    pipx install yq
+
+You can also install directly via ``pip``, but ``pipx`` is highly recommended!
+::
+
     pip install yq
 
 Before using ``yq``, you also have to install its dependency, ``jq``. See the `jq installation instructions
