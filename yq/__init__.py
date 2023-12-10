@@ -301,7 +301,7 @@ def yq(
                             raise Exception(str(e) + " Use --xml-root=name to envelope your output with a root element")
                         else:
                             raise
-                    output_stream.write(b"\n" if sys.version_info < (3, 0) else "\n")
+                    output_stream.write("\n")
             elif output_format == "toml":
                 import tomlkit
 
