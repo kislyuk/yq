@@ -13,3 +13,7 @@ per-file-ignores = {"yq/__init__.py" = ["F401"]}
 [[tool.mypy.overrides]]
 module = "argcomplete.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tomlkit.*"
+ignore_missing_imports = true
