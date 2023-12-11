@@ -17,3 +17,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "tomlkit.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "yq.version"
+ignore_missing_imports = true
