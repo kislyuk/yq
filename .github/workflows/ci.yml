@@ -20,7 +20,8 @@ jobs:
         if [[ $(uname) == Linux ]]; then sudo apt-get install --yes jq; fi
         if [[ $(uname) == Darwin ]]; then brew install jq; fi
     - run: make install
-    - run: make lint
+    - if: ${{matrix.python-version == '3.12'}}
+      run: make lint
     - run: make test
     - uses: codecov/codecov-action@v3
   black:
