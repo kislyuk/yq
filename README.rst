@@ -103,6 +103,8 @@ parses this metadata, re-applies the tags and styles, and discards the extra pai
  4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
  metadata keys. Check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
 
+yq does not support passing YAML comments into the JSON representation used by jq, or roundtripping such comments.
+
 XML support
 -----------
 ``yq`` also supports XML. The ``yq`` package installs an executable, ``xq``, which
