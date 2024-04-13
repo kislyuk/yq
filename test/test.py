@@ -195,7 +195,7 @@ class TestYq(unittest.TestCase):
             self.assertEqual(tf.read(), b"foo\n...\n")
             self.assertEqual(tf2.read(), b"foo\n...\n")
 
-            # Files do not get overwritten on error (DeferredOutputStream logic)
+            # Files do not get overwritten on error
             self.run_yq("", ["-i", "-y", tf.name, tf2.name], expect_exit_codes=[3])
             tf.seek(0)
             tf2.seek(0)
