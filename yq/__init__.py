@@ -290,6 +290,8 @@ def yq(
                         msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
                         exit_func(msg.format(program_name))
                     tomlkit.dump(doc, output_stream)
+            else:
+                raise Exception("Unknown output format")
         else:
             if input_format == "yaml":
                 loader_class = get_loader(
