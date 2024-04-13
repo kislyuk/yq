@@ -33,7 +33,7 @@ release:
             xq --help > docs/cli-doc-xq.txt; git add docs/cli-doc-xq.txt; \
             tomlq --help > docs/cli-doc-tomlq.txt; git add docs/cli-doc-tomlq.txt; \
             git commit -m ${TAG}; \
-	    git tag --sign --annotate --file $$TAG_MSG ${TAG}
+	    git tag --annotate --file $$TAG_MSG ${TAG}
 	git push --follow-tags
 	$(MAKE) install
 	gh release create ${TAG} dist/*.whl --notes="$$(git tag --list ${TAG} -n99 | perl -pe 's/^\S+\s*// if $$. == 1' | sed 's/^\s\s\s\s//')"
@@ -42,7 +42,7 @@ release:
 
 release-pypi:
 	python -m build
-	twine upload dist/*.tar.gz dist/*.whl --sign --verbose
+	twine upload dist/*.tar.gz dist/*.whl --verbose
 
 release-docs:
 	$(MAKE) docs
