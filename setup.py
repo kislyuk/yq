@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="yq",
-    version="3.2.3",
+    version="3.3.0",
     url="https://github.com/kislyuk/yq",
     license="Apache Software License",
     author="Andrey Kislyuk",

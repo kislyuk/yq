@@ -1,3 +1,13 @@
+Changes for v3.3.0 (2024-04-13)
+===============================
+
+-  tomlq: Use tomllib on Python 3.11 when not round-tripping
+
+-  xq: Support in-place XML editing
+
+-  Do not interpret characters that cannot be parsed in octal as int
+   (#176)
+
 Changes for v3.2.3 (2023-09-09)
 ===============================
 
