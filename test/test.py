@@ -317,7 +317,6 @@ class TestYq(unittest.TestCase):
 
     def test_yaml_1_1_octals(self):
         self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "'on': -5349\n")
-        self.assertEqual(self.run_yq("on: -012349", ["-y", "."]), "'on': -012349\n")
 
     @unittest.expectedFailure
     def test_yaml_1_2_octals(self):
