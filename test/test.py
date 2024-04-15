@@ -294,6 +294,9 @@ class TestYq(unittest.TestCase):
             self.run_yq("a: &b\n  c: d\ne:\n  <<: *b\n  g: h", ["-y", "."]), "a:\n  c: d\ne:\n  c: d\n  g: h\n"
         )
 
+    def test_yaml_floats(self):
+        self.assertEqual(self.run_yq("test: 0.0004", ["-y", "."]), "test: 0.0004\n")
+        
     def test_yaml_1_2(self):
         self.assertEqual(self.run_yq("11:12:13", ["."]), "")
         self.assertEqual(self.run_yq("11:12:13", ["-y", "."]), "'11:12:13'\n")
