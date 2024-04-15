@@ -1,3 +1,9 @@
+Changes for v3.3.1 (2024-04-15)
+===============================
+
+Revert “Do not interpret characters that cannot be parsed in octal as
+int (#176)”
+
 Changes for v3.3.0 (2024-04-13)
 ===============================
 
