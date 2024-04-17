@@ -1,3 +1,8 @@
+Changes for v3.4.1 (2024-04-17)
+===============================
+
+-  Add module entry points for xq and tomlq
+
 Changes for v3.4.0 (2024-04-17)
 ===============================
 
