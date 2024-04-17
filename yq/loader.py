@@ -19,6 +19,7 @@ except ImportError:
     from yaml import SafeLoader as default_loader  # type: ignore
 
 
+# Note the 1.1 resolver is modified from the default and only safe for use in dumping, not loading.
 core_resolvers = {
     "1.1": [
         {
@@ -45,9 +46,10 @@ core_resolvers = {
         },
         {
             "tag": "tag:yaml.org,2002:int",
+            # Line 2 of regexp modified to match all decimal digits, not just 0-7, to induce quoting of string scalars
             "regexp": re.compile(
                 r"""^(?:[-+]?0b[0-1_]+
-            |[-+]?0[0-7_]+
+            |[-+]?0[0-9_]+
             |[-+]?(?:0|[1-9][0-9_]*)
             |[-+]?0x[0-9a-fA-F_]+
             |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$""",
