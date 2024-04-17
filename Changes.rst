@@ -1,3 +1,8 @@
+Changes for v3.4.0 (2024-04-17)
+===============================
+
+-  yq -y: Induce quoting of string scalars that start with 08 and 09
+
 Changes for v3.3.1 (2024-04-15)
 ===============================
 
