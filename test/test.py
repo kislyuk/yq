@@ -192,6 +192,8 @@ class TestYq(unittest.TestCase):
             tf2.write(b"- foo\n- bar\n")
             tf2.seek(0)
             self.run_yq("", ["-i", "-y", ".[0]", tf.name, tf2.name])
+            tf.seek(0)
+            tf2.seek(0)
             self.assertEqual(tf.read(), b"foo\n...\n")
             self.assertEqual(tf2.read(), b"foo\n...\n")
 
@@ -207,6 +209,7 @@ class TestYq(unittest.TestCase):
             tf.write(b'[GLOBAL]\nversion="1.0.0"\n')
             tf.seek(0)
             self.run_yq("", ["-i", "-t", '.GLOBAL.version="1.0.1"', tf.name], input_format="toml")
+            tf.seek(0)
             self.assertEqual(tf.read(), b'[GLOBAL]\nversion = "1.0.1"\n')
 
     def test_explicit_doc_markers(self):
