@@ -1,4 +1,5 @@
 usage: xq [options] <jq filter> [input file...]
+          [--version]
           [jq_filter] [files ...]
 
 xq: Command-line XML processor - jq wrapper for XML documents
@@ -13,10 +14,10 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --xml-output, -x      Transcode jq JSON output back into XML and emit it
+  --xml-item-depth 123  Specify depth of items to emit (default 0; use a positive integer to stream large docs)
   --xml-dtd             Preserve XML Document Type Definition (disables streaming of multiple docs)
   --xml-root XML_ROOT   When transcoding back to XML, envelope the output in an element with this name
-  --xml-force-list XML_FORCE_LIST
-                        Tag name to pass to force_list parameter of xmltodict.parse(). Can be used multiple times.
+  --xml-force-list ELT  Emit a list for elements with this name even if they occur only once (option can repeat)
   --in-place, -i        Edit files in place (no backup - use caution)
   --version             show program's version number and exit
 

@@ -1,3 +1,8 @@
+Changes for v3.4.2 (2024-04-26)
+===============================
+
+Constrain setuptools_scm version
+
 Changes for v3.4.1 (2024-04-17)
 ===============================
 
