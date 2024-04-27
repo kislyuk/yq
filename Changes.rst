@@ -1,3 +1,8 @@
+Changes for v3.4.3 (2024-04-27)
+===============================
+
+Finish migration to setuptools_scm
+
 Changes for v3.4.2 (2024-04-26)
 ===============================
 
