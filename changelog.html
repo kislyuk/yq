@@ -1,0 +1,644 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="yq: Command-line YAML/XML/TOML processor - jq wrapper for YAML, XML, TOML documents" href="index.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+        <title>Release Notes - yq documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">yq  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">yq  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><ul>
+<li><a class="reference internal" href="#">Release Notes</a></li>
+<li><a class="reference internal" href="#changes-for-v3-4-3-2024-04-27">Changes for v3.4.3 (2024-04-27)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-4-2-2024-04-26">Changes for v3.4.2 (2024-04-26)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-4-1-2024-04-17">Changes for v3.4.1 (2024-04-17)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-4-0-2024-04-17">Changes for v3.4.0 (2024-04-17)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-3-1-2024-04-15">Changes for v3.3.1 (2024-04-15)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-3-0-2024-04-13">Changes for v3.3.0 (2024-04-13)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-2-3-2023-09-09">Changes for v3.2.3 (2023-09-09)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-2-2-2023-04-22">Changes for v3.2.2 (2023-04-22)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-2-1-2023-04-04">Changes for v3.2.1 (2023-04-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-2-0-2023-04-03">Changes for v3.2.0 (2023-04-03)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-1-1-2023-02-21">Changes for v3.1.1 (2023-02-21)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-1-0-2022-07-24">Changes for v3.1.0 (2022-07-24)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-0-2-2022-07-05">Changes for v3.0.2 (2022-07-05)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-0-1-2022-07-04">Changes for v3.0.1 (2022-07-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v3-0-0-2022-07-04">Changes for v3.0.0 (2022-07-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-14-0-2022-02-20">Changes for v2.14.0 (2022-02-20)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-13-0-2021-12-02">Changes for v2.13.0 (2021-12-02)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-12-2-2021-06-13">Changes for v2.12.2 (2021-06-13)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-12-1-2021-06-13">Changes for v2.12.1 (2021-06-13)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-12-0-2021-02-05">Changes for v2.12.0 (2021-02-05)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-11-1-2020-09-26">Changes for v2.11.1 (2020-09-26)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-11-0-2020-09-03">Changes for v2.11.0 (2020-09-03)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-10-1-2020-05-11">Changes for v2.10.1 (2020-05-11)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-10-0-2019-12-23">Changes for v2.10.0 (2019-12-23)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-9-2-2019-11-04">Changes for v2.9.2 (2019-11-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-9-1-2019-11-04">Changes for v2.9.1 (2019-11-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-9-0-2019-11-04">Changes for v2.9.0 (2019-11-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-8-1-2019-10-28">Changes for v2.8.1 (2019-10-28)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-8-0-2019-10-25">Changes for v2.8.0 (2019-10-25)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-7-2-2019-01-09">Changes for v2.7.2 (2019-01-09)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-7-1-2018-11-05">Changes for v2.7.1 (2018-11-05)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-7-0-2018-08-04">Changes for v2.7.0 (2018-08-04)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-6-0-2018-04-28">Changes for v2.6.0 (2018-04-28)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-5-0-2018-04-02">Changes for v2.5.0 (2018-04-02)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-4-1-2018-02-13">Changes for v2.4.1 (2018-02-13)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-4-0-2018-02-08">Changes for v2.4.0 (2018-02-08)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-7-2018-02-07">Changes for v2.3.7 (2018-02-07)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-6-2018-01-29">Changes for v2.3.6 (2018-01-29)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-5-2018-01-29">Changes for v2.3.5 (2018-01-29)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-4-2017-12-26">Changes for v2.3.4 (2017-12-26)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-3-2017-09-30">Changes for v2.3.3 (2017-09-30)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-2-2017-09-25">Changes for v2.3.2 (2017-09-25)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-1-2017-09-25">Changes for v2.3.1 (2017-09-25)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-3-0-2017-08-27">Changes for v2.3.0 (2017-08-27)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-2-0-2017-07-07">Changes for v2.2.0 (2017-07-07)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-1-2-2017-06-27">Changes for v2.1.2 (2017-06-27)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-1-1-2017-05-02">Changes for v2.1.1 (2017-05-02)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-1-0-2017-05-02">Changes for v2.1.0 (2017-05-02)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-0-2-2017-01-16">Changes for v2.0.2 (2017-01-16)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-0-1-2017-01-14">Changes for v2.0.1 (2017-01-14)</a></li>
+<li><a class="reference internal" href="#changes-for-v2-0-0-2017-01-14">Changes for v2.0.0 (2017-01-14)</a></li>
+</ul>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="release-notes">
+<h1>Release Notes<a class="headerlink" href="#release-notes" title="Link to this heading">#</a></h1>
+</section>
+<section id="changes-for-v3-4-3-2024-04-27">
+<h1>Changes for v3.4.3 (2024-04-27)<a class="headerlink" href="#changes-for-v3-4-3-2024-04-27" title="Link to this heading">#</a></h1>
+<p>Finish migration to setuptools_scm</p>
+</section>
+<section id="changes-for-v3-4-2-2024-04-26">
+<h1>Changes for v3.4.2 (2024-04-26)<a class="headerlink" href="#changes-for-v3-4-2-2024-04-26" title="Link to this heading">#</a></h1>
+<p>Constrain setuptools_scm version</p>
+</section>
+<section id="changes-for-v3-4-1-2024-04-17">
+<h1>Changes for v3.4.1 (2024-04-17)<a class="headerlink" href="#changes-for-v3-4-1-2024-04-17" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Add module entry points for xq and tomlq</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-4-0-2024-04-17">
+<h1>Changes for v3.4.0 (2024-04-17)<a class="headerlink" href="#changes-for-v3-4-0-2024-04-17" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>yq -y: Induce quoting of string scalars that start with 08 and 09</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-3-1-2024-04-15">
+<h1>Changes for v3.3.1 (2024-04-15)<a class="headerlink" href="#changes-for-v3-3-1-2024-04-15" title="Link to this heading">#</a></h1>
+<p>Revert “Do not interpret characters that cannot be parsed in octal as
+int (#176)”</p>
+</section>
+<section id="changes-for-v3-3-0-2024-04-13">
+<h1>Changes for v3.3.0 (2024-04-13)<a class="headerlink" href="#changes-for-v3-3-0-2024-04-13" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>tomlq: Use tomllib on Python 3.11 when not round-tripping</p></li>
+<li><p>xq: Support in-place XML editing</p></li>
+<li><p>Do not interpret characters that cannot be parsed in octal as int
+(#176)</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-2-3-2023-09-09">
+<h1>Changes for v3.2.3 (2023-09-09)<a class="headerlink" href="#changes-for-v3-2-3-2023-09-09" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>test.py: use valid values for jsonargs. Fixes #172</p></li>
+<li><p>Allow editing toml in place (#171)</p></li>
+<li><p>Documentation improvements</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-2-2-2023-04-22">
+<h1>Changes for v3.2.2 (2023-04-22)<a class="headerlink" href="#changes-for-v3-2-2-2023-04-22" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Allow XML documents to be streamed with –xml-item-depth</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-2-1-2023-04-04">
+<h1>Changes for v3.2.1 (2023-04-04)<a class="headerlink" href="#changes-for-v3-2-1-2023-04-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Relax tomlkit dependency version range to preserve Python 3.6
+compatibility (#165)</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-2-0-2023-04-03">
+<h1>Changes for v3.2.0 (2023-04-03)<a class="headerlink" href="#changes-for-v3-2-0-2023-04-03" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Use tomlkit instead of toml</p></li>
+<li><p>Add security policy</p></li>
+<li><p>Documentation and release infrastructure improvements</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-1-1-2023-02-21">
+<h1>Changes for v3.1.1 (2023-02-21)<a class="headerlink" href="#changes-for-v3-1-1-2023-02-21" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Handle TOML datetimes. Fixes #160</p></li>
+<li><p>Test and documentation improvements</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-1-0-2022-07-24">
+<h1>Changes for v3.1.0 (2022-07-24)<a class="headerlink" href="#changes-for-v3-1-0-2022-07-24" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Use configurable output grammar, compatible with YAML 1.1</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-0-2-2022-07-05">
+<h1>Changes for v3.0.2 (2022-07-05)<a class="headerlink" href="#changes-for-v3-0-2-2022-07-05" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Expand merge keys (<a class="reference external" href="https://yaml.org/type/merge.html">https://yaml.org/type/merge.html</a>). This is a YAML
+1.1 specific behavior, but will be accommodated in yq due to its
+widespread use and low likelihood of accidental invocation.</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-0-1-2022-07-04">
+<h1>Changes for v3.0.1 (2022-07-04)<a class="headerlink" href="#changes-for-v3-0-1-2022-07-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>yq now uses the YAML 1.2 grammar when parsing and rendering YAML
+documents. This means bare literals like “on”, “no”, and “12:34:56”
+are interpreted as strings. (Fix interrupted release)</p></li>
+</ul>
+</section>
+<section id="changes-for-v3-0-0-2022-07-04">
+<h1>Changes for v3.0.0 (2022-07-04)<a class="headerlink" href="#changes-for-v3-0-0-2022-07-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>yq now uses the YAML 1.2 grammar when parsing and rendering YAML
+documents. This means bare literals like “on”, “no”, and “12:34:56”
+are interpreted as strings.</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-14-0-2022-02-20">
+<h1>Changes for v2.14.0 (2022-02-20)<a class="headerlink" href="#changes-for-v2-14-0-2022-02-20" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Support binary and set tags. Fixes #140</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-13-0-2021-12-02">
+<h1>Changes for v2.13.0 (2021-12-02)<a class="headerlink" href="#changes-for-v2-13-0-2021-12-02" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Armor against entity expansion attacks</p></li>
+<li><p>Improve YAML loading performance by using CSafeLoader where available</p></li>
+<li><p>Require PyYAML 5.3.1 or newer</p></li>
+<li><p>Test and release infrastructure improvements</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-12-2-2021-06-13">
+<h1>Changes for v2.12.2 (2021-06-13)<a class="headerlink" href="#changes-for-v2-12-2-2021-06-13" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Handle -n correctly</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-12-1-2021-06-13">
+<h1>Changes for v2.12.1 (2021-06-13)<a class="headerlink" href="#changes-for-v2-12-1-2021-06-13" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Do not close fds on child process</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-12-0-2021-02-05">
+<h1>Changes for v2.12.0 (2021-02-05)<a class="headerlink" href="#changes-for-v2-12-0-2021-02-05" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Add TOML support and the tomlq CLI utility to access it</p></li>
+<li><p>Drop Python 2.7 support</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-11-1-2020-09-26">
+<h1>Changes for v2.11.1 (2020-09-26)<a class="headerlink" href="#changes-for-v2-11-1-2020-09-26" title="Link to this heading">#</a></h1>
+<p>Parse correctly when empty string is passed as jq_filter</p>
+</section>
+<section id="changes-for-v2-11-0-2020-09-03">
+<h1>Changes for v2.11.0 (2020-09-03)<a class="headerlink" href="#changes-for-v2-11-0-2020-09-03" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Better handling of jq_filter and files arguments (#102)</p></li>
+<li><p>Create <strong>main</strong>.py (#82)</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-10-1-2020-05-11">
+<h1>Changes for v2.10.1 (2020-05-11)<a class="headerlink" href="#changes-for-v2-10-1-2020-05-11" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Add support for xmltodict force_list definition for xq CLI (#95)</p></li>
+<li><p>Support explicit doc markers (#93)</p></li>
+<li><p>Ensure proper ordering of help messages (#90)</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-10-0-2019-12-23">
+<h1>Changes for v2.10.0 (2019-12-23)<a class="headerlink" href="#changes-for-v2-10-0-2019-12-23" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Add support for in-place editing (yq -yi)</p></li>
+<li><p>Add argcomplete integration</p></li>
+<li><p>Docs: Migrate from RTD to gh-pages</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-9-2-2019-11-04">
+<h1>Changes for v2.9.2 (2019-11-04)<a class="headerlink" href="#changes-for-v2-9-2-2019-11-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix interrupted release</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-9-1-2019-11-04">
+<h1>Changes for v2.9.1 (2019-11-04)<a class="headerlink" href="#changes-for-v2-9-1-2019-11-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix documentation build</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-9-0-2019-11-04">
+<h1>Changes for v2.9.0 (2019-11-04)<a class="headerlink" href="#changes-for-v2-9-0-2019-11-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Add -Y/–yaml-roundtrip for preserving YAML styles and tags</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-8-1-2019-10-28">
+<h1>Changes for v2.8.1 (2019-10-28)<a class="headerlink" href="#changes-for-v2-8-1-2019-10-28" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Filter out -C and separate commingled yq and jq short options</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-8-0-2019-10-25">
+<h1>Changes for v2.8.0 (2019-10-25)<a class="headerlink" href="#changes-for-v2-8-0-2019-10-25" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Set default block sequence indentation to 2 spaces, –indentless for 0</p></li>
+<li><p>Make main body of yq callable as a library function</p></li>
+<li><p>Test and release infrastructure updates</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-7-2-2019-01-09">
+<h1>Changes for v2.7.2 (2019-01-09)<a class="headerlink" href="#changes-for-v2-7-2-2019-01-09" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Support options introduced in jq 1.6. Fixes #46</p></li>
+<li><p>xq: Re-raise if exception is unrecognized</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-7-1-2018-11-05">
+<h1>Changes for v2.7.1 (2018-11-05)<a class="headerlink" href="#changes-for-v2-7-1-2018-11-05" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>xq: Introduce –xml-dtd and –xml-root. Fixes #37.</p></li>
+<li><p>TOML support is optional and experimental</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-7-0-2018-08-04">
+<h1>Changes for v2.7.0 (2018-08-04)<a class="headerlink" href="#changes-for-v2-7-0-2018-08-04" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>TOML support with the tq executable entry point.</p></li>
+<li><p>Disallow argparse abbreviated options. Fixes #38 on Python 3.5+.</p></li>
+<li><p>Now available in Homebrew as python-yq.</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-6-0-2018-04-28">
+<h1>Changes for v2.6.0 (2018-04-28)<a class="headerlink" href="#changes-for-v2-6-0-2018-04-28" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Packaging: Replace scripts with entry-points</p></li>
+<li><p>Packaging: Package the license file</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-5-0-2018-04-02">
+<h1>Changes for v2.5.0 (2018-04-02)<a class="headerlink" href="#changes-for-v2-5-0-2018-04-02" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Parse unrecognized tags instead of dropping them. Fixes #23</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-4-1-2018-02-13">
+<h1>Changes for v2.4.1 (2018-02-13)<a class="headerlink" href="#changes-for-v2-4-1-2018-02-13" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Ignore unrecognized YAML tags instead of crashing</p></li>
+<li><p>Explicitly disable XML entity expansion and mention in docs</p></li>
+<li><p>xq -x: Raise understandable error on non-dict conversion failure</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-4-0-2018-02-08">
+<h1>Changes for v2.4.0 (2018-02-08)<a class="headerlink" href="#changes-for-v2-4-0-2018-02-08" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Support XML parsing with xmltodict</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-7-2018-02-07">
+<h1>Changes for v2.3.7 (2018-02-07)<a class="headerlink" href="#changes-for-v2-3-7-2018-02-07" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix for the –from-file/-f argument: Re-route jq_filter to files when
+using –from-file. Fixes #19.</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-6-2018-01-29">
+<h1>Changes for v2.3.6 (2018-01-29)<a class="headerlink" href="#changes-for-v2-3-6-2018-01-29" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Parse and pass multiple positional-consuming jq args</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-5-2018-01-29">
+<h1>Changes for v2.3.5 (2018-01-29)<a class="headerlink" href="#changes-for-v2-3-5-2018-01-29" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Support jq arguments that consume subsequent positionals (such as
+–arg k v) (#16).</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-4-2017-12-26">
+<h1>Changes for v2.3.4 (2017-12-26)<a class="headerlink" href="#changes-for-v2-3-4-2017-12-26" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Support bare YAML dates and times. Fixes #10</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-3-2017-09-30">
+<h1>Changes for v2.3.3 (2017-09-30)<a class="headerlink" href="#changes-for-v2-3-3-2017-09-30" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Avoid buffering all input docs in memory with no -y</p></li>
+<li><p>End all json.dump output with newlines. Close all input streams.
+Fixes #8. Thanks to &#64;bubbleattic for reporting.</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-2-2017-09-25">
+<h1>Changes for v2.3.2 (2017-09-25)<a class="headerlink" href="#changes-for-v2-3-2-2017-09-25" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix test suite on Python 3</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-1-2017-09-25">
+<h1>Changes for v2.3.1 (2017-09-25)<a class="headerlink" href="#changes-for-v2-3-1-2017-09-25" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Add support for multiple yaml files in arguments. Thanks to
+&#64;bubbleattic (PR #7)</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-3-0-2017-08-27">
+<h1>Changes for v2.3.0 (2017-08-27)<a class="headerlink" href="#changes-for-v2-3-0-2017-08-27" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Handle multi-document streams. Fixes #6</p></li>
+<li><p>Report version via yq –version</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-2-0-2017-07-07">
+<h1>Changes for v2.2.0 (2017-07-07)<a class="headerlink" href="#changes-for-v2-2-0-2017-07-07" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Stringify datetimes loaded from YAML. Fixes #5</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-1-2-2017-06-27">
+<h1>Changes for v2.1.2 (2017-06-27)<a class="headerlink" href="#changes-for-v2-1-2-2017-06-27" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix ResourceWarning: unclosed file</p></li>
+<li><p>Internal: Make usage of loader argument consistent</p></li>
+<li><p>Documentation improvements</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-1-1-2017-05-02">
+<h1>Changes for v2.1.1 (2017-05-02)<a class="headerlink" href="#changes-for-v2-1-1-2017-05-02" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix release script. Release is identical to v2.1.0.</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-1-0-2017-05-02">
+<h1>Changes for v2.1.0 (2017-05-02)<a class="headerlink" href="#changes-for-v2-1-0-2017-05-02" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>yq now supports emitting YAML (round-trip YAML support) using “yq
+-y”. Fixes #2.</p></li>
+<li><p>Key order is now preserved in mappings/objects/dictionaries.</p></li>
+<li><p>Passing input files by filename as an argument is now supported (in
+addition to providing data on standard input).</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-0-2-2017-01-16">
+<h1>Changes for v2.0.2 (2017-01-16)<a class="headerlink" href="#changes-for-v2-0-2-2017-01-16" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Test and documentation improvements</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-0-1-2017-01-14">
+<h1>Changes for v2.0.1 (2017-01-14)<a class="headerlink" href="#changes-for-v2-0-1-2017-01-14" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Fix description in setup.py</p></li>
+</ul>
+</section>
+<section id="changes-for-v2-0-0-2017-01-14">
+<h1>Changes for v2.0.0 (2017-01-14)<a class="headerlink" href="#changes-for-v2-0-0-2017-01-14" title="Link to this heading">#</a></h1>
+<ul class="simple">
+<li><p>Begin 2.0.0 release series. This package’s release series available
+on PyPI begins with version 2.0.0. Versions of <code class="docutils literal notranslate"><span class="pre">yq</span></code> prior to 2.0.0
+are distributed by <a class="reference external" href="https://github.com/abesto/yq">https://github.com/abesto/yq</a> and are not related
+to this package. No guarantees of compatibility are made between
+abesto/yq and kislyuk/yq. This package follows the
+<code class="docutils literal notranslate"><span class="pre">Semantic</span>&#160;&#160; <span class="pre">Versioning</span> <span class="pre">2.0.0</span> <span class="pre">&lt;http://semver.org/&gt;</span></code>_ standard. To
+ensure proper operation, declare dependency version ranges according
+to SemVer. See the Readme for more information.</p></li>
+</ul>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; Andrey Kislyuk
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>
