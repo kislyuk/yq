@@ -21,3 +21,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "yq.version"
 ignore_missing_imports = true
+
+[tool.setuptools_scm]
+version_file = "yq/version.py"

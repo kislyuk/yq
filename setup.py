@@ -4,18 +4,15 @@ from setuptools import find_packages, setup
 
 setup(
     name="yq",
-    version="3.4.2",
     url="https://github.com/kislyuk/yq",
     license="Apache Software License",
     author="Andrey Kislyuk",
     author_email="kislyuk@gmail.com",
     description="Command-line YAML/XML processor - jq wrapper for YAML/XML documents",
     long_description=open("README.rst").read(),
-    python_requires=">=3.6",
-    use_scm_version={
-        "write_to": "yq/version.py",
-    },
-    setup_requires=["setuptools_scm >= 7, <8"],
+    python_requires=">=3.8",
+    use_scm_version=True,
+    setup_requires=["setuptools_scm >= 7"],
     install_requires=[
         "PyYAML >= 5.3.1",
         "xmltodict >= 0.11.0",
