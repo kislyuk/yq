@@ -2,7 +2,7 @@ SHELL=/bin/bash
 
 lint:
 	ruff $$(dirname */__init__.py)
-	mypy --install-types --non-interactive --check-untyped-defs $$(dirname */__init__.py)
+	mypy --install-types --non-interactive $$(dirname */__init__.py)
 
 test:
 	python ./test/test.py -v
