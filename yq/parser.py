@@ -6,7 +6,7 @@ from typing import Union
 try:
     from .version import version as __version__
 except ImportError:
-    __version__ = "0.0.0"
+    __version__ = "3.4.3"
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
 jq_arg_spec = {
