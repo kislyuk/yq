@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
 lint:
-	ruff $$(dirname */__init__.py)
+	ruff check $$(dirname */__init__.py)
 	mypy --install-types --non-interactive $$(dirname */__init__.py)
 
 test:
