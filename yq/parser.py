@@ -25,7 +25,7 @@ jq_arg_spec = {
 
 
 class Parser(argparse.ArgumentParser):
-    def print_help(self):
+    def print_help(self, *args, **kwargs):
         yq_help = argparse.ArgumentParser.format_help(self).splitlines()
         print("\n".join(["usage: {} [options] <jq filter> [input file...]".format(self.prog)] + yq_help[2:] + [""]))
         sys.stdout.flush()

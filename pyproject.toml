@@ -1,3 +1,66 @@
+[project]
+name = "yq"
+description = "Command-line YAML/XML processor - jq wrapper for YAML/XML documents"
+readme = "README.rst"
+requires-python = ">=3.8"
+license = { text = "Apache Software License" }
+authors = [{ name = "Andrey Kislyuk"}, {email = "kislyuk@gmail.com" }]
+maintainers = [{ name = "Andrey Kislyuk"}, {email = "kislyuk@gmail.com" }]
+dynamic = ["version"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Development Status :: 5 - Production/Stable",
+  "Topic :: Software Development",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "PyYAML >= 5.3.1",
+    "xmltodict >= 0.11.0",
+    "tomlkit >= 0.11.6",
+    "argcomplete >= 1.8.1",
+]
+
+[project.optional-dependencies]
+test = [
+    "ruff",
+    "coverage",
+    "build",
+    "wheel",
+    "mypy",
+]
+
+[project.urls]
+"Homepage"= "https://github.com/kislyuk/yq"
+"Documentation"= "https://xml-security.github.io/yq/"
+"Source Code"= "https://github.com/kislyuk/yq"
+"Issue Tracker"= "https://github.com/kislyuk/yq/issues"
+"Change Log"= "https://github.com/kislyuk/yq/blob/main/Changes.rst"
+
+[project.scripts]
+yq = "yq:cli"
+xq = "yq:xq_cli"
+tomlq = "yq:tq_cli"
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
 [tool.black]
 line-length = 120
 
@@ -8,6 +71,8 @@ skip_gitignore = true
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
 per-file-ignores = {"yq/__init__.py" = ["F401"]}
 
 [tool.mypy]
@@ -28,6 +93,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "yq.version"
 ignore_missing_imports = true
-
-[tool.setuptools_scm]
-version_file = "yq/version.py"
