@@ -100,6 +100,12 @@ def get_parser(program_name, description):
     parser.add_argument(
         "--yaml-output-grammar-version", "--yml-out-ver", choices=["1.1", "1.2"], default="1.1", help=grammar_help
     )
+    parser.add_argument(
+        "--yaml-string-styles",
+        "--yml-string-styles",
+        "-z",
+        action="store_true",
+        help="Allows special strings to control style of strings (only valid in combination with -y or -Y)")
     parser.add_argument("--width", "-w", type=int, help=width_help)
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
     parser.add_argument("--explicit-start", action="store_true", help=explicit_start_help)
