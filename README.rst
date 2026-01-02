@@ -149,12 +149,3 @@ Please report bugs, issues, feature requests, etc. on `GitHub <https://github.co
 License
 -------
 Licensed under the terms of the `Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0>`_.
-
-.. image:: https://github.com/kislyuk/yq/workflows/Python%20package/badge.svg
-        :target: https://github.com/kislyuk/yq/actions
-.. image:: https://codecov.io/github/kislyuk/yq/coverage.svg?branch=master
-        :target: https://codecov.io/github/kislyuk/yq?branch=master
-.. image:: https://img.shields.io/pypi/v/yq.svg
-        :target: https://pypi.python.org/pypi/yq
-.. image:: https://img.shields.io/pypi/l/yq.svg
-        :target: https://pypi.python.org/pypi/yq
