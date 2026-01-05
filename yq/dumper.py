@@ -26,7 +26,27 @@ yaml_value_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>.+)__$
 yaml_item_annotation_re = re.compile(r"^__yq_(?P<type>tag|style)_(?P<key>\d+)_(?P<value>.+)__$")
 
 
-def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1"):
+def extractStringStyle(v):
+    if v.value.startswith("__yq_style_|__"):
+        v.value = v.value[14:]
+        v.style = '|'
+    elif v.value.startswith("__yq_style_>__"):
+        v.value = v.value[14:]
+        v.style = '>'
+    elif v.value.startswith("__yq_style_'__"):
+        v.value = v.value[14:]
+        v.style = '\''
+    elif v.value.startswith("__yq_style_\"__"):
+        v.value = v.value[14:]
+        v.style = '"'
+    elif v.value.startswith("__yq_style____"):
+        v.value = v.value[14:]
+        v.style = None
+
+    return v
+
+
+def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1", use_string_styles=False):
     # if not (use_annotations or indentless):
     #     return default_dumper
 
@@ -55,6 +75,7 @@ def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1"):
                         v.flow_style = True
                 if hashed_key in custom_tags:
                     v.tag = custom_tags[hashed_key]
+
         return mapping
 
     def represent_list(dumper, data):
@@ -79,10 +100,17 @@ def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1"):
                         v.flow_style = True
                 if str(i) in custom_tags:
                     v.tag = custom_tags[str(i)]
+
         return sequence
+
+    def represent_str(dumper, data):
+        scalar = dumper.represent_scalar("tag:yaml.org,2002:str", value=data)
+        return extractStringStyle(scalar)
 
     dumper = OrderedIndentlessDumper if indentless else OrderedDumper
     dumper.add_representer(dict, represent_dict)
     dumper.add_representer(list, represent_list)
+    if use_string_styles:
+        dumper.add_representer(str, represent_str)
     set_yaml_grammar(dumper, grammar_version=grammar_version)
     return dumper
