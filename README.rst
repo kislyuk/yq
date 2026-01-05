@@ -110,7 +110,7 @@ Forcing string styles using the ``-z`` (``--yaml-string_styles``) option
 The ``-z`` option will assume that strings might start with some style information.
 This option is only useful when using YAML-output (using ``-y`` or ``-Y``)
 
-To control the string style, the string itself has to be prepanded by additional information.
+To control the string style, the string itself has to be prepended by additional information.
 Valid control strings are:
 
 * ``__yq_style_'__``: uses single quotes ``'``
@@ -144,7 +144,7 @@ The usage can be simplified by adding the function ``style`` to ``~/.jq`` and/or
         end;
 
 
-This allows to simpify the above example to::
+This allows to simplify the above example to::
 
     yq -y -z '.field1 |= style("|")' input.yaml
 
