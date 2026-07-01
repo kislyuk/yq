@@ -110,7 +110,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     in_place = args.in_place
     delattr(args, "in_place")
 
-    if sys.stdin.isatty() and not args.input_streams:
+    if (sys.stdin is None or sys.stdin.isatty()) and not args.input_streams:
         parser.print_help()
         sys.exit(2)
     elif not args.input_streams:
