@@ -124,6 +124,20 @@ def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
             resolver.yaml_implicit_resolvers[start_char].append((r["tag"], r["regexp"]))
 
 
+def construct_yaml_1_2_int(loader, node):
+    value = loader.construct_scalar(node).replace("_", "")
+    sign = +1
+    if value[0] == "-":
+        sign = -1
+    if value[0] in "+-":
+        value = value[1:]
+    if value.startswith("0o"):
+        return sign * int(value[2:], 8)
+    if value.startswith("0x"):
+        return sign * int(value[2:], 16)
+    return sign * int(value, 10)
+
+
 def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
 
@@ -199,6 +213,7 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
     loader_class = default_loader if expand_aliases else CustomLoader
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
+    loader_class.add_constructor("tag:yaml.org,2002:int", construct_yaml_1_2_int)
     loader_class.add_multi_constructor("", parse_unknown_tags)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:binary", None)
     loader_class.yaml_constructors.pop("tag:yaml.org,2002:set", None)

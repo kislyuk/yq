@@ -318,14 +318,26 @@ class TestYq(unittest.TestCase):
 
         self.assertEqual(self.run_yq("+12345", ["-y", "."]), "12345\n...\n")
 
-    def test_yaml_1_1_octals(self):
-        self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "'on': -5349\n")
+    def test_yaml_1_1_output_quotes(self):
+        self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "'on': -12345\n")
         self.assertEqual(self.run_yq("on: '0900'", ["-y", "."]), "'on': '0900'\n")
 
-    @unittest.expectedFailure
-    def test_yaml_1_2_octals(self):
-        """YAML 1.2 octals not yet implemented"""
+    def test_yaml_1_2_leading_zero_integers(self):
         self.assertEqual(self.run_yq("on: -012345", ["-y", "--yml-out-ver=1.2", "."]), "on: -12345\n")
+
+        literals = []
+        expected_values = []
+        for sign in "", "+", "-":
+            for width in 1, 2, 3:
+                for value in range(10):
+                    literals.append("{}{:0{}d}".format(sign, value, width))
+                    expected_values.append(-value if sign == "-" else value)
+        yaml_doc = "".join("- {}\n".format(literal) for literal in literals)
+        expected = "".join("- {}\n".format(value) for value in expected_values)
+        self.assertEqual(self.run_yq(yaml_doc, ["-y", "--yml-out-ver=1.2", "."]), expected)
+
+        self.assertEqual(self.run_yq("octal: 0o10", ["-y", "--yml-out-ver=1.2", "."]), "octal: 8\n")
+        self.assertEqual(self.run_yq("'08'", ["-y", "--yml-out-ver=1.2", "."]), "'08'\n")
 
 
 if __name__ == "__main__":
