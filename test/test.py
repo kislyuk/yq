@@ -291,7 +291,7 @@ class TestYq(unittest.TestCase):
             "a = 1_000 # a\n"
             "b = 'old' # b\n"
             "arr = [1,  2, 3] # arr\n"
-            "inline = { x = 1,  y = \"z\" } # inline\n"
+            'inline = { x = 1,  y = "z" } # inline\n'
             "\n"
             "[foo] # table\n"
             "bar = 2 # bar\n"
@@ -299,24 +299,24 @@ class TestYq(unittest.TestCase):
         )
         self.assertEqual(self.run_yq(toml_doc, ["-T", "."], input_format="toml"), toml_doc)
         self.assertEqual(
-            self.run_yq(toml_doc, ["-T", ".a=2000 | .b=\"new\" | .foo.bar=3"], input_format="toml"),
+            self.run_yq(toml_doc, ["-T", '.a=2000 | .b="new" | .foo.bar=3'], input_format="toml"),
             "# top\n"
             "a = 2000 # a\n"
             "b = 'new' # b\n"
             "arr = [1,  2, 3] # arr\n"
-            "inline = { x = 1,  y = \"z\" } # inline\n"
+            'inline = { x = 1,  y = "z" } # inline\n'
             "\n"
             "[foo] # table\n"
             "bar = 3 # bar\n"
             "baz = 'x'\n",
         )
         self.assertEqual(
-            self.run_yq(toml_doc, ["-T", ".arr[1]=9 | .inline.y=\"zz\""], input_format="toml"),
+            self.run_yq(toml_doc, ["-T", '.arr[1]=9 | .inline.y="zz"'], input_format="toml"),
             "# top\n"
             "a = 1_000 # a\n"
             "b = 'old' # b\n"
             "arr = [1,  9, 3] # arr\n"
-            "inline = { x = 1,  y = \"zz\" } # inline\n"
+            'inline = { x = 1,  y = "zz" } # inline\n'
             "\n"
             "[foo] # table\n"
             "bar = 2 # bar\n"
@@ -377,9 +377,7 @@ class TestYq(unittest.TestCase):
     def test_yaml_1_1_output_quotes(self):
         self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "'on': -12345\n")
         self.assertEqual(self.run_yq("on: '0900'", ["-y", "."]), "'on': '0900'\n")
-        self.assertEqual(
-            self.run_yq("a: abc\nb: cba\n", ["-y", '.a="23695230e640"']), "a: '23695230e640'\nb: cba\n"
-        )
+        self.assertEqual(self.run_yq("a: abc\nb: cba\n", ["-y", '.a="23695230e640"']), "a: '23695230e640'\nb: cba\n")
 
         numeric_strings = [
             "0",
