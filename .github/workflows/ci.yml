@@ -15,6 +15,7 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: ${{matrix.python-version}}
+        allow-prereleases: true
     - name: Install jq
       run: |
         if [[ $(uname) == Linux ]]; then sudo apt-get install --yes jq; fi
