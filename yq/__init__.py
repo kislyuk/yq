@@ -68,6 +68,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     null_input = False
 
     for i, arg in enumerate(jq_args):
+        if arg == "--null-input":
+            null_input = True
         if arg.startswith("-") and not arg.startswith("--"):
             if "n" in arg:
                 null_input = True
@@ -266,7 +268,7 @@ def yq(
                     decode_docs(jq_out, json_decoder),
                     stream=output_stream,
                     Dumper=dumper_class,
-                    width=width,
+                    width=sys.maxsize if width == 0 else width,
                     allow_unicode=True,
                     default_flow_style=False,
                     explicit_start=explicit_start,

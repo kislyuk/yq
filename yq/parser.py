@@ -51,7 +51,7 @@ def get_parser(program_name, description):
             "in their enclosing mappings and sequences while in JSON. This option "
             "is incompatible with jq filters that do not expect these extra items."
         )
-        width_help = "When using --yaml-output, specify string wrap width"
+        width_help = "When using --yaml-output, specify string wrap width (0 disables wrapping)"
         indentless_help = "When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2"
         grammar_help = (
             "When using --yaml-output, specify output grammar (the default is 1.1 and will be changed "

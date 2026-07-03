@@ -21,7 +21,7 @@ options:
   --yaml-output-grammar-version {1.1,1.2}, --yml-out-ver {1.1,1.2}
                         When using --yaml-output, specify output grammar (the default is 1.1 and will be changed to 1.2 in a future version). Setting this to 1.2 will cause strings like 'on' and 'no' to be emitted unquoted.
   --width WIDTH, -w WIDTH
-                        When using --yaml-output, specify string wrap width
+                        When using --yaml-output, specify string wrap width (0 disables wrapping)
   --indentless-lists, --indentless
                         When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2
   --explicit-start      When using --yaml-output, always emit explicit document start ("---")

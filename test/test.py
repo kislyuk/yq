@@ -77,6 +77,9 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("foo:\n bar: 1\n baz: {bat: 3}", ["-y", ".foo.baz.bat"]), "3\n...\n")
         self.assertEqual(self.run_yq("[aaaaaaaaaa bbb]", ["-y", "."]), "- aaaaaaaaaa bbb\n")
         self.assertEqual(self.run_yq("[aaaaaaaaaa bbb]", ["-y", "-w", "8", "."]), "- aaaaaaaaaa\n  bbb\n")
+        long_string = " ".join(["word"] * 30)
+        self.assertEqual(self.run_yq(f'["{long_string}"]', ["-y", "--width", "0", "."]), f"- {long_string}\n")
+        self.assertEqual(self.run_yq(f'["{long_string}"]', ["-Y", "--width", "0", "."]), f'- "{long_string}"\n')
         self.assertEqual(self.run_yq('{"понедельник": 1}', ['.["понедельник"]']), "")
         self.assertEqual(self.run_yq('{"понедельник": 1}', ["-y", '.["понедельник"]']), "1\n...\n")
         self.assertEqual(self.run_yq("- понедельник\n- вторник\n", ["-y", "."]), "- понедельник\n- вторник\n")
@@ -129,6 +132,14 @@ class TestYq(unittest.TestCase):
             for arg in "--from-file", "-f":
                 tf2.seek(0)
                 self.assertEqual(self.run_yq("", ["-y", arg, tf.name, self.fd_path(tf2)]), "1\n...\n")
+
+    def test_yq_long_null_input_passthrough(self):
+        from unittest import mock
+
+        unusable_tty_input = mock.Mock()
+        unusable_tty_input.isatty = mock.Mock(return_value=True)
+
+        self.assertEqual(self.run_yq(unusable_tty_input, ["--null-input", "-y", "."]), "null\n...\n")
 
     @unittest.skipIf(subprocess.check_output(["jq", "--version"]) < b"jq-1.6", "Test options introduced in jq 1.6")
     def test_jq16_arg_passthrough(self):
