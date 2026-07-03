@@ -220,6 +220,12 @@ class TestYq(unittest.TestCase):
             self.run_yq("", ["-i", "-t", '.GLOBAL.version="1.0.1"', tf.name], input_format="toml")
             self.assertEqual(tf.read(), b'[GLOBAL]\nversion = "1.0.1"\n')
 
+        with tempfile.NamedTemporaryFile() as tf:
+            tf.write(b'# top\nversion = "1.0.0" # keep\n')
+            tf.seek(0)
+            self.run_yq("", ["-i", "-T", '.version="1.0.1"', tf.name], input_format="toml")
+            self.assertEqual(tf.read(), b'# top\nversion = "1.0.1" # keep\n')
+
     def test_explicit_doc_markers(self):
         test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
         self.assertTrue(self.run_yq("", ["-y", ".", test_doc]).startswith("yaml_struct"))
@@ -278,6 +284,45 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("[foo]\nbar = 1", ["."], input_format="toml"), "")
         self.assertEqual(self.run_yq("[foo]\nbar = 1", ["-t", ".foo"], input_format="toml"), "bar = 1\n")
         self.assertEqual(self.run_yq("[foo]\nbar = 2020-02-20", ["."], input_format="toml"), "")
+
+    def test_tomlq_roundtrip(self):
+        toml_doc = (
+            "# top\n"
+            "a = 1_000 # a\n"
+            "b = 'old' # b\n"
+            "arr = [1,  2, 3] # arr\n"
+            "inline = { x = 1,  y = \"z\" } # inline\n"
+            "\n"
+            "[foo] # table\n"
+            "bar = 2 # bar\n"
+            "baz = 'x'\n"
+        )
+        self.assertEqual(self.run_yq(toml_doc, ["-T", "."], input_format="toml"), toml_doc)
+        self.assertEqual(
+            self.run_yq(toml_doc, ["-T", ".a=2000 | .b=\"new\" | .foo.bar=3"], input_format="toml"),
+            "# top\n"
+            "a = 2000 # a\n"
+            "b = 'new' # b\n"
+            "arr = [1,  2, 3] # arr\n"
+            "inline = { x = 1,  y = \"z\" } # inline\n"
+            "\n"
+            "[foo] # table\n"
+            "bar = 3 # bar\n"
+            "baz = 'x'\n",
+        )
+        self.assertEqual(
+            self.run_yq(toml_doc, ["-T", ".arr[1]=9 | .inline.y=\"zz\""], input_format="toml"),
+            "# top\n"
+            "a = 1_000 # a\n"
+            "b = 'old' # b\n"
+            "arr = [1,  9, 3] # arr\n"
+            "inline = { x = 1,  y = \"zz\" } # inline\n"
+            "\n"
+            "[foo] # table\n"
+            "bar = 2 # bar\n"
+            "baz = 'x'\n",
+        )
+        self.assertEqual(self.run_yq(toml_doc, ["-T", ".foo"], input_format="toml"), "bar = 2 # bar\nbaz = 'x'\n")
 
     def test_abbrev_opt_collisions(self):
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:

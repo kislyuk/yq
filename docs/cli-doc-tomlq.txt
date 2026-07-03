@@ -10,10 +10,11 @@ positional arguments:
   files
 
 options:
-  -h, --help         show this help message and exit
-  --toml-output, -t  Transcode jq JSON output back into TOML and emit it
-  --in-place, -i     Edit files in place (no backup - use caution)
-  --version          show program's version number and exit
+  -h, --help            show this help message and exit
+  --toml-output, -t     Transcode jq JSON output back into TOML and emit it
+  --toml-roundtrip, -T  Transcode jq JSON output back into TOML and emit it. Preserve TOML comments, whitespace, and other formatting metadata by representing them as extra items while in JSON.
+  --in-place, -i        Edit files in place (no backup - use caution)
+  --version             show program's version number and exit
 
 jq - commandline JSON processor [version 1.7]
 

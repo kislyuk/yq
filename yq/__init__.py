@@ -21,6 +21,7 @@ import yaml
 from .dumper import get_dumper
 from .loader import get_loader
 from .parser import get_parser, jq_arg_spec
+from .toml_support import tomlkit_from_json, tomlkit_to_json
 
 try:
     from .version import version as __version__
@@ -79,9 +80,20 @@ def cli(args=None, input_format="yaml", program_name="yq"):
                 args.output_format = "yaml"
             elif "Y" in arg:
                 args.output_format = "annotated_yaml"
+            elif "t" in arg:
+                args.output_format = "toml"
+            elif "T" in arg:
+                args.output_format = "annotated_toml"
             elif "x" in arg:
                 args.output_format = "xml"
-            jq_args[i] = arg.replace("i", "").replace("x", "").replace("y", "").replace("Y", "")
+            jq_args[i] = (
+                arg.replace("i", "")
+                .replace("x", "")
+                .replace("y", "")
+                .replace("Y", "")
+                .replace("t", "")
+                .replace("T", "")
+            )
         if args.output_format != "json":
             jq_args[i] = jq_args[i].replace("C", "")
             if jq_args[i] == "-":
@@ -120,8 +132,8 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 
     yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
     if in_place:
-        if args.output_format not in {"yaml", "annotated_yaml", "toml", "xml"}:
-            sys.exit("{}: -i/--in-place can only be used with -y/-Y/-t/-x".format(program_name))
+        if args.output_format not in {"yaml", "annotated_yaml", "toml", "annotated_toml", "xml"}:
+            sys.exit("{}: -i/--in-place can only be used with -y/-Y/-t/-T/-x".format(program_name))
         input_streams = yq_args.pop("input_streams")
         if len(input_streams) == 1 and input_streams[0].name == "<stdin>":
             msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
@@ -218,6 +230,7 @@ def yq(
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
             use_annotations = True if output_format == "annotated_yaml" else False
+            use_toml_annotations = True if output_format == "annotated_toml" else False
             json_buffer = io.StringIO()
             for input_stream in input_streams:
                 if input_format == "yaml":
@@ -252,7 +265,11 @@ def yq(
                     import tomlkit
 
                     toml_doc = tomlkit.load(input_stream)
-                    json.dump(toml_doc, json_buffer, cls=JSONDateTimeEncoder)
+                    json.dump(
+                        tomlkit_to_json(toml_doc, use_annotations=use_toml_annotations),
+                        json_buffer,
+                        cls=JSONDateTimeEncoder,
+                    )
                     json_buffer.write("\n")
                 else:
                     raise Exception("Unknown input format")
@@ -297,13 +314,15 @@ def yq(
                         else:
                             raise
                     output_stream.write("\n")
-            elif output_format == "toml":
+            elif output_format == "toml" or output_format == "annotated_toml":
                 import tomlkit
 
                 for doc in decode_docs(jq_out, json_decoder):
                     if not isinstance(doc, dict):
                         msg = "{}: Error converting JSON to TOML: cannot represent non-object types at top level."
                         exit_func(msg.format(program_name))
+                    if output_format == "annotated_toml":
+                        doc = tomlkit_from_json(doc)
                     tomlkit.dump(doc, output_stream)
             else:
                 raise Exception("Unknown output format")

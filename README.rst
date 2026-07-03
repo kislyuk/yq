@@ -120,7 +120,8 @@ TOML support
 ------------
 ``yq`` supports `TOML <https://toml.io/>`_ as well. The ``yq`` package installs an executable, ``tomlq``, which uses the
 `tomlkit library <https://github.com/sdispater/tomlkit>`_ to transcode TOML to JSON, then pipes it to ``jq``. Roundtrip
-transcoding is available with the ``tomlq --toml-output``/``tomlq -t`` option. Use ``python -m yq.tomlq`` if you want to
+transcoding is available with the ``tomlq --toml-output``/``tomlq -t`` option. Use ``tomlq --toml-roundtrip``/``tomlq -T``
+to preserve TOML comments, whitespace, and formatting metadata while editing. Use ``python -m yq.tomlq`` if you want to
 ensure a specific Python runtime.
 
 .. admonition:: Compatibility note

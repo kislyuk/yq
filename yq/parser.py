@@ -40,7 +40,7 @@ def get_parser(program_name, description):
     yaml_output_help, yaml_roundtrip_help, width_help, indentless_help, grammar_help = [argparse.SUPPRESS] * 5
     explicit_start_help, explicit_end_help = [argparse.SUPPRESS] * 2
     xml_output_help, xml_item_depth_help, xml_dtd_help, xml_root_help, xml_force_list_help = [argparse.SUPPRESS] * 5
-    toml_output_help = argparse.SUPPRESS
+    toml_output_help = toml_roundtrip_help = argparse.SUPPRESS
 
     if program_name == "yq":
         current_language = "YAML"
@@ -70,6 +70,10 @@ def get_parser(program_name, description):
     elif program_name == "tomlq":
         current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
+        toml_roundtrip_help = (
+            "Transcode jq JSON output back into TOML and emit it. Preserve TOML comments, whitespace, "
+            "and other formatting metadata by representing them as extra items while in JSON."
+        )
     else:
         raise Exception("Unknown program name")
 
@@ -115,6 +119,14 @@ def get_parser(program_name, description):
     parser.add_argument("--xml-force-list", action="append", help=xml_force_list_help, metavar="ELT")
     parser.add_argument(
         "--toml-output", "-t", dest="output_format", action="store_const", const="toml", help=toml_output_help
+    )
+    parser.add_argument(
+        "--toml-roundtrip",
+        "-T",
+        dest="output_format",
+        action="store_const",
+        const="annotated_toml",
+        help=toml_roundtrip_help,
     )
     parser.add_argument("--in-place", "-i", action="store_true", help="Edit files in place (no backup - use caution)")
     parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
