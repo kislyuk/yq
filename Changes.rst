@@ -1,3 +1,9 @@
+Changes for v4.1.1 (2026-07-03)
+===============================
+
+-  xq: support –xml-short-empty-elements to emit self-closing elements
+   instead of the long form
+
 Changes for v4.1.0 (2026-07-03)
 ===============================
 
