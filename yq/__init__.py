@@ -191,6 +191,7 @@ def yq(
     xml_item_depth=0,
     xml_dtd=False,
     xml_force_list=frozenset(),
+    xml_short_empty_elements=False,
     explicit_start=False,
     explicit_end=False,
     expand_merge_keys=True,
@@ -306,7 +307,12 @@ def yq(
                     full_document = True if xml_dtd else False
                     try:
                         xmltodict.unparse(
-                            doc, output=output_stream, full_document=full_document, pretty=True, indent="  "
+                            doc,
+                            output=output_stream,
+                            full_document=full_document,
+                            pretty=True,
+                            indent="  ",
+                            short_empty_elements=xml_short_empty_elements,
                         )
                     except ValueError as e:
                         if "Document must have exactly one root" in str(e):

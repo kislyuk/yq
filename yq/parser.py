@@ -40,6 +40,7 @@ def get_parser(program_name, description):
     yaml_output_help, yaml_roundtrip_help, width_help, indentless_help, grammar_help = [argparse.SUPPRESS] * 5
     explicit_start_help, explicit_end_help = [argparse.SUPPRESS] * 2
     xml_output_help, xml_item_depth_help, xml_dtd_help, xml_root_help, xml_force_list_help = [argparse.SUPPRESS] * 5
+    xml_short_empty_elements_help = argparse.SUPPRESS
     toml_output_help = toml_roundtrip_help = argparse.SUPPRESS
 
     if program_name == "yq":
@@ -67,6 +68,7 @@ def get_parser(program_name, description):
         xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
         xml_force_list_help = "Emit a list for elements with this name even if they occur only once (option can repeat)"
+        xml_short_empty_elements_help = "When transcoding back to XML, emit empty tags as self-closing tags"
     elif program_name == "tomlq":
         current_language = "TOML"
         toml_output_help = "Transcode jq JSON output back into TOML and emit it"
@@ -117,6 +119,7 @@ def get_parser(program_name, description):
     parser.add_argument("--xml-dtd", action="store_true", help=xml_dtd_help)
     parser.add_argument("--xml-root", help=xml_root_help)
     parser.add_argument("--xml-force-list", action="append", help=xml_force_list_help, metavar="ELT")
+    parser.add_argument("--xml-short-empty-elements", action="store_true", help=xml_short_empty_elements_help)
     parser.add_argument(
         "--toml-output", "-t", dest="output_format", action="store_const", const="toml", help=toml_output_help
     )

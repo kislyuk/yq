@@ -263,6 +263,8 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("<foo/>", ["--xml-item-depth=2", "."], input_format="xml"), "")
         self.assertEqual(self.run_yq("<foo/>", ["--xml-dtd", "."], input_format="xml"), "")
         self.assertEqual(self.run_yq("<foo/>", ["-x", ".foo.x=1"], input_format="xml"), "<foo>\n  <x>1</x>\n</foo>\n")
+        self.assertEqual(self.run_yq("<foo/>", ["-x", "."], input_format="xml"), "<foo></foo>\n")
+        self.assertEqual(self.run_yq("<foo/>", ["-x", "--xml-short-empty-elements", "."], input_format="xml"), "<foo/>\n")
         self.assertTrue(self.run_yq("<foo/>", ["-x", "--xml-dtd", "."], input_format="xml").startswith("<?xml"))
         self.assertTrue(self.run_yq("<foo/>", ["-x", "--xml-root=R", "."], input_format="xml").startswith("<R>"))
         self.assertEqual(self.run_yq("<foo/>", ["--xml-force-list=foo", "."], input_format="xml"), "")
@@ -281,6 +283,16 @@ class TestYq(unittest.TestCase):
             self.assertEqual(
                 self.run_yq("", ["-x", ".a", self.fd_path(tf), self.fd_path(tf2)], input_format="xml"),
                 "<b></b>\n<c></c>\n",
+            )
+            tf.seek(0)
+            tf2.seek(0)
+            self.assertEqual(
+                self.run_yq(
+                    "",
+                    ["-x", "--xml-short-empty-elements", ".a", self.fd_path(tf), self.fd_path(tf2)],
+                    input_format="xml",
+                ),
+                "<b/>\n<c/>\n",
             )
         err = (
             "yq: Error converting JSON to XML: cannot represent non-object types at top level. "
