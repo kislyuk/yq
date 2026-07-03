@@ -321,6 +321,30 @@ class TestYq(unittest.TestCase):
     def test_yaml_1_1_output_quotes(self):
         self.assertEqual(self.run_yq("on: -012345", ["-y", "."]), "'on': -12345\n")
         self.assertEqual(self.run_yq("on: '0900'", ["-y", "."]), "'on': '0900'\n")
+        self.assertEqual(
+            self.run_yq("a: abc\nb: cba\n", ["-y", '.a="23695230e640"']), "a: '23695230e640'\nb: cba\n"
+        )
+
+        numeric_strings = [
+            "0",
+            "7",
+            "08",
+            "+9",
+            "-9",
+            "0o10",
+            "0x10",
+            "1.0",
+            "1.0e10",
+            "1e10",
+            "1e+10",
+            "1e-10",
+            "23695230e640",
+            ".5",
+            ".inf",
+            ".nan",
+        ]
+        yaml_doc = "".join("- '{}'\n".format(value) for value in numeric_strings)
+        self.assertEqual(self.run_yq(yaml_doc, ["-y", "."]), yaml_doc)
 
     def test_yaml_1_2_leading_zero_integers(self):
         self.assertEqual(self.run_yq("on: -012345", ["-y", "--yml-out-ver=1.2", "."]), "on: -12345\n")
