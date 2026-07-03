@@ -1,3 +1,12 @@
+Changes for v4.0.0 (2026-07-02)
+===============================
+
+-  Implement TOML comment roundtripping (tomlq -T)
+-  Add –width=0 for no-wrap option; –null-input as -n alias
+-  Force quote strings that can be parsed as integers in YAML 1.2
+-  Implement YAML 1.2 octals
+-  Prevent exception thrown when sys.stdin is None. (#193)
+
 Changes for v3.4.3 (2024-04-27)
 ===============================
 
