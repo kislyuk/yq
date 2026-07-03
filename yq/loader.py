@@ -14,6 +14,15 @@ from yaml.tokens import (
     ValueToken,
 )
 
+from .yaml_support import (
+    COMMENT_PLACEMENT_BEFORE,
+    COMMENT_PLACEMENT_INLINE,
+    CommentPreservingLoader,
+    consume_comments_for_node,
+    make_mapping_comment_key,
+    make_sequence_comment_annotation,
+)
+
 default_loader: Any = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
 
@@ -181,12 +190,46 @@ class CustomLoader(yaml.SafeLoader):
         # self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
 
 
+class CommentPreservingCustomLoader(CommentPreservingLoader):
+    expand_aliases = False
+
+    def emit_yq_kv(self, key, value, original_token):
+        marks = dict(start_mark=original_token.start_mark, end_mark=original_token.end_mark)
+        self.tokens.append(FlowMappingStartToken(**marks))
+        self.tokens.append(KeyToken(**marks))
+        self.tokens.append(ScalarToken(value=key, plain=True, **marks))
+        self.tokens.append(ValueToken(**marks))
+        self.tokens.append(ScalarToken(value=value, plain=True, **marks))
+        self.tokens.append(FlowMappingEndToken(**marks))
+
+    def fetch_alias(self):
+        if self.expand_aliases:
+            return super().fetch_alias()
+        self.save_possible_simple_key()
+        self.allow_simple_key = False
+        alias_token = self.scan_anchor(AliasToken)
+        self.emit_yq_kv("__yq_alias__", alias_token.value, original_token=alias_token)
+
+    def fetch_anchor(self):
+        if self.expand_aliases:
+            return super().fetch_anchor()
+        self.save_possible_simple_key()
+        self.allow_simple_key = False
+        anchor_token = self.scan_anchor(AnchorToken)  # noqa: F841
+        # self.emit_yq_kv("__yq_anchor__", anchor_token.value, original_token=anchor_token)
+
+
 def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=True):
     def construct_sequence(loader, node):
         annotations = []
         for i, v_node in enumerate(node.value):
             if not use_annotations:
                 break
+            comments = consume_comments_for_node(loader, v_node)
+            for comment in comments[COMMENT_PLACEMENT_BEFORE]:
+                annotations.append(make_sequence_comment_annotation(COMMENT_PLACEMENT_BEFORE, i, comment))
+            for comment in comments[COMMENT_PLACEMENT_INLINE]:
+                annotations.append(make_sequence_comment_annotation(COMMENT_PLACEMENT_INLINE, i, comment))
             if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
                 annotations.append("__yq_tag_{}_{}__".format(i, v_node.tag))
             if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
@@ -202,14 +245,21 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
             key = loader.construct_object(k_node)
             value = loader.construct_object(v_node)
             pairs.append((key, value))
-            if not (use_annotations and isinstance(key, (str, bytes))):
+            if not use_annotations:
                 continue
+            comments = consume_comments_for_node(loader, k_node, v_node)
+            if not isinstance(key, (str, bytes)):
+                continue
+            hashed_key = hash_key(key)
+            for placement, values in comments.items():
+                if values:
+                    pairs.append((make_mapping_comment_key(placement, hashed_key), values))
             if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
-                pairs.append(("__yq_tag_{}__".format(hash_key(key)), v_node.tag))
+                pairs.append(("__yq_tag_{}__".format(hashed_key), v_node.tag))
             if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
-                pairs.append(("__yq_style_{}__".format(hash_key(key)), v_node.style))
+                pairs.append(("__yq_style_{}__".format(hashed_key), v_node.style))
             elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
-                pairs.append(("__yq_style_{}__".format(hash_key(key)), "flow"))
+                pairs.append(("__yq_style_{}__".format(hashed_key), "flow"))
         return dict(pairs)
 
     def parse_unknown_tags(loader, tag_suffix, node):
@@ -220,7 +270,11 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
         elif isinstance(node, yaml.nodes.MappingNode):
             return construct_mapping(loader, node)
 
-    loader_class = default_loader if expand_aliases else CustomLoader
+    loader_class: Any
+    if use_annotations:
+        loader_class = CommentPreservingLoader if expand_aliases else CommentPreservingCustomLoader
+    else:
+        loader_class = default_loader if expand_aliases else CustomLoader
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
     loader_class.add_constructor("tag:yaml.org,2002:int", construct_yaml_1_2_int)

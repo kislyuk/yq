@@ -46,8 +46,8 @@ details on ``jq`` features and options.
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
 
-Preserving tags and styles using the ``-Y`` (``--yaml-roundtrip``) option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Preserving tags, styles, and comments using the ``-Y`` (``--yaml-roundtrip``) option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``-Y`` option helps preserve custom `string styles <https://yaml-multiline.info/>`_ and
 `tags <https://camel.readthedocs.io/en/latest/yamlref.html#tags>`_ in your document. For example, consider the following
@@ -79,7 +79,7 @@ and styles, such as the `folded <https://yaml-multiline.info/>`_ style of the ``
 
         Good thing it''s managed by this template.'
 
-By contrast, passing it through ``yq -Y .Resources.ElasticLoadBalancer`` will preserve tags and styles::
+By contrast, passing it through ``yq -Y .Resources.ElasticLoadBalancer`` will preserve tags, styles, and comments::
 
     Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
     Properties:
@@ -102,8 +102,6 @@ parses this metadata, re-applies the tags and styles, and discards the extra pai
  to preserve the YAML formatting. For example, a jq filter that counts entries in the Instances array will come up with
  4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
  metadata keys. Check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
-
-yq does not support passing YAML comments into the JSON representation used by jq, or roundtripping such comments.
 
 XML support
 -----------

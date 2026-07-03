@@ -196,6 +196,32 @@ class TestYq(unittest.TestCase):
         with io.open(cfn_filename) as fh:
             self.assertEqual(self.run_yq("", ["-Y", ".", cfn_filename]), fh.read())
 
+    def test_yaml_comment_roundtrip(self):
+        yaml_doc = (
+            "# top\n"
+            "a: 1 # inline a\n"
+            "# before b\n"
+            "b: 2\n"
+            "parent: # parent inline\n"
+            "  # child before\n"
+            "  child: 3 # child inline\n"
+            "items:\n"
+            "  - 1 # one\n"
+            "  # before two\n"
+            "  - 2\n"
+        )
+        self.assertEqual(self.run_yq(yaml_doc, ["-Y", "."]), yaml_doc)
+        self.assertEqual(
+            self.run_yq(yaml_doc, ["-y", "."]),
+            "a: 1\nb: 2\nparent:\n  child: 3\nitems:\n  - 1\n  - 2\n",
+        )
+
+        from yq.loader import get_loader
+        from yq.yaml_support import CommentPreservingLoader
+
+        self.assertNotIn(CommentPreservingLoader, get_loader(use_annotations=False).__mro__)
+        self.assertIn(CommentPreservingLoader, get_loader(use_annotations=True).__mro__)
+
     def test_in_place_yaml(self):
         with tempfile.NamedTemporaryFile() as tf, tempfile.NamedTemporaryFile() as tf2:
             tf.write(b"- foo\n- bar\n")
