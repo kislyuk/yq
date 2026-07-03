@@ -114,7 +114,11 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
     ],
 }
 
-merge_resolver: ResolverSpec = {"tag": "tag:yaml.org,2002:merge", "regexp": re.compile(r"^(?:<<)$"), "start_chars": ["<"]}
+merge_resolver: ResolverSpec = {
+    "tag": "tag:yaml.org,2002:merge",
+    "regexp": re.compile(r"^(?:<<)$"),
+    "start_chars": ["<"],
+}
 
 
 def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
