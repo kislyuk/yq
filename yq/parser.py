@@ -1,7 +1,7 @@
 import argparse
 import subprocess
 import sys
-from typing import Union
+from typing import Dict, Union
 
 try:
     from .version import version as __version__
@@ -9,7 +9,7 @@ except ImportError:
     __version__ = "0.0.0"
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
-jq_arg_spec = {
+jq_arg_spec: Dict[str, Union[int, str]] = {
     "--indent": 1,
     "-f": 1,
     "--from-file": 1,
@@ -131,8 +131,7 @@ def get_parser(program_name, description):
     parser.add_argument("--in-place", "-i", action="store_true", help="Edit files in place (no backup - use caution)")
     parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
 
-    for arg in jq_arg_spec:
-        nargs: Union[int, str] = jq_arg_spec[arg]  # type: ignore
+    for arg, nargs in jq_arg_spec.items():
         parser.add_argument(arg, nargs=nargs, dest=arg, action="append", help=argparse.SUPPRESS)
 
     parser.add_argument("jq_filter", nargs="?")

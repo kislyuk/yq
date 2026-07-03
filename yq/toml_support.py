@@ -1,7 +1,7 @@
 from datetime import date, datetime, time
 
 import tomlkit
-from tomlkit.items import AoT, Array, Bool, Float, InlineTable, Integer, String, Table
+from tomlkit.items import AoT, Array, Bool, Float, InlineTable, Integer, Item, String, Table
 from tomlkit.toml_document import TOMLDocument
 
 TOML_META_KEY = "__tomlq_meta__"
@@ -119,6 +119,7 @@ def _apply_aot(aot, values):
 
 
 def _replacement_item(current, value):
+    item: Item
     if isinstance(current, String) and isinstance(value, str):
         try:
             item = String.from_raw(value, current.type)

@@ -1,6 +1,7 @@
 import re
 from base64 import b64encode
 from hashlib import sha224
+from typing import Any, Dict, List, Pattern, TypedDict
 
 import yaml
 from yaml.tokens import (
@@ -13,14 +14,17 @@ from yaml.tokens import (
     ValueToken,
 )
 
-try:
-    from yaml import CSafeLoader as default_loader
-except ImportError:
-    from yaml import SafeLoader as default_loader  # type: ignore
+default_loader: Any = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+class ResolverSpec(TypedDict):
+    tag: str
+    regexp: Pattern[str]
+    start_chars: List[str]
 
 
 # Note the 1.1 resolver is modified from the default and only safe for use in dumping, not loading.
-core_resolvers = {
+core_resolvers: Dict[str, List[ResolverSpec]] = {
     "1.1": [
         {
             "tag": "tag:yaml.org,2002:bool",
@@ -110,7 +114,7 @@ core_resolvers = {
     ],
 }
 
-merge_resolver = {"tag": "tag:yaml.org,2002:merge", "regexp": re.compile(r"^(?:<<)$"), "start_chars": ["<"]}
+merge_resolver: ResolverSpec = {"tag": "tag:yaml.org,2002:merge", "regexp": re.compile(r"^(?:<<)$"), "start_chars": ["<"]}
 
 
 def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
@@ -121,7 +125,7 @@ def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
         resolvers.append(merge_resolver)
     resolver.yaml_implicit_resolvers = {}
     for r in resolvers:
-        for start_char in r["start_chars"]:  # type: ignore
+        for start_char in r["start_chars"]:
             resolver.yaml_implicit_resolvers.setdefault(start_char, [])
             resolver.yaml_implicit_resolvers[start_char].append((r["tag"], r["regexp"]))
 
