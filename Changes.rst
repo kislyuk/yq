@@ -1,3 +1,8 @@
+Changes for v4.1.0 (2026-07-03)
+===============================
+
+-  Implement YAML comment roundtripping
+
 Changes for v4.0.0 (2026-07-02)
 ===============================
 
