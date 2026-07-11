@@ -61,6 +61,9 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.build.hooks.vcs]
+version-file = "yq/version.py"
+
 [tool.black]
 line-length = 120
 

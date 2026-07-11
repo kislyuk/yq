@@ -35,6 +35,17 @@ class Parser(argparse.ArgumentParser):
             pass
 
 
+class VersionAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print("{} {}".format(parser.prog, __version__))
+        try:
+            jq_version = subprocess.check_output(["jq", "--version"], stderr=subprocess.STDOUT, text=True)
+            print(jq_version, end="" if jq_version.endswith("\n") else "\n")
+        except Exception as error:
+            print("jq version could not be determined: {}".format(error))
+        parser.exit()
+
+
 def get_parser(program_name, description):
     # By default suppress these help strings and only enable them in the specific programs.
     yaml_output_help, yaml_roundtrip_help, width_help, indentless_help, grammar_help = [argparse.SUPPRESS] * 5
@@ -132,7 +143,13 @@ def get_parser(program_name, description):
         help=toml_roundtrip_help,
     )
     parser.add_argument("--in-place", "-i", action="store_true", help="Edit files in place (no backup - use caution)")
-    parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
+    parser.add_argument(
+        "--version",
+        action=VersionAction,
+        nargs=0,
+        dest=argparse.SUPPRESS,
+        help="show the versions of %(prog)s and jq and exit",
+    )
 
     for arg, nargs in jq_arg_spec.items():
         parser.add_argument(arg, nargs=nargs, dest=arg, action="append", help=argparse.SUPPRESS)

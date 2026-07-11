@@ -84,6 +84,22 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq('{"понедельник": 1}', ["-y", '.["понедельник"]']), "1\n...\n")
         self.assertEqual(self.run_yq("- понедельник\n- вторник\n", ["-y", "."]), "- понедельник\n- вторник\n")
 
+    def test_version(self):
+        from unittest import mock
+
+        with mock.patch("yq.parser.__version__", "1.2.3"), mock.patch(
+            "yq.parser.subprocess.check_output", return_value="jq-1.7\n"
+        ):
+            self.assertEqual(self.run_yq("", ["--version"]), "yq 1.2.3\njq-1.7\n")
+
+        with mock.patch("yq.parser.__version__", "1.2.3"), mock.patch(
+            "yq.parser.subprocess.check_output", side_effect=OSError("jq not found")
+        ):
+            self.assertEqual(
+                self.run_yq("", ["--version"]),
+                "yq 1.2.3\njq version could not be determined: jq not found\n",
+            )
+
     def test_yq_err(self):
         err = (
             "yq: Error running jq: ScannerError: while scanning for the next token\nfound character '%' that "
