@@ -12,10 +12,12 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import date, datetime, time
 from itertools import chain, islice
+from typing import List
 
 import argcomplete
 import yaml
@@ -198,24 +200,24 @@ def has_explicit_yaml_start(source, loader_class):
         events.close()
 
 
-def split_yaml_frontmatter(source):
-    """Split at the first closing fence without asking the YAML parser to read the body."""
-    offset = 0
+def read_yaml_frontmatter(stream):
+    """Buffer the header and closing fence, leaving the body unread in stream."""
+    lines: List[str] = []
     started = False
-    for line in io.StringIO(source, newline=""):
+    for line in stream:
         content = line.rstrip("\r\n")
-        if offset == 0:
+        if not lines:
             content = content.lstrip("\ufeff")
         marker = re.match(r"(---|\.\.\.)(?=[ \t]|$)", content)
         if marker:
             if marker[1] == "---" and not started:
                 started = True
             else:
-                return source[:offset], source[offset:]
+                return "".join(lines), line
         elif content.strip() and not content.lstrip().startswith(("#", "%")):
             started = True
-        offset += len(line)
-    return source, ""
+        lines.append(line)
+    return "".join(lines), ""
 
 
 def yq(
@@ -287,7 +289,7 @@ def yq(
             use_toml_annotations = True if output_format == "annotated_toml" else False
             json_buffer = io.StringIO()
             input_doc_count = 0
-            yaml_tail = ""
+            yaml_boundary = ""
             for input_stream in input_streams:
                 if input_format == "yaml":
                     loader_class = get_loader(
@@ -295,9 +297,10 @@ def yq(
                         expand_aliases=expand_aliases,
                         expand_merge_keys=expand_merge_keys,
                     )
-                    yaml_input = input_stream.read()
                     if yaml_frontmatter:
-                        yaml_input, yaml_tail = split_yaml_frontmatter(yaml_input)
+                        yaml_input, yaml_boundary = read_yaml_frontmatter(input_stream)
+                    else:
+                        yaml_input = input_stream.read()
                     explicit_start = explicit_start or has_explicit_yaml_start(yaml_input, loader_class)
                     input_doc_count += load_yaml_docs(
                         in_stream=io.StringIO(yaml_input),
@@ -350,7 +353,7 @@ def yq(
                 first_docs = list(islice(docs, 2))
                 if yaml_frontmatter and len(first_docs) != 1:
                     raise ValueError("--yaml-frontmatter requires the jq filter to produce exactly one document")
-                yaml_output = io.StringIO() if yaml_tail else output_stream
+                yaml_output = io.StringIO() if yaml_boundary else output_stream
                 yaml.dump_all(
                     chain(first_docs, docs),
                     stream=yaml_output,
@@ -358,16 +361,17 @@ def yq(
                     width=sys.maxsize if width == 0 else width,
                     allow_unicode=True,
                     default_flow_style=False,
-                    explicit_start=explicit_start or input_doc_count > 1 or len(first_docs) > 1 or bool(yaml_tail),
+                    explicit_start=explicit_start or input_doc_count > 1 or len(first_docs) > 1 or bool(yaml_boundary),
                     explicit_end=explicit_end,
                 )
-                if yaml_tail:
+                if yaml_boundary:
                     rendered_yaml = yaml_output.getvalue()
                     # The original closing fence terminates even a scalar document.
-                    if rendered_yaml.endswith("...\n") and (not explicit_end or yaml_tail.startswith("...")):
+                    if rendered_yaml.endswith("...\n") and (not explicit_end or yaml_boundary.startswith("...")):
                         rendered_yaml = rendered_yaml[:-4]
                     output_stream.write(rendered_yaml)
-                    output_stream.write(yaml_tail)
+                    output_stream.write(yaml_boundary)
+                    shutil.copyfileobj(input_streams[0], output_stream, length=64 * 1024)
             elif output_format == "xml":
                 import xmltodict
 
@@ -416,7 +420,7 @@ def yq(
                 for input_stream in input_streams:
                     yaml_stream = input_stream
                     if yaml_frontmatter:
-                        yaml_stream = io.StringIO(split_yaml_frontmatter(input_stream.read())[0])
+                        yaml_stream = io.StringIO(read_yaml_frontmatter(input_stream)[0])
                     load_yaml_docs(
                         in_stream=yaml_stream,
                         out_stream=jq.stdin,

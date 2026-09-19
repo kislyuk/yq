@@ -271,9 +271,37 @@ class TestYq(unittest.TestCase):
         )
         self.assertEqual(result, b"Hello\n")
 
+    def test_yaml_frontmatter_streaming(self):
+        header = "---\na: b\n---\r\n"
+        expected_header = "---\na: c\n---\r\n"
+        # A body longer than several copy buffers, including a long line and no final newline.
+        body = "# body\r\n" + "x" * (256 * 1024) + "\r\ntrailing spaces  "
+        test = self
+
+        class StreamingInput(io.StringIO):
+            def seekable(self):
+                return False
+
+            def seek(self, *args):
+                raise AssertionError("Frontmatter streaming must not seek the input")
+
+            def read(self, size=-1):
+                test.assertGreater(size, 0, "The body must be read in bounded chunks")
+                test.assertLessEqual(size, 64 * 1024)
+                # The header must be processed before the body is read, and each chunk
+                # must be written before the next read instead of collecting the body.
+                test.assertEqual(sys.stdout.getvalue(), expected_header + body[: self.tell() - len(header)])
+                return super().read(size)
+
+        for mode in "-yF", "-YF":
+            with self.subTest(mode=mode):
+                result = self.run_yq(StreamingInput(header + body), [mode, '.a = "c"'])
+                self.assertEqual(result, expected_header + body)
+
     def test_yaml_frontmatter_in_place(self):
         with tempfile.NamedTemporaryFile() as first, tempfile.NamedTemporaryFile() as second:
-            body = b"---\r\n# Heading\r\n\r\n[invalid YAML\r\ntrailing spaces  \r\nno final newline"
+            body = b"---\r\n# Heading\r\n\r\n[invalid YAML\r\n" + b"x" * (256 * 1024)
+            body += b"\r\ntrailing spaces  \r\nno final newline"
             for stream in first, second:
                 stream.write(b"---\r\na: b\r\n" + body)
                 stream.flush()
