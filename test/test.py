@@ -383,13 +383,14 @@ class TestYq(unittest.TestCase):
                 try:
                     for _ in documents:
                         self.assertTrue(loader.check_node())
-                        loader.construct_document(loader.get_node())
                         self.assertEqual(loader.yaml_comments, [])
+                        loader.construct_document(loader.get_node())
                     self.assertFalse(loader.check_node())
+                    self.assertEqual(loader.yaml_comments, [])
                 finally:
                     loader.dispose()
 
-    def test_yaml_comment_cleanup_preserves_lookahead(self):
+    def test_yaml_comment_cleanup_preserves_leading_comments(self):
         import yaml
 
         from yq.dumper import get_dumper
@@ -401,13 +402,13 @@ class TestYq(unittest.TestCase):
                 loader = get_loader(use_annotations=True, expand_aliases=expand_aliases)(io.StringIO(source))
                 try:
                     self.assertTrue(loader.check_node())
-                    node = loader.get_node()
-                    # Parsing the next document start scans its leading comment before
-                    # the first document has been constructed.
+                    first = loader.construct_document(loader.get_node())
+                    # Advancing clears the completed document's comments before
+                    # scanning the next document's leading comments.
                     self.assertTrue(loader.check_node())
-                    first = loader.construct_document(node)
-                    self.assertEqual([comment.value for comment in loader.yaml_comments], [" second"])
+                    self.assertEqual([comment.value for comment in loader.yaml_comments], [" end first", " second"])
                     second = loader.construct_document(loader.get_node())
+                    self.assertFalse(loader.check_node())
                     self.assertEqual(loader.yaml_comments, [])
                     self.assertEqual(
                         yaml.dump_all(
@@ -417,6 +418,22 @@ class TestYq(unittest.TestCase):
                     )
                 finally:
                     loader.dispose()
+
+    def test_yaml_comment_cleanup_preserves_single_document(self):
+        import yaml
+
+        from yq.dumper import get_dumper
+        from yq.loader import get_loader
+
+        for start in "", "---\n", "%YAML 1.2\n---\n":
+            for end in "", "...\n":
+                with self.subTest(start=start, end=end):
+                    source = "# leading\n" + start + "value: 1 # inline\n" + end
+                    document = yaml.load(source, Loader=get_loader(use_annotations=True))
+                    self.assertEqual(
+                        yaml.dump(document, Dumper=get_dumper(use_annotations=True), default_flow_style=False),
+                        "# leading\nvalue: 1 # inline\n",
+                    )
 
     def test_yaml_comments_do_not_leak_between_documents(self):
         for first in "scalar", "null", "[]", "{}":
