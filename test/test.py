@@ -366,6 +366,64 @@ class TestYq(unittest.TestCase):
         self.assertNotIn(CommentPreservingLoader, get_loader(use_annotations=False).__mro__)
         self.assertIn(CommentPreservingLoader, get_loader(use_annotations=True).__mro__)
 
+    def test_yaml_comments_released_per_document(self):
+        from yq.loader import get_loader
+
+        documents = [
+            "# mapping\nvalue: 1 # inline\n# trailing mapping\n",
+            "# sequence\n- item # inline\n# trailing sequence\n",
+            "# scalar\nscalar # unattached inline\n# trailing scalar\n",
+            "# empty document\n",
+            "# empty collection\n[] # unattached inline\n",
+        ] * 100
+        source = "".join("---\n" + document for document in documents)
+        for expand_aliases in True, False:
+            with self.subTest(expand_aliases=expand_aliases):
+                loader = get_loader(use_annotations=True, expand_aliases=expand_aliases)(io.StringIO(source))
+                try:
+                    for _ in documents:
+                        self.assertTrue(loader.check_node())
+                        loader.construct_document(loader.get_node())
+                        self.assertEqual(loader.yaml_comments, [])
+                    self.assertFalse(loader.check_node())
+                finally:
+                    loader.dispose()
+
+    def test_yaml_comment_cleanup_preserves_lookahead(self):
+        import yaml
+
+        from yq.dumper import get_dumper
+        from yq.loader import get_loader
+
+        source = "# first\nvalue: 1 # inline\n... # end first\n# second\n---\nvalue: 2 # keep\n"
+        for expand_aliases in True, False:
+            with self.subTest(expand_aliases=expand_aliases):
+                loader = get_loader(use_annotations=True, expand_aliases=expand_aliases)(io.StringIO(source))
+                try:
+                    self.assertTrue(loader.check_node())
+                    node = loader.get_node()
+                    # Parsing the next document start scans its leading comment before
+                    # the first document has been constructed.
+                    self.assertTrue(loader.check_node())
+                    first = loader.construct_document(node)
+                    self.assertEqual([comment.value for comment in loader.yaml_comments], [" second"])
+                    second = loader.construct_document(loader.get_node())
+                    self.assertEqual(loader.yaml_comments, [])
+                    self.assertEqual(
+                        yaml.dump_all(
+                            [first, second], Dumper=get_dumper(use_annotations=True), default_flow_style=False
+                        ),
+                        "# first\nvalue: 1 # inline\n---\n# second\nvalue: 2 # keep\n",
+                    )
+                finally:
+                    loader.dispose()
+
+    def test_yaml_comments_do_not_leak_between_documents(self):
+        for first in "scalar", "null", "[]", "{}":
+            with self.subTest(first=first):
+                source = "# unattached\n" + first + " # unattached inline\n# trailing\n---\n# second\nkey: value\n"
+                self.assertEqual(self.run_yq(source, ["-Y", "."]), "---\n" + first + "\n---\n# second\nkey: value\n")
+
     def test_in_place_yaml(self):
         with tempfile.NamedTemporaryFile() as tf, tempfile.NamedTemporaryFile() as tf2:
             tf.write(b"- foo\n- bar\n")
