@@ -1,3 +1,8 @@
+Changes for v4.2.0 (2026-09-19)
+===============================
+
+-  Add YAML frontmatter processing with body passthrough
+
 Changes for v4.1.2 (2026-07-11)
 ===============================
 
