@@ -40,8 +40,7 @@ yq can be called as a module if needed. With ``-y/-Y``, files can be edited in p
 
 Use the ``--width``/``-w`` option to pass the line wrap width for string literals; ``--width 0`` disables wrapping. Use
 ``--explicit-start``/``--explicit-end`` to emit YAML start/end markers even when processing a single document.
-YAML output preserves an explicit leading ``---`` from the input and emits one for multidocument streams.
-Document start markers are always followed by a newline. All other
+YAML output preserves an explicit leading ``---`` from the input and emits one for multidocument streams. All other
 command line arguments are forwarded to ``jq``. ``yq`` forwards the exit code ``jq`` produced, unless there was an error
 in YAML parsing, in which case the exit code is 1. See the `jq manual <https://stedolan.github.io/jq/manual/>`_ for more
 details on ``jq`` features and options.
@@ -56,8 +55,8 @@ Use ``--yaml-frontmatter``/``-F`` to process a YAML header followed by Markdown 
     yq -Y --yaml-frontmatter '.draft = false' post.md
     yq -iYF '.draft = false' post.md another-post.md
 
-Only the first document is sent to jq. An unindented ``---`` or ``...`` document marker closes the header; an initial ``---``
-opens it. With ``-y`` or ``-Y``, the closing delimiter and everything after it pass through unchanged, including
+Only the first document is sent to jq. An initial ``---`` opens the header; an unindented ``---`` or ``...`` document marker
+closes it. With ``-y`` or ``-Y``, the closing delimiter and everything after it pass through unchanged, including
 comments, whitespace, and line endings. The filter must produce exactly one document, and each invocation accepts
 one input file (or multiple files with ``--in-place``). A header without a closing delimiter is processed as ordinary
 YAML. Without ``-y``/``-Y``, only the JSON query result is emitted, allowing queries such as ``yq -F .title post.md``.
