@@ -5,7 +5,14 @@ from typing import Any, Dict, List, Optional, cast
 
 import yaml
 from yaml.emitter import Emitter
-from yaml.events import AliasEvent, CollectionStartEvent, MappingEndEvent, ScalarEvent, SequenceEndEvent
+from yaml.events import (
+    AliasEvent,
+    CollectionStartEvent,
+    DocumentEndEvent,
+    MappingEndEvent,
+    ScalarEvent,
+    SequenceEndEvent,
+)
 from yaml.serializer import Serializer
 
 COMMENT_PLACEMENT_BEFORE = "before"
@@ -75,7 +82,24 @@ def consume_comments_for_node(loader: Any, anchor_node: Any, value_node: Optiona
 class CommentPreservingLoader(yaml.SafeLoader):
     def __init__(self, stream: Any) -> None:
         self.yaml_comments: List[YamlComment] = []
+        self.yaml_document_end_line = 0
         super().__init__(stream)
+
+    def get_event(self) -> Any:
+        event = super().get_event()
+        if isinstance(event, DocumentEndEvent):
+            # An explicit '...' ends its own line; an implicit end is positioned
+            # at the next document's start, whose comments must remain available.
+            self.yaml_document_end_line = event.end_mark.line + int(event.explicit)
+        return event
+
+    def construct_document(self, node: Any) -> Any:
+        try:
+            return super().construct_document(node)
+        finally:
+            self.yaml_comments = [
+                comment for comment in self.yaml_comments if comment.line >= self.yaml_document_end_line
+            ]
 
     def scan_to_next_token(self) -> None:
         if self.index == 0 and self.peek() == "\ufeff":
