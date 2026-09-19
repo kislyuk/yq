@@ -27,7 +27,7 @@ jq_arg_spec: Dict[str, Union[int, str]] = {
 class Parser(argparse.ArgumentParser):
     def print_help(self, *args, **kwargs):
         yq_help = argparse.ArgumentParser.format_help(self).splitlines()
-        print("\n".join(["usage: {} [options] <jq filter> [input file...]".format(self.prog)] + yq_help[2:] + [""]))
+        print("\n".join([f"usage: {self.prog} [options] <jq filter> [input file...]"] + yq_help[2:] + [""]))
         sys.stdout.flush()
         try:
             subprocess.check_call(["jq", "--help"])
@@ -37,12 +37,12 @@ class Parser(argparse.ArgumentParser):
 
 class VersionAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print("{} {}".format(parser.prog, __version__))
+        print(f"{parser.prog} {__version__}")
         try:
             jq_version = subprocess.check_output(["jq", "--version"], stderr=subprocess.STDOUT, text=True)
             print(jq_version, end="" if jq_version.endswith("\n") else "\n")
         except Exception as error:
-            print("jq version could not be determined: {}".format(error))
+            print(f"jq version could not be determined: {error}")
         parser.exit()
 
 

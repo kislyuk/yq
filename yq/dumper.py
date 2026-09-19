@@ -27,7 +27,7 @@ class OrderedIndentlessDumper(yaml.SafeDumper):
 
 class OrderedDumper(OrderedIndentlessDumper):
     def increase_indent(self, flow=False, indentless=False):
-        return super(OrderedDumper, self).increase_indent(flow, False)
+        return super().increase_indent(flow, False)
 
     def ignore_aliases(self, data):
         return True

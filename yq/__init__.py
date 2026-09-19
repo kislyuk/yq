@@ -139,7 +139,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
     if in_place:
         if args.output_format not in {"yaml", "annotated_yaml", "toml", "annotated_toml", "xml"}:
-            sys.exit("{}: -i/--in-place can only be used with -y/-Y/-t/-T/-x".format(program_name))
+            sys.exit(f"{program_name}: -i/--in-place can only be used with -y/-Y/-t/-T/-x")
         input_streams = yq_args.pop("input_streams")
         if len(input_streams) == 1 and input_streams[0].name == "<stdin>":
             msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
@@ -178,7 +178,7 @@ def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor
                 if doc_bytes_written > doc_len * max_expansion_factor:
                     if jq:
                         jq.kill()
-                    exit_func("{}: Error: detected unsafe YAML entity expansion".format(prog))
+                    exit_func(f"{prog}: Error: detected unsafe YAML entity expansion")
                 out_stream.write(chunk)
             out_stream.write("\n")
             last_loader_pos = loader_pos
@@ -252,11 +252,11 @@ def yq(
 
     if yaml_frontmatter:
         if input_format != "yaml" or output_format not in {"json", "yaml", "annotated_yaml"}:
-            exit_func("{}: --yaml-frontmatter requires YAML input and JSON or YAML output".format(program_name))
+            exit_func(f"{program_name}: --yaml-frontmatter requires YAML input and JSON or YAML output")
             return
         if converting_output and len(input_streams) != 1:
             exit_func(
-                "{}: --yaml-frontmatter requires one input file, or --in-place for multiple files".format(program_name)
+                f"{program_name}: --yaml-frontmatter requires one input file, or --in-place for multiple files"
             )
             return
         for stream in [*input_streams, output_stream]:
@@ -466,4 +466,4 @@ def yq(
             input_stream.close()
         exit_func(jq.returncode)
     except Exception as e:
-        exit_func("{}: Error running jq: {}: {}.".format(program_name, type(e).__name__, e))
+        exit_func(f"{program_name}: Error running jq: {type(e).__name__}: {e}.")
