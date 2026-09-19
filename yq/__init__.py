@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 from datetime import date, datetime, time
+from itertools import chain, islice
 
 import argcomplete
 import yaml
@@ -159,6 +160,7 @@ def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor
     loader = loader_class(in_stream)
 
     last_loader_pos = 0
+    doc_count = 0
     try:
         while loader.check_node():
             node = loader.get_node()
@@ -175,8 +177,20 @@ def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor
                 out_stream.write(chunk)
             out_stream.write("\n")
             last_loader_pos = loader_pos
+            doc_count += 1
     finally:
         loader.dispose()
+    return doc_count
+
+
+def has_explicit_yaml_start(source, loader_class):
+    # Inspect only the stream/document start events, including comments and directives.
+    events = yaml.parse(source, Loader=loader_class)
+    try:
+        next(events)  # StreamStartEvent
+        return getattr(next(events), "explicit", False)
+    finally:
+        events.close()
 
 
 def yq(
@@ -233,6 +247,7 @@ def yq(
             use_annotations = True if output_format == "annotated_yaml" else False
             use_toml_annotations = True if output_format == "annotated_toml" else False
             json_buffer = io.StringIO()
+            input_doc_count = 0
             for input_stream in input_streams:
                 if input_format == "yaml":
                     loader_class = get_loader(
@@ -240,8 +255,10 @@ def yq(
                         expand_aliases=expand_aliases,
                         expand_merge_keys=expand_merge_keys,
                     )
-                    load_yaml_docs(
-                        in_stream=input_stream,
+                    yaml_input = input_stream.read()
+                    explicit_start = explicit_start or has_explicit_yaml_start(yaml_input, loader_class)
+                    input_doc_count += load_yaml_docs(
+                        in_stream=io.StringIO(yaml_input),
                         out_stream=json_buffer,
                         jq=None,
                         loader_class=loader_class,
@@ -282,14 +299,16 @@ def yq(
                     indentless=indentless_lists,
                     grammar_version=yaml_output_grammar_version,
                 )
+                docs = decode_docs(jq_out, json_decoder)
+                first_docs = list(islice(docs, 2))
                 yaml.dump_all(
-                    decode_docs(jq_out, json_decoder),
+                    chain(first_docs, docs),
                     stream=output_stream,
                     Dumper=dumper_class,
                     width=sys.maxsize if width == 0 else width,
                     allow_unicode=True,
                     default_flow_style=False,
-                    explicit_start=explicit_start,
+                    explicit_start=explicit_start or input_doc_count > 1 or len(first_docs) > 1,
                     explicit_end=explicit_end,
                 )
             elif output_format == "xml":
