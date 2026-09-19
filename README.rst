@@ -53,7 +53,7 @@ YAML frontmatter
 
 Use ``--yaml-frontmatter``/``-F`` to process a YAML header followed by Markdown or other text::
 
-    yq -Y -F '.draft = false' post.md
+    yq -Y --yaml-frontmatter '.draft = false' post.md
     yq -iYF '.draft = false' post.md another-post.md
 
 Only the first document is sent to jq. An unindented ``---`` or ``...`` document marker closes the header; an initial ``---``
