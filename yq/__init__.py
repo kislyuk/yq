@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+from contextlib import ExitStack
 from datetime import date, datetime, time
 from itertools import chain, islice
 from typing import List
@@ -116,51 +117,52 @@ def cli(args=None, input_format="yaml", program_name="yq"):
             for value_group in values:
                 jq_args.append(arg)
                 jq_args.extend(value_group)
-    if args.jq_filter is not None:
-        if "--from-file" in jq_args or "-f" in jq_args:
-            args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
+    with ExitStack() as input_stack:
+        if args.jq_filter is not None:
+            if "--from-file" in jq_args or "-f" in jq_args:
+                args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
+            else:
+                jq_filter_arg_loc = len(jq_args)
+                if "--args" in jq_args:
+                    jq_filter_arg_loc = jq_args.index("--args") + 1
+                elif "--jsonargs" in jq_args:
+                    jq_filter_arg_loc = jq_args.index("--jsonargs") + 1
+                jq_args.insert(jq_filter_arg_loc, args.jq_filter)
+                if null_input:
+                    args.input_streams.insert(0, input_stack.enter_context(open(os.devnull)))
+        delattr(args, "jq_filter")
+        in_place = args.in_place
+        delattr(args, "in_place")
+
+        if (sys.stdin is None or sys.stdin.isatty()) and not args.input_streams:
+            parser.print_help()
+            sys.exit(2)
+        elif not args.input_streams:
+            args.input_streams = [sys.stdin]
+
+        yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
+        if in_place:
+            if args.output_format not in {"yaml", "annotated_yaml", "toml", "annotated_toml", "xml"}:
+                sys.exit(f"{program_name}: -i/--in-place can only be used with -y/-Y/-t/-T/-x")
+            input_streams = yq_args.pop("input_streams")
+            if len(input_streams) == 1 and input_streams[0].name == "<stdin>":
+                msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
+                sys.exit(msg.format(program_name))
+            for i, input_stream in enumerate(input_streams):
+
+                def exit_handler(arg=None):
+                    if arg:
+                        sys.exit(arg)
+
+                if i < len(input_streams):
+                    yq_args["exit_func"] = exit_handler
+
+                with io.StringIO() as out_fh:
+                    yq(input_streams=[input_stream], output_stream=out_fh, **yq_args)
+                    with open(input_stream.name, "w", newline="" if args.yaml_frontmatter else None) as fh:
+                        fh.write(out_fh.getvalue())
         else:
-            jq_filter_arg_loc = len(jq_args)
-            if "--args" in jq_args:
-                jq_filter_arg_loc = jq_args.index("--args") + 1
-            elif "--jsonargs" in jq_args:
-                jq_filter_arg_loc = jq_args.index("--jsonargs") + 1
-            jq_args.insert(jq_filter_arg_loc, args.jq_filter)
-            if null_input:
-                args.input_streams.insert(0, open(os.devnull))
-    delattr(args, "jq_filter")
-    in_place = args.in_place
-    delattr(args, "in_place")
-
-    if (sys.stdin is None or sys.stdin.isatty()) and not args.input_streams:
-        parser.print_help()
-        sys.exit(2)
-    elif not args.input_streams:
-        args.input_streams = [sys.stdin]
-
-    yq_args = dict(input_format=input_format, program_name=program_name, jq_args=jq_args, **vars(args))
-    if in_place:
-        if args.output_format not in {"yaml", "annotated_yaml", "toml", "annotated_toml", "xml"}:
-            sys.exit(f"{program_name}: -i/--in-place can only be used with -y/-Y/-t/-T/-x")
-        input_streams = yq_args.pop("input_streams")
-        if len(input_streams) == 1 and input_streams[0].name == "<stdin>":
-            msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
-            sys.exit(msg.format(program_name))
-        for i, input_stream in enumerate(input_streams):
-
-            def exit_handler(arg=None):
-                if arg:
-                    sys.exit(arg)
-
-            if i < len(input_streams):
-                yq_args["exit_func"] = exit_handler
-
-            with io.StringIO() as out_fh:
-                yq(input_streams=[input_stream], output_stream=out_fh, **yq_args)
-                with open(input_stream.name, "w", newline="" if args.yaml_frontmatter else None) as fh:
-                    fh.write(out_fh.getvalue())
-    else:
-        yq(**yq_args)
+            yq(**yq_args)
 
 
 def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor, exit_func, prog):
@@ -257,9 +259,7 @@ def yq(
             exit_func(f"{program_name}: --yaml-frontmatter requires YAML input and JSON or YAML output")
             return
         if converting_output and len(input_streams) != 1:
-            exit_func(
-                f"{program_name}: --yaml-frontmatter requires one input file, or --in-place for multiple files"
-            )
+            exit_func(f"{program_name}: --yaml-frontmatter requires one input file, or --in-place for multiple files")
             return
         for stream in [*input_streams, output_stream]:
             if isinstance(stream, io.TextIOWrapper):
@@ -316,7 +316,7 @@ def yq(
                     import xmltodict
 
                     if xml_item_depth != 0:
-                        raise Exception("xml_item_depth is not supported with xq -x")
+                        raise ValueError("xml_item_depth is not supported with xq -x")
 
                     xml_doc = xmltodict.parse(
                         input_stream.buffer if isinstance(input_stream, io.TextIOWrapper) else input_stream.read(),
@@ -336,7 +336,7 @@ def yq(
                     )
                     json_buffer.write("\n")
                 else:
-                    raise Exception("Unknown input format")
+                    raise ValueError("Unknown input format")
             jq_out, _jq_err = jq.communicate(json_buffer.getvalue())
             if yaml_frontmatter and jq.returncode:
                 for input_stream in input_streams:
@@ -397,7 +397,9 @@ def yq(
                         )
                     except ValueError as e:
                         if "Document must have exactly one root" in str(e):
-                            raise Exception(str(e) + " Use --xml-root=name to envelope your output with a root element")
+                            raise ValueError(
+                                str(e) + " Use --xml-root=name to envelope your output with a root element"
+                            ) from e
                         else:
                             raise
                     output_stream.write("\n")
@@ -412,7 +414,7 @@ def yq(
                         doc = tomlkit_from_json(doc)
                     tomlkit.dump(doc, output_stream)
             else:
-                raise Exception("Unknown output format")
+                raise ValueError("Unknown output format")
         else:
             if input_format == "yaml":
                 loader_class = get_loader(
@@ -457,7 +459,7 @@ def yq(
                     json.dump(toml_doc, jq.stdin, cls=JSONDateTimeEncoder)
                     jq.stdin.write("\n")
             else:
-                raise Exception("Unknown input format")
+                raise ValueError("Unknown input format")
 
             try:
                 jq.stdin.close()

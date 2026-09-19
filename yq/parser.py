@@ -89,7 +89,7 @@ def get_parser(program_name, description):
             "and other formatting metadata by representing them as extra items while in JSON."
         )
     else:
-        raise Exception("Unknown program name")
+        raise ValueError("Unknown program name")
 
     description = description.replace("yq", program_name).replace("YAML", current_language)
     parser_args = {"prog": program_name, "description": description, "formatter_class": argparse.RawTextHelpFormatter}

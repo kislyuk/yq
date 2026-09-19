@@ -134,7 +134,7 @@ merge_resolver: ResolverSpec = {
 
 def set_yaml_grammar(resolver, grammar_version="1.2", expand_merge_keys=True):
     if grammar_version not in core_resolvers:
-        raise Exception(f"Unknown grammar version {grammar_version}")
+        raise ValueError(f"Unknown grammar version {grammar_version}")
     resolvers = list(core_resolvers[grammar_version])
     if expand_merge_keys:
         resolvers.append(merge_resolver)
