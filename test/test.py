@@ -185,7 +185,9 @@ class TestYq(unittest.TestCase):
             tf.seek(0)
             tf2.write(b'{"a": 1}')
             tf2.seek(0)
-            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "---\nb\n---\n1\n...\n")
+            self.assertEqual(
+                self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "---\nb\n---\n1\n...\n"
+            )
 
     def test_leading_document_marker(self):
         for mode in "-y", "-Y":
@@ -223,6 +225,77 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("2016-12-20", ["."]), "")
         self.assertEqual(self.run_yq("2016-12-20", ["-y", "."]), "'2016-12-20'\n")
         self.assertEqual(self.run_yq("2016-12-20", ["-y", "--yml-out-ver=1.2", "."]), "2016-12-20\n...\n")
+
+    def test_yaml_frontmatter(self):
+        header = "---\ntitle: My First Post\ndate: 2026-09-18\ntags: [notes, guides]\ndraft: false\n"
+        body = "---\n# Hello World\nThis is the main content of the file.\n"
+        expected_header = header.replace("2026-09-18", "'2026-09-18'").replace("draft: false", "draft: true")
+        for flag in "--yaml-frontmatter", "-F":
+            self.assertEqual(self.run_yq(header + body, ["-Y", flag, ".draft = true"]), expected_header + body)
+        self.assertEqual(self.run_yq(header + body, ["-YF", ".draft = true"]), expected_header + body)
+        self.assertEqual(self.run_yq(header + body, ["-cYF", ".draft = true"]), expected_header + body)
+
+        # The body is not YAML and must never reach the scanner, even with control characters.
+        body = "--- # closing fence\n# Heading\n```\n[unclosed\n\t@invalid: :\n\x00\n---\n...\n  spaces  \nno final newline"
+        for mode in "-y", "-Y":
+            self.assertEqual(self.run_yq("---\na: b\n" + body, [mode, "-F", "."]), "---\na: b\n" + body)
+            self.assertEqual(
+                self.run_yq("a: b\n--- inline body\n[invalid", [mode, "-F", "."]),
+                "---\na: b\n--- inline body\n[invalid",
+            )
+
+    def test_yaml_frontmatter_boundaries(self):
+        for mode in "-y", "-Y":
+            for closing in "---\n", "---", "...\n", "... # end\n":
+                for header, expected in [("---\na: b\n", "a: b\n"), ("a: b\n", "a: b\n"), ("---\nhello\n", "hello\n")]:
+                    with self.subTest(mode=mode, header=header, closing=closing):
+                        self.assertEqual(self.run_yq(header + closing, [mode, "-F", "."]), "---\n" + expected + closing)
+            self.assertEqual(self.run_yq("---\n---\n# body", [mode, "-F", "."]), "---\nnull\n---\n# body")
+            self.assertEqual(self.run_yq("a: b\n", [mode, "-F", "."]), "a: b\n")
+            self.assertEqual(self.run_yq("---\na: b\n", [mode, "-F", "."]), "---\na: b\n")
+            for closing in "---\n", "...\n":
+                expected = "---\na: b\n...\n" + ("---\n" if closing == "---\n" else "") + "# body"
+                self.assertEqual(
+                    self.run_yq("---\na: b\n" + closing + "# body", [mode, "-F", "--explicit-end", "."]), expected
+                )
+        header = '# header\n---\ntext: |\n  ---\n  ...\nquoted: "---"\n'
+        body = "---\n# body\n"
+        self.assertEqual(
+            self.run_yq(header + body, ["-YF", "."]), header.replace("# header\n---", "---\n# header") + body
+        )
+
+    def test_yaml_frontmatter_json(self):
+        result = subprocess.check_output(
+            [sys.executable, "-m", "yq", "-F", "-r", ".title"],
+            input=b"---\ntitle: Hello\n---\n# body\n[invalid YAML",
+        )
+        self.assertEqual(result, b"Hello\n")
+
+    def test_yaml_frontmatter_in_place(self):
+        with tempfile.NamedTemporaryFile() as first, tempfile.NamedTemporaryFile() as second:
+            body = b"---\r\n# Heading\r\n\r\n[invalid YAML\r\ntrailing spaces  \r\nno final newline"
+            for stream in first, second:
+                stream.write(b"---\r\na: b\r\n" + body)
+                stream.flush()
+            self.run_yq("", ["-iYF", '.a = "c"', first.name, second.name])
+            for stream in first, second:
+                stream.seek(0)
+                self.assertEqual(stream.read(), b"---\na: c\n" + body)
+
+            err = (
+                "yq: Error running jq: ValueError: --yaml-frontmatter requires the jq filter "
+                "to produce exactly one document."
+            )
+            for jq_filter, exit_code in [("empty", err), ("., .", err), ("[", 3)]:
+                self.run_yq("", ["-iYF", jq_filter, first.name], expect_exit_codes={exit_code})
+                first.seek(0)
+                self.assertEqual(first.read(), b"---\na: c\n" + body)
+
+            self.run_yq(
+                "",
+                ["-YF", ".", first.name, second.name],
+                expect_exit_codes={"yq: --yaml-frontmatter requires one input file, or --in-place for multiple files"},
+            )
 
     def test_unrecognized_tags(self):
         self.assertEqual(self.run_yq("!!foo bar\n", ["."]), "")

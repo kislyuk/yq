@@ -121,6 +121,16 @@ def get_parser(program_name, description):
     parser.add_argument("--indentless-lists", "--indentless", action="store_true", help=indentless_help)
     parser.add_argument("--explicit-start", action="store_true", help=explicit_start_help)
     parser.add_argument("--explicit-end", action="store_true", help=explicit_end_help)
+    parser.add_argument(
+        "--yaml-frontmatter",
+        "-F",
+        action="store_true",
+        help=(
+            "Process only the first YAML document; with -y/-Y, pass through the remaining text unchanged"
+            if program_name == "yq"
+            else argparse.SUPPRESS
+        ),
+    )
     parser.add_argument("--no-expand-aliases", action="store_false", dest="expand_aliases", help=argparse.SUPPRESS)
     parser.add_argument("--max-expansion-factor", type=int, default=1024, help=argparse.SUPPRESS)
     parser.add_argument(
