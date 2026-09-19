@@ -109,8 +109,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     jq_args = [arg for arg in jq_args if arg is not None]
 
     for arg in jq_arg_spec:
-        values = getattr(args, arg, None)
-        delattr(args, arg)
+        values = vars(args).pop(arg)
         if values is not None:
             for value_group in values:
                 jq_args.append(arg)
