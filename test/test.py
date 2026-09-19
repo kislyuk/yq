@@ -185,7 +185,21 @@ class TestYq(unittest.TestCase):
             tf.seek(0)
             tf2.write(b'{"a": 1}')
             tf2.seek(0)
-            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "b\n--- 1\n...\n")
+            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "b\n---\n1\n...\n")
+
+    def test_document_marker_newline(self):
+        import yaml
+
+        for mode in "-y", "-Y":
+            for indent in [], ["--indentless"]:
+                for document in "hello", "42", "null", "[]", "{}", "[one, two]", "{a: b}":
+                    with self.subTest(mode=mode, indent=indent, document=document):
+                        result = self.run_yq(document, [mode, *indent, "--explicit-start", "."])
+                        self.assertTrue(result.startswith("---\n"), result)
+                        self.assertEqual(yaml.safe_load(result), yaml.safe_load(document))
+                        result = self.run_yq("a: b\n---\n" + document, [mode, *indent, "."])
+                        self.assertIn("\n---\n", result)
+                        self.assertNotIn("--- ", result)
 
     def test_datetimes(self):
         self.assertEqual(self.run_yq("- 2016-12-20T22:07:36Z\n", ["."]), "")
