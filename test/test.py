@@ -179,13 +179,26 @@ class TestYq(unittest.TestCase):
         return "/dev/fd/{}".format(fh.fileno())
 
     def test_multidocs(self):
-        self.assertEqual(self.run_yq("---\na: b\n---\nc: d", ["-y", "."]), "a: b\n---\nc: d\n")
+        self.assertEqual(self.run_yq("---\na: b\n---\nc: d", ["-y", "."]), "---\na: b\n---\nc: d\n")
         with tempfile.TemporaryFile() as tf, tempfile.TemporaryFile() as tf2:
             tf.write(b'{"a": "b"}')
             tf.seek(0)
             tf2.write(b'{"a": 1}')
             tf2.seek(0)
-            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "b\n---\n1\n...\n")
+            self.assertEqual(self.run_yq("", ["-y", ".a", self.fd_path(tf), self.fd_path(tf2)]), "---\nb\n---\n1\n...\n")
+
+    def test_leading_document_marker(self):
+        for mode in "-y", "-Y":
+            with self.subTest(mode=mode):
+                self.assertEqual(self.run_yq("a: b\n", [mode, "."]), "a: b\n")
+                self.assertEqual(self.run_yq("---\na: b\n", [mode, "."]), "---\na: b\n")
+                self.assertEqual(self.run_yq("%YAML 1.1\n---\na: b\n", [mode, "."]), "---\na: b\n")
+                self.assertTrue(self.run_yq("# header\n---\na: b\n", [mode, "."]).startswith("---\n"))
+                self.assertEqual(self.run_yq("a: b\n---\nc: d\n", [mode, "."]), "---\na: b\n---\nc: d\n")
+                self.assertEqual(self.run_yq("a: b\n", [mode, "., ."]), "---\na: b\n---\na: b\n")
+                self.assertEqual(self.run_yq("a: b\n---\nc: d\n", [mode, "select(.a)"]), "---\na: b\n")
+                self.assertEqual(self.run_yq("---\na: b\n", [mode, "empty"]), "")
+                self.assertEqual(self.run_yq("", [mode, "."]), "")
 
     def test_document_marker_newline(self):
         import yaml
@@ -284,7 +297,7 @@ class TestYq(unittest.TestCase):
 
     def test_explicit_doc_markers(self):
         test_doc = os.path.join(os.path.dirname(__file__), "doc.yml")
-        self.assertTrue(self.run_yq("", ["-y", ".", test_doc]).startswith("yaml_struct"))
+        self.assertTrue(self.run_yq("", ["-y", ".", test_doc]).startswith("---\nyaml_struct"))
         self.assertTrue(self.run_yq("", ["-y", "--explicit-start", ".", test_doc]).startswith("---"))
         self.assertTrue(self.run_yq("", ["-y", "--explicit-end", ".", test_doc]).endswith("...\n"))
 
