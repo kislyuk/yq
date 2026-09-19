@@ -192,7 +192,8 @@ def has_explicit_yaml_start(source, loader_class):
     events = yaml.parse(source, Loader=loader_class)
     try:
         next(events)  # StreamStartEvent
-        return getattr(next(events), "explicit", False)
+        event = next(events)
+        return isinstance(event, yaml.events.DocumentStartEvent) and event.explicit
     finally:
         events.close()
 
