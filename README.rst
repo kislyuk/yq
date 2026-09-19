@@ -113,6 +113,11 @@ To accomplish this in ``-Y`` mode, yq carries extra metadata (mapping pairs and 
 representation of your document for any custom tags or styles that it finds. When converting the JSON back into YAML, it
 parses this metadata, re-applies the tags and styles, and discards the extra pairs and values.
 
+YAML comment metadata is attached to entries in mappings and sequences. Comments on a document whose root is a
+scalar (a string, number, boolean, or null) cannot currently roundtrip through ``-Y``: there is no enclosing collection
+to carry their metadata through jq. For example, a Markdown heading after a YAML document separator is treated as a
+comment on a root string and is lost. Use ``--yaml-frontmatter``/``-F`` for these files to preserve the entire body.
+
 .. warning ::
 
  The ``-Y`` option is incompatible with jq filters that do not expect the extra information injected into the document
