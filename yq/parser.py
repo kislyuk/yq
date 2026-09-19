@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import argparse
 import subprocess
 import sys
-from typing import Dict, Union
 
 try:
     from .version import version as __version__
@@ -9,7 +10,7 @@ except ImportError:
     __version__ = "0.0.0"
 
 # jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
-jq_arg_spec: Dict[str, Union[int, str]] = {
+jq_arg_spec: dict[str, int | str] = {
     "--indent": 1,
     "-f": 1,
     "--from-file": 1,
@@ -91,9 +92,8 @@ def get_parser(program_name, description):
         raise Exception("Unknown program name")
 
     description = description.replace("yq", program_name).replace("YAML", current_language)
-    parser_args = dict(prog=program_name, description=description, formatter_class=argparse.RawTextHelpFormatter)
-    if sys.version_info >= (3, 5):
-        parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
+    parser_args = {"prog": program_name, "description": description, "formatter_class": argparse.RawTextHelpFormatter}
+    parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
     parser = Parser(**parser_args)
     parser.add_argument("--output-format", default="json", help=argparse.SUPPRESS)
     parser.add_argument(

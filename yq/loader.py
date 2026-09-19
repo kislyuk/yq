@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import re
 from base64 import b64encode
 from hashlib import sha224
-from typing import Any, Dict, List, Pattern, TypedDict
+from typing import Any, Pattern, TypedDict
 
 import yaml
 from yaml.tokens import (
@@ -29,11 +31,11 @@ default_loader: Any = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 class ResolverSpec(TypedDict):
     tag: str
     regexp: Pattern[str]
-    start_chars: List[str]
+    start_chars: list[str]
 
 
 # Note the 1.1 resolver is modified from the default and only safe for use in dumping, not loading.
-core_resolvers: Dict[str, List[ResolverSpec]] = {
+core_resolvers: dict[str, list[ResolverSpec]] = {
     "1.1": [
         {
             "tag": "tag:yaml.org,2002:bool",
@@ -151,9 +153,9 @@ def construct_yaml_1_2_int(loader, node):
     if value[0] in "+-":
         value = value[1:]
     if value.startswith("0o"):
-        return sign * int(value[2:], 8)
+        return sign * int(value, 0)
     if value.startswith("0x"):
-        return sign * int(value[2:], 16)
+        return sign * int(value, 0)
     return sign * int(value, 10)
 
 
@@ -165,7 +167,7 @@ class CustomLoader(yaml.SafeLoader):
     expand_aliases = False
 
     def emit_yq_kv(self, key, value, original_token):
-        marks = dict(start_mark=original_token.start_mark, end_mark=original_token.end_mark)
+        marks = {"start_mark": original_token.start_mark, "end_mark": original_token.end_mark}
         self.tokens.append(FlowMappingStartToken(**marks))
         self.tokens.append(KeyToken(**marks))
         self.tokens.append(ScalarToken(value=key, plain=True, **marks))
@@ -194,7 +196,7 @@ class CommentPreservingCustomLoader(CommentPreservingLoader):
     expand_aliases = False
 
     def emit_yq_kv(self, key, value, original_token):
-        marks = dict(start_mark=original_token.start_mark, end_mark=original_token.end_mark)
+        marks = {"start_mark": original_token.start_mark, "end_mark": original_token.end_mark}
         self.tokens.append(FlowMappingStartToken(**marks))
         self.tokens.append(KeyToken(**marks))
         self.tokens.append(ScalarToken(value=key, plain=True, **marks))

@@ -7,6 +7,8 @@ See https://github.com/kislyuk/yq for more information.
 
 # PYTHON_ARGCOMPLETE_OK
 
+from __future__ import annotations
+
 import argparse
 import io
 import json
@@ -201,7 +203,7 @@ def has_explicit_yaml_start(source, loader_class):
 
 def read_yaml_frontmatter(stream):
     """Buffer the header and closing fence, leaving the body unread in stream."""
-    lines: List[str] = []
+    lines: list[str] = []
     started = False
     for line in stream:
         content = line.rstrip("\r\n")
@@ -248,7 +250,7 @@ def yq(
         output_stream = sys.stdout
     if not exit_func:
         exit_func = sys.exit
-    converting_output = True if output_format != "json" else False
+    converting_output = output_format != "json"
 
     if yaml_frontmatter:
         if input_format != "yaml" or output_format not in {"json", "yaml", "annotated_yaml"}:
@@ -284,8 +286,8 @@ def yq(
             # TODO: enable true streaming in this branch (with asyncio, asyncproc, a multi-shot variant of
             # subprocess.Popen._communicate, etc.)
             # See https://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
-            use_annotations = True if output_format == "annotated_yaml" else False
-            use_toml_annotations = True if output_format == "annotated_toml" else False
+            use_annotations = output_format == "annotated_yaml"
+            use_toml_annotations = output_format == "annotated_toml"
             json_buffer = io.StringIO()
             input_doc_count = 0
             yaml_boundary = ""
@@ -335,7 +337,7 @@ def yq(
                     json_buffer.write("\n")
                 else:
                     raise Exception("Unknown input format")
-            jq_out, jq_err = jq.communicate(json_buffer.getvalue())
+            jq_out, _jq_err = jq.communicate(json_buffer.getvalue())
             if yaml_frontmatter and jq.returncode:
                 for input_stream in input_streams:
                     input_stream.close()
@@ -383,7 +385,7 @@ def yq(
                             "Use --xml-root=name to envelope your output with a root element."
                         )
                         exit_func(msg.format(program_name))
-                    full_document = True if xml_dtd else False
+                    full_document = bool(xml_dtd)
                     try:
                         xmltodict.unparse(
                             doc,
