@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import base64
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, cast
 
 import yaml
 from yaml.emitter import Emitter
@@ -48,16 +50,16 @@ def make_sequence_comment_annotation(placement: str, index: int, value: str) -> 
     return f"__yq_comment_{placement}_{index}_{encode_comment(value)}__"
 
 
-def normalize_comment_values(value: Any) -> List[str]:
+def normalize_comment_values(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value]
     return [str(value)]
 
 
 def consume_comments_for_node(
-    loader: "CommentPreservingLoader", anchor_node: Any, value_node: Optional[Any] = None
-) -> Dict[str, List[str]]:
-    result: Dict[str, List[str]] = {COMMENT_PLACEMENT_BEFORE: [], COMMENT_PLACEMENT_INLINE: []}
+    loader: CommentPreservingLoader, anchor_node: Any, value_node: Any | None = None
+) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {COMMENT_PLACEMENT_BEFORE: [], COMMENT_PLACEMENT_INLINE: []}
     comments = loader.yaml_comments
     if not comments:
         return result
@@ -82,7 +84,7 @@ def consume_comments_for_node(
 
 class CommentPreservingLoader(yaml.SafeLoader):
     def __init__(self, stream: Any) -> None:
-        self.yaml_comments: List[YamlComment] = []
+        self.yaml_comments: list[YamlComment] = []
         self.yaml_document_constructed = False
         super().__init__(stream)
 
@@ -178,13 +180,13 @@ class CommentPreservingDumperMixin(Emitter):
         if self.event is not None and hasattr(self.event, "yaml_comment_inline"):
             self.write_inline_comments(self.event.yaml_comment_inline)
 
-    def write_comments_before(self, comments: Optional[List[str]]) -> None:
+    def write_comments_before(self, comments: list[str] | None) -> None:
         for comment in comments or []:
             self.write_indent()
             self.write_comment(comment)
             self.write_line_break()
 
-    def write_inline_comments(self, comments: Optional[List[str]]) -> None:
+    def write_inline_comments(self, comments: list[str] | None) -> None:
         if not comments:
             return
         self.write_comment(comments[0])

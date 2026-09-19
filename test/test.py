@@ -11,7 +11,7 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from yq import cli, yq  # noqa
 
-USING_PYPY = True if platform.python_implementation() == "PyPy" else False
+USING_PYPY = platform.python_implementation() == "PyPy"
 
 yaml_with_tags = """
 foo: !vault |
@@ -49,7 +49,9 @@ lol10: &lol10 [*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9]
 
 
 class TestYq(unittest.TestCase):
-    def run_yq(self, input_data, args, expect_exit_codes={os.EX_OK}, input_format="yaml"):
+    def run_yq(self, input_data, args, expect_exit_codes=None, input_format="yaml"):
+        if expect_exit_codes is None:
+            expect_exit_codes = {os.EX_OK}
         stdin, stdout = sys.stdin, sys.stdout
         try:
             if isinstance(input_data, str):
