@@ -1,5 +1,9 @@
 # Agent Notes
 
+## Python coding style
+
+- Do not use `getattr()` in code you write or change. Use direct attribute access and explicit type checks where needed; use dictionary lookups for genuinely dynamic keyed values.
+
 ## Testing
 
 - On Windows/WSL, run the unit suite with `TMPDIR=/tmp python test/test.py` so tests that reopen `/dev/fd/N` temporary files work reliably.
