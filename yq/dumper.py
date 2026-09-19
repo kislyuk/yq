@@ -19,10 +19,13 @@ from .yaml_support import (
 
 
 class OrderedIndentlessDumper(yaml.SafeDumper):
-    pass
+    def expect_document_root(self):
+        # PyYAML otherwise emits root scalars and flow collections beside '---'.
+        self.write_indent()
+        super().expect_document_root()
 
 
-class OrderedDumper(yaml.SafeDumper):
+class OrderedDumper(OrderedIndentlessDumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(OrderedDumper, self).increase_indent(flow, False)
 
