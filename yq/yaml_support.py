@@ -8,7 +8,6 @@ from yaml.emitter import Emitter
 from yaml.events import (
     AliasEvent,
     CollectionStartEvent,
-    DocumentEndEvent,
     MappingEndEvent,
     ScalarEvent,
     SequenceEndEvent,
@@ -82,24 +81,21 @@ def consume_comments_for_node(loader: Any, anchor_node: Any, value_node: Optiona
 class CommentPreservingLoader(yaml.SafeLoader):
     def __init__(self, stream: Any) -> None:
         self.yaml_comments: List[YamlComment] = []
-        self.yaml_document_end_line = 0
+        self.yaml_document_constructed = False
         super().__init__(stream)
 
-    def get_event(self) -> Any:
-        event = super().get_event()
-        if isinstance(event, DocumentEndEvent):
-            # An explicit '...' ends its own line; an implicit end is positioned
-            # at the next document's start, whose comments must remain available.
-            self.yaml_document_end_line = event.end_mark.line + int(event.explicit)
-        return event
+    def parse_document_start(self) -> Any:
+        # yq constructs each document before advancing to the next one. Clear
+        # its comments before the parser scans the next document's leading comments.
+        if self.yaml_document_constructed:
+            self.yaml_comments.clear()
+            self.yaml_document_constructed = False
+        return super().parse_document_start()
 
     def construct_document(self, node: Any) -> Any:
-        try:
-            return super().construct_document(node)
-        finally:
-            self.yaml_comments = [
-                comment for comment in self.yaml_comments if comment.line >= self.yaml_document_end_line
-            ]
+        document = super().construct_document(node)
+        self.yaml_document_constructed = True
+        return document
 
     def scan_to_next_token(self) -> None:
         if self.index == 0 and self.peek() == "\ufeff":
