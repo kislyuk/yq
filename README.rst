@@ -47,21 +47,6 @@ details on ``jq`` features and options.
 
 Because YAML treats JSON as a dialect of YAML, you can use yq to convert JSON to YAML: ``yq -y . < in.json > out.yml``.
 
-YAML frontmatter
-~~~~~~~~~~~~~~~~
-
-Use ``--yaml-frontmatter``/``-F`` to process a YAML header followed by Markdown or other text::
-
-    yq -Y --yaml-frontmatter '.draft = false' post.md
-    yq -iYF '.draft = false' post.md another-post.md
-
-Only the first document is sent to jq. An initial ``---`` opens the header; an unindented ``---`` or ``...`` document marker
-closes it. With ``-y`` or ``-Y``, the closing delimiter and everything after it pass through unchanged, including
-comments, whitespace, and line endings. The filter must produce exactly one document, and each invocation accepts
-one input file (or multiple files with ``--in-place``). A header without a closing delimiter is processed as ordinary
-YAML. Without ``-y``/``-Y``, only the JSON query result is emitted, allowing queries such as ``yq -F .title post.md``.
-The ``-f`` option still means jq's ``--from-file``.
-
 Preserving tags, styles, and comments using the ``-Y`` (``--yaml-roundtrip``) option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -123,6 +108,21 @@ comment on a root string and is lost. Use ``--yaml-frontmatter``/``-F`` for thes
  to preserve the YAML formatting. For example, a jq filter that counts entries in the Instances array will come up with
  4 entries instead of 2. A filter that expects all array entries to be mappings may break due to the presence of string
  metadata keys. Check your jq filter for compatibility/semantic validity when using the ``-Y`` option.
+
+YAML frontmatter
+~~~~~~~~~~~~~~~~
+
+Use ``--yaml-frontmatter``/``-F`` to process a YAML header followed by Markdown or other text::
+
+    yq -Y --yaml-frontmatter '.draft = false' post.md
+    yq -iYF '.draft = false' post.md another-post.md
+
+Only the first document is sent to jq. An initial ``---`` opens the header; an unindented ``---`` or ``...`` document marker
+closes it. With ``-y`` or ``-Y``, the closing delimiter and everything after it pass through unchanged, including
+comments, whitespace, and line endings. The filter must produce exactly one document, and each invocation accepts
+one input file (or multiple files with ``--in-place``). A header without a closing delimiter is processed as ordinary
+YAML. Without ``-y``/``-Y``, only the JSON query result is emitted, allowing queries such as ``yq -F .title post.md``.
+The ``-f`` option still means jq's ``--from-file``.
 
 XML support
 -----------
