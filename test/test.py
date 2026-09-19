@@ -159,6 +159,13 @@ class TestYq(unittest.TestCase):
 
         self.assertEqual(self.run_yq(unusable_tty_input, ["--null-input", "-y", "."]), "null\n...\n")
 
+    def test_null_input_closed_on_error(self):
+        from unittest import mock
+
+        with mock.patch("yq.yq", side_effect=SystemExit(1)) as run:
+            self.run_yq("", ["--null-input", "."], expect_exit_codes={1})
+        self.assertTrue(run.call_args.kwargs["input_streams"][0].closed)
+
     @unittest.skipIf(subprocess.check_output(["jq", "--version"]) < b"jq-1.6", "Test options introduced in jq 1.6")
     def test_jq16_arg_passthrough(self):
         self.assertEqual(

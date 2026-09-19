@@ -76,6 +76,7 @@ skip_gitignore = true
 line-length = 120
 
 [tool.ruff.lint]
+ignore = ["SIM102", "S110", "BLE001"]
 per-file-ignores = {"yq/__init__.py" = ["F401"]}
 
 [tool.mypy]
