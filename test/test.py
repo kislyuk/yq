@@ -176,7 +176,7 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq('{"a": 1}', ["-Cc", "."]), "")
 
     def fd_path(self, fh):
-        return "/dev/fd/{}".format(fh.fileno())
+        return f"/dev/fd/{fh.fileno()}"
 
     def test_multidocs(self):
         self.assertEqual(self.run_yq("---\na: b\n---\nc: d", ["-y", "."]), "---\na: b\n---\nc: d\n")
@@ -337,7 +337,7 @@ class TestYq(unittest.TestCase):
 
     def test_roundtrip_yaml(self):
         cfn_filename = os.path.join(os.path.dirname(__file__), "cfn.yml")
-        with io.open(cfn_filename) as fh:
+        with open(cfn_filename) as fh:
             self.assertEqual(self.run_yq("", ["-Y", ".", cfn_filename]), fh.read())
 
     def test_yaml_comment_roundtrip(self):
@@ -656,7 +656,7 @@ class TestYq(unittest.TestCase):
             ".inf",
             ".nan",
         ]
-        yaml_doc = "".join("- '{}'\n".format(value) for value in numeric_strings)
+        yaml_doc = "".join(f"- '{value}'\n" for value in numeric_strings)
         self.assertEqual(self.run_yq(yaml_doc, ["-y", "."]), yaml_doc)
 
     def test_yaml_1_2_leading_zero_integers(self):
@@ -669,8 +669,8 @@ class TestYq(unittest.TestCase):
                 for value in range(10):
                     literals.append("{}{:0{}d}".format(sign, value, width))
                     expected_values.append(-value if sign == "-" else value)
-        yaml_doc = "".join("- {}\n".format(literal) for literal in literals)
-        expected = "".join("- {}\n".format(value) for value in expected_values)
+        yaml_doc = "".join(f"- {literal}\n" for literal in literals)
+        expected = "".join(f"- {value}\n" for value in expected_values)
         self.assertEqual(self.run_yq(yaml_doc, ["-y", "--yml-out-ver=1.2", "."]), expected)
 
         self.assertEqual(self.run_yq("octal: 0o10", ["-y", "--yml-out-ver=1.2", "."]), "octal: 8\n")

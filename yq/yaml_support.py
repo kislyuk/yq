@@ -41,11 +41,11 @@ def decode_comment(value: str) -> str:
 
 
 def make_mapping_comment_key(placement: str, key: str) -> str:
-    return "__yq_comment_{}_{}__".format(placement, key)
+    return f"__yq_comment_{placement}_{key}__"
 
 
 def make_sequence_comment_annotation(placement: str, index: int, value: str) -> str:
-    return "__yq_comment_{}_{}_{}__".format(placement, index, encode_comment(value))
+    return f"__yq_comment_{placement}_{index}_{encode_comment(value)}__"
 
 
 def normalize_comment_values(value: Any) -> List[str]:

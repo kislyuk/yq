@@ -41,7 +41,7 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
                 r"""^(?:yes|Yes|YES|no|No|NO
             |true|True|TRUE|false|False|FALSE
             |on|On|ON|off|Off|OFF)$""",
-                re.X,
+                re.VERBOSE,
             ),
             "start_chars": list("yYnNtTfFoO"),
         },
@@ -54,7 +54,7 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
             |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
             |[-+]?\.(?:inf|Inf|INF)
             |\.(?:nan|NaN|NAN))$""",
-                re.X,
+                re.VERBOSE,
             ),
             "start_chars": list("-+0123456789."),
         },
@@ -68,7 +68,7 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
             |[-+]?(?:0|[1-9][0-9_]*)
             |[-+]?0x[0-9a-fA-F_]+
             |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$""",
-                re.X,
+                re.VERBOSE,
             ),
             "start_chars": list("-+0123456789"),
         },
@@ -78,7 +78,7 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
                 r"""^(?: ~
             |null|Null|NULL
             | )$""",
-                re.X,
+                re.VERBOSE,
             ),
             "start_chars": ["~", "n", "N", ""],
         },
@@ -90,7 +90,7 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
             (?:[Tt]|[ \t]+)[0-9][0-9]?
             :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
             (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$""",
-                re.X,
+                re.VERBOSE,
             ),
             "start_chars": list("0123456789"),
         },
@@ -99,25 +99,25 @@ core_resolvers: Dict[str, List[ResolverSpec]] = {
     "1.2": [
         {
             "tag": "tag:yaml.org,2002:bool",
-            "regexp": re.compile(r"^(?:|true|True|TRUE|false|False|FALSE)$", re.X),
+            "regexp": re.compile(r"^(?:|true|True|TRUE|false|False|FALSE)$", re.VERBOSE),
             "start_chars": list("tTfF"),
         },
         {
             "tag": "tag:yaml.org,2002:int",
-            "regexp": re.compile(r"^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$", re.X),
+            "regexp": re.compile(r"^(?:|0o[0-7]+|[-+]?(?:[0-9]+)|0x[0-9a-fA-F]+)$", re.VERBOSE),
             "start_chars": list("-+0123456789"),
         },
         {
             "tag": "tag:yaml.org,2002:float",
             "regexp": re.compile(
-                r"^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$",  # noqa
-                re.X,
+                r"^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$",
+                re.VERBOSE,
             ),
             "start_chars": list("-+0123456789."),
         },
         {
             "tag": "tag:yaml.org,2002:null",
-            "regexp": re.compile(r"^(?:~||null|Null|NULL)$", re.X),
+            "regexp": re.compile(r"^(?:~||null|Null|NULL)$", re.VERBOSE),
             "start_chars": ["~", "n", "N", ""],
         },
     ],
@@ -231,9 +231,9 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
             for comment in comments[COMMENT_PLACEMENT_INLINE]:
                 annotations.append(make_sequence_comment_annotation(COMMENT_PLACEMENT_INLINE, i, comment))
             if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
-                annotations.append("__yq_tag_{}_{}__".format(i, v_node.tag))
+                annotations.append(f"__yq_tag_{i}_{v_node.tag}__")
             if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
-                annotations.append("__yq_style_{}_{}__".format(i, v_node.style))
+                annotations.append(f"__yq_style_{i}_{v_node.style}__")
             elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
                 annotations.append("__yq_style_{}_{}__".format(i, "flow"))
         return [loader.construct_object(i) for i in node.value] + annotations
@@ -255,11 +255,11 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
                 if values:
                     pairs.append((make_mapping_comment_key(placement, hashed_key), values))
             if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
-                pairs.append(("__yq_tag_{}__".format(hashed_key), v_node.tag))
+                pairs.append((f"__yq_tag_{hashed_key}__", v_node.tag))
             if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
-                pairs.append(("__yq_style_{}__".format(hashed_key), v_node.style))
+                pairs.append((f"__yq_style_{hashed_key}__", v_node.style))
             elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
-                pairs.append(("__yq_style_{}__".format(hashed_key), "flow"))
+                pairs.append((f"__yq_style_{hashed_key}__", "flow"))
         return dict(pairs)
 
     def parse_unknown_tags(loader, tag_suffix, node):
