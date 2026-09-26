@@ -6,6 +6,7 @@ from hashlib import sha224
 from typing import Any, Pattern, TypedDict
 
 import yaml
+from yaml.constructor import SafeConstructor
 from yaml.tokens import (
     AliasToken,
     AnchorToken,
@@ -163,6 +164,29 @@ def hash_key(key):
     return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
 
 
+class YAMLExpansionError(ValueError):
+    pass
+
+
+class _MergeKeyExpansionGuard(SafeConstructor):
+    max_merge_expansion: int | None = None
+    merge_expansion = 0
+    _flatten_mapping_depth = 0
+
+    def flatten_mapping(self, node):
+        self._flatten_mapping_depth += 1
+        try:
+            super().flatten_mapping(node)
+        finally:
+            self._flatten_mapping_depth -= 1
+        if self._flatten_mapping_depth:
+            # The ancestor recurses through this wrapper for every merge source.
+            # Charge its flattened pairs before returning to the caller that copies them.
+            self.merge_expansion += len(node.value)
+            if self.max_merge_expansion is not None and self.merge_expansion > self.max_merge_expansion:
+                raise YAMLExpansionError
+
+
 class CustomLoader(yaml.SafeLoader):
     expand_aliases = False
 
@@ -277,6 +301,7 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
         loader_class = CommentPreservingLoader if expand_aliases else CommentPreservingCustomLoader
     else:
         loader_class = default_loader if expand_aliases else CustomLoader
+    loader_class = type("YqLoader", (_MergeKeyExpansionGuard, loader_class), {})
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
     loader_class.add_constructor("tag:yaml.org,2002:int", construct_yaml_1_2_int)
