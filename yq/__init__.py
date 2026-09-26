@@ -26,7 +26,7 @@ import argcomplete
 import yaml
 
 from .dumper import get_dumper
-from .loader import get_loader
+from .loader import YAMLExpansionError, get_loader
 from .parser import get_parser, jq_arg_spec
 from .toml_support import tomlkit_from_json, tomlkit_to_json
 
@@ -173,20 +173,24 @@ def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor
     try:
         while loader.check_node():
             node = loader.get_node()
-            doc = loader.construct_document(node)
             loader_pos = node.end_mark.index
             doc_len = loader_pos - last_loader_pos
+            loader.max_merge_expansion = doc_len * max_expansion_factor
+            loader.merge_expansion = 0
+            doc = loader.construct_document(node)
             doc_bytes_written = 0
             for chunk in JSONDateTimeEncoder().iterencode(doc):
                 doc_bytes_written += len(chunk)
                 if doc_bytes_written > doc_len * max_expansion_factor:
-                    if jq:
-                        jq.kill()
-                    exit_func(f"{prog}: Error: detected unsafe YAML entity expansion")
+                    raise YAMLExpansionError
                 out_stream.write(chunk)
             out_stream.write("\n")
             last_loader_pos = loader_pos
             doc_count += 1
+    except YAMLExpansionError:
+        if jq:
+            jq.kill()
+        exit_func(f"{prog}: Error: detected unsafe YAML entity expansion")
     finally:
         loader.dispose()
     return doc_count

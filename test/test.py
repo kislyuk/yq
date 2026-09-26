@@ -602,6 +602,54 @@ class TestYq(unittest.TestCase):
     def test_entity_expansion_defense(self):
         self.run_yq(bomb_yaml, ["."], expect_exit_codes=["yq: Error: detected unsafe YAML entity expansion"])
 
+    def test_yaml_merge_expansion_defense(self):
+        # Each level collapses to {k: v}, but flattening the merges copies 4**level pairs.
+        # Keep the payload small and lower the limit so a regression cannot exhaust memory.
+        for merge_sequence in True, False:
+            source = "a0: &a0\n  k: v\n"
+            for level in range(1, 7):
+                source += f"a{level}: &a{level}\n"
+                if merge_sequence:
+                    aliases = ", ".join([f"*a{level - 1}"] * 4)
+                    source += f"  <<: [{aliases}]\n"
+                else:
+                    source += f"  <<: *a{level - 1}\n" * 4
+            for output_args in [], ["-y"], ["-Y"]:
+                with self.subTest(merge_sequence=merge_sequence, output_args=output_args):
+                    self.run_yq(
+                        source,
+                        [*output_args, "--max-expansion-factor", "4", "."],
+                        expect_exit_codes={"yq: Error: detected unsafe YAML entity expansion"},
+                    )
+            # A larger configured budget allows the same input, and resets for each document.
+            self.assertEqual(
+                self.run_yq("---\n".join([source] * 3), ["-y", "--max-expansion-factor", "32", ".a6"]),
+                "---\nk: v\n" * 3,
+            )
+
+    def test_yaml_merge_expansion_rejected_before_json(self):
+        from unittest import mock
+
+        import yaml
+
+        from yq import load_yaml_docs
+        from yq.loader import default_loader, get_loader
+
+        source = "a: &a {k: v}\nb: {<<: [" + ", ".join(["*a"] * 4) + "]}\n"
+        for base_loader in yaml.SafeLoader, default_loader:
+            with self.subTest(loader=base_loader), mock.patch("yq.loader.default_loader", base_loader):
+                loader_class = get_loader()
+                jq = mock.Mock()
+                out_stream = io.StringIO()
+                # Set a tiny budget to exercise rejection before JSON encoding starts.
+                with mock.patch("yq.JSONDateTimeEncoder") as encoder, self.assertRaisesRegex(
+                    SystemExit, "^yq: Error: detected unsafe YAML entity expansion$"
+                ):
+                    load_yaml_docs(io.StringIO(source), out_stream, jq, loader_class, 0, sys.exit, "yq")
+                encoder.assert_not_called()
+                jq.kill.assert_called_once_with()
+                self.assertEqual(out_stream.getvalue(), "")
+
     def test_yaml_type_tags(self):
         bin_yaml = "example: !!binary Zm9vYmFyCg=="
         self.assertEqual(self.run_yq(bin_yaml, ["."]), "")
@@ -617,6 +665,13 @@ class TestYq(unittest.TestCase):
         self.assertEqual(
             self.run_yq("a: &b\n  c: d\ne:\n  <<: *b\n  g: h", ["-y", "."]), "a:\n  c: d\ne:\n  c: d\n  g: h\n"
         )
+        source = "a: &a {x: first, y: first}\nb: &b {x: second, z: second}\nresult:\n  <<: [*a, *b]\n  y: explicit\n"
+        for output_arg in "-y", "-Y":
+            with self.subTest(output_arg=output_arg):
+                self.assertEqual(
+                    self.run_yq(source, [output_arg, '.result == {x: "first", y: "explicit", z: "second"}']),
+                    "true\n...\n",
+                )
 
     def test_yaml_floats(self):
         self.assertEqual(self.run_yq("test: 0.0004", ["-y", "."]), "test: 0.0004\n")
