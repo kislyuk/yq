@@ -1,3 +1,8 @@
+Changes for v4.3.0 (2026-09-26)
+===============================
+
+-  Guard YAML merge expansion during document construction
+
 Changes for v4.2.0 (2026-09-19)
 ===============================
 

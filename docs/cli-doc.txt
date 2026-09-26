@@ -1,6 +1,6 @@
 usage: yq [options] <jq filter> [input file...]
           [--indentless-lists] [--explicit-start] [--explicit-end]
-          [--in-place] [--version]
+          [--yaml-frontmatter] [--in-place] [--version]
           [jq_filter] [files ...]
 
 yq: Command-line YAML processor - jq wrapper for YAML documents
@@ -26,8 +26,10 @@ options:
                         When using --yaml-output, indent block style lists (sequences) with 0 spaces instead of 2
   --explicit-start      When using --yaml-output, always emit explicit document start ("---")
   --explicit-end        When using --yaml-output, always emit explicit document end ("...")
+  --yaml-frontmatter, -F
+                        Process only the first YAML document; with -y/-Y, pass through the remaining text unchanged
   --in-place, -i        Edit files in place (no backup - use caution)
-  --version             show program's version number and exit
+  --version             show the versions of yq and jq and exit
 
 jq - commandline JSON processor [version 1.6]
 

@@ -21,7 +21,7 @@ options:
   --xml-short-empty-elements
                         When transcoding back to XML, emit empty tags as self-closing tags
   --in-place, -i        Edit files in place (no backup - use caution)
-  --version             show program's version number and exit
+  --version             show the versions of xq and jq and exit
 
 jq - commandline JSON processor [version 1.6]
 
