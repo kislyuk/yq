@@ -1377,11 +1377,7 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
         from yq.loader import get_loader
         from yq.yaml_support import consume_comments_for_node
 
-        source = (
-            "# before one\none: &value 1 # one\n"
-            "# before two\ntwo: *value # two\n"
-            "# before three\nthree: 3 #\n"
-        )
+        source = "# before one\none: &value 1 # one\n# before two\ntwo: *value # two\n# before three\nthree: 3 #\n"
         loader = get_loader(use_annotations=True)(io.StringIO(source))
         try:
             node = loader.get_single_node()
