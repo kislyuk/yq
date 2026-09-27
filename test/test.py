@@ -1373,6 +1373,33 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
         self.assertNotIn(CommentPreservingLoader, get_loader(use_annotations=False).__mro__)
         self.assertIn(CommentPreservingLoader, get_loader(use_annotations=True).__mro__)
 
+    def test_yaml_comment_consumption_out_of_source_order(self):
+        from yq.loader import get_loader
+        from yq.yaml_support import consume_comments_for_node
+
+        source = (
+            "# before one\none: &value 1 # one\n"
+            "# before two\ntwo: *value # two\n"
+            "# before three\nthree: 3 #\n"
+        )
+        loader = get_loader(use_annotations=True)(io.StringIO(source))
+        try:
+            node = loader.get_single_node()
+            # An alias points back to an earlier value. Attach inline comments
+            # in source order, and never attach a comment more than once.
+            self.assertEqual(
+                consume_comments_for_node(loader, *node.value[1]),
+                {"before": [" before one", " before two"], "inline": [" one", " two"]},
+            )
+            self.assertEqual(consume_comments_for_node(loader, *node.value[0]), {"before": [], "inline": []})
+            self.assertEqual(
+                consume_comments_for_node(loader, *node.value[2]),
+                {"before": [" before three"], "inline": [""]},
+            )
+            self.assertEqual(consume_comments_for_node(loader, *node.value[1]), {"before": [], "inline": []})
+        finally:
+            loader.dispose()
+
     def test_yaml_comments_released_per_document(self):
         from yq.loader import get_loader
 
@@ -1390,10 +1417,12 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
                 try:
                     for _ in documents:
                         self.assertTrue(loader.check_node())
-                        self.assertEqual(loader.yaml_comments, [])
+                        self.assertFalse(loader.yaml_comments_before)
+                        self.assertFalse(loader.yaml_comments_inline)
                         loader.construct_document(loader.get_node())
                     self.assertFalse(loader.check_node())
-                    self.assertEqual(loader.yaml_comments, [])
+                    self.assertFalse(loader.yaml_comments_before)
+                    self.assertFalse(loader.yaml_comments_inline)
                 finally:
                     loader.dispose()
 
@@ -1413,10 +1442,12 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
                     # Advancing clears the completed document's comments before
                     # scanning the next document's leading comments.
                     self.assertTrue(loader.check_node())
-                    self.assertEqual([comment.value for comment in loader.yaml_comments], [" end first", " second"])
+                    self.assertEqual([comment.value for comment in loader.yaml_comments_before], [" second"])
+                    self.assertEqual(loader.yaml_comments_inline, {2: " end first"})
                     second = loader.construct_document(loader.get_node())
                     self.assertFalse(loader.check_node())
-                    self.assertEqual(loader.yaml_comments, [])
+                    self.assertFalse(loader.yaml_comments_before)
+                    self.assertFalse(loader.yaml_comments_inline)
                     self.assertEqual(
                         yaml.dump_all(
                             [first, second], Dumper=get_dumper(use_annotations=True), default_flow_style=False

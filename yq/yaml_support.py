@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import re
+from collections import deque
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -29,8 +30,6 @@ yaml_item_comment_annotation_re = re.compile(
 class YamlComment:
     value: str
     line: int
-    inline: bool
-    consumed: bool = False
 
 
 def encode_comment(value: str) -> str:
@@ -60,31 +59,30 @@ def consume_comments_for_node(
     loader: CommentPreservingLoader, anchor_node: Any, value_node: Any | None = None
 ) -> dict[str, list[str]]:
     result: dict[str, list[str]] = {COMMENT_PLACEMENT_BEFORE: [], COMMENT_PLACEMENT_INLINE: []}
-    comments = loader.yaml_comments
-    if not comments:
+    comments = loader.yaml_comments_before
+    if not (comments or loader.yaml_comments_inline):
         return result
 
-    inline_nodes = [anchor_node]
+    # Construction can revisit earlier source lines (for example through aliases).
+    # Only consume preceding comments that have not already been attached.
+    while comments and comments[0].line < anchor_node.start_mark.line:
+        result[COMMENT_PLACEMENT_BEFORE].append(comments.popleft().value)
+
+    inline_lines = {anchor_node.end_mark.line}
     if value_node is not None:
-        inline_nodes.append(value_node)
-    inline_lines = {node.end_mark.line for node in inline_nodes}
-
-    for comment in comments:
-        if not comment.consumed and not comment.inline and comment.line < anchor_node.start_mark.line:
-            result[COMMENT_PLACEMENT_BEFORE].append(comment.value)
-            comment.consumed = True
-
-    for comment in comments:
-        if not comment.consumed and comment.inline and comment.line in inline_lines:
-            result[COMMENT_PLACEMENT_INLINE].append(comment.value)
-            comment.consumed = True
+        inline_lines.add(value_node.end_mark.line)
+    for line in sorted(inline_lines):
+        comment = loader.yaml_comments_inline.pop(line, None)
+        if comment is not None:
+            result[COMMENT_PLACEMENT_INLINE].append(comment)
 
     return result
 
 
 class CommentPreservingLoader(yaml.SafeLoader):
     def __init__(self, stream: Any) -> None:
-        self.yaml_comments: list[YamlComment] = []
+        self.yaml_comments_before: deque[YamlComment] = deque()
+        self.yaml_comments_inline: dict[int, str] = {}
         self.yaml_document_constructed = False
         super().__init__(stream)
 
@@ -92,7 +90,8 @@ class CommentPreservingLoader(yaml.SafeLoader):
         # yq constructs each document before advancing to the next one. Clear
         # its comments before the parser scans the next document's leading comments.
         if self.yaml_document_constructed:
-            self.yaml_comments.clear()
+            self.yaml_comments_before.clear()
+            self.yaml_comments_inline.clear()
             self.yaml_document_constructed = False
         return super().parse_document_start()
 
@@ -116,7 +115,11 @@ class CommentPreservingLoader(yaml.SafeLoader):
                 while self.peek() not in "\0\r\n\x85\u2028\u2029":
                     chunks.append(self.peek())
                     self.forward()
-                self.yaml_comments.append(YamlComment(value="".join(chunks), line=mark.line, inline=inline))
+                value = "".join(chunks)
+                if inline:
+                    self.yaml_comments_inline[mark.line] = value
+                else:
+                    self.yaml_comments_before.append(YamlComment(value=value, line=mark.line))
             if self.scan_line_break():
                 if not self.flow_level:
                     self.allow_simple_key = True
