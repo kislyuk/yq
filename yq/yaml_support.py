@@ -134,17 +134,15 @@ class CommentPreservingDumperMixin(Emitter):
 
         dumper = cast(Any, self)
         original_emit = dumper.emit
-        attached = False
 
         def emit_with_comments(event: Any) -> None:
-            nonlocal attached
-            if not attached and isinstance(event, (AliasEvent, CollectionStartEvent, ScalarEvent)):
+            if isinstance(event, (AliasEvent, CollectionStartEvent, ScalarEvent)):
                 comment_event = cast(Any, event)
                 if before:
                     comment_event.yaml_comment_before = before
                 if inline:
                     comment_event.yaml_comment_inline = inline
-                attached = True
+                dumper.emit = original_emit
             original_emit(event)
 
         dumper.emit = emit_with_comments

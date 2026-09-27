@@ -20,6 +20,21 @@ from .yaml_support import (
 #     from yaml import SafeDumper as default_dumper
 
 
+def dump_yaml_document(*, doc, dumper):
+    """Serialize one document and return whether it needs a closing marker."""
+    try:
+        dumper.open()
+        dumper.represent(doc)
+        # Only StreamEnd can add an implicit scalar end marker. Defer
+        # that marker; the next '---' or frontmatter fence can end it.
+        pending_end = dumper.open_ended
+        dumper.open_ended = False
+        dumper.close()
+        return pending_end
+    finally:
+        dumper.dispose()
+
+
 class OrderedIndentlessDumper(yaml.SafeDumper):
     def expect_document_root(self):
         # PyYAML otherwise emits root scalars and flow collections beside '---'.

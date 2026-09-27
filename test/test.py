@@ -358,7 +358,7 @@ class TestYq(unittest.TestCase):
     def test_json_pull_parsing(self):
         import json
 
-        from yq import JSONInputStreamWrapper
+        from yq.stream_wrappers import JSONInputStreamWrapper
 
         values = [{"text": 'понедельник\nquoted "text"\x00'}, [], None, True, False, -1.25e30, 12345678901234567890]
 
@@ -376,7 +376,7 @@ class TestYq(unittest.TestCase):
     def test_json_buffered_lookahead(self):
         import json
 
-        from yq import JSONInputStreamWrapper
+        from yq.stream_wrappers import JSONInputStreamWrapper
 
         first = b'{"a": "first"}\n'
         source = io.BytesIO(first + b'{"a": "' + b"x" * (128 * 1024) + b'"}\n')
@@ -395,7 +395,7 @@ class TestYq(unittest.TestCase):
         import json
         from unittest import mock
 
-        from yq import JSONInputStreamWrapper
+        from yq.stream_wrappers import JSONInputStreamWrapper
 
         values = [{"nested": [{"escaped": 'braces } ] and " and \\', "n": n} for n in range(2000)]}, False, 1e-20]
         text = "".join(json.dumps(value) + "\n" for value in values)
@@ -576,7 +576,7 @@ class TestYq(unittest.TestCase):
         import json
         from unittest import mock
 
-        from yq import JSONInputStreamWrapper
+        from yq.stream_wrappers import JSONInputStreamWrapper
 
         test = self
         first = b'{"a":"first"}\n'
@@ -666,7 +666,7 @@ class TestYq(unittest.TestCase):
             script = (
                 "from unittest import mock\n"
                 "from yq import cli\n"
-                f"with mock.patch('yq._cli', side_effect={error}):\n"
+                f"with mock.patch('yq.parse_cli_args_and_run_yq', side_effect={error}):\n"
                 "    cli()\n"
             )
             result = subprocess.run(self.python_command(script), capture_output=True, timeout=5, check=False)
@@ -693,7 +693,7 @@ def run(*args):
     thread.join()
     atexit.register(fail)
 
-with mock.patch("yq._cli", run):
+with mock.patch("yq.parse_cli_args_and_run_yq", run):
     cli()
 """
         result = subprocess.run(self.python_command(script), capture_output=True, timeout=5, check=False)
@@ -899,7 +899,7 @@ with mock.patch("yq._cli", run):
     def test_yaml_output_before_reading_second_result(self):
         from unittest import mock
 
-        from yq import JSONInputStreamWrapper
+        from yq.stream_wrappers import JSONInputStreamWrapper
 
         test = self
 

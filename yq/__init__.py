@@ -15,24 +15,23 @@ import json
 import locale
 import os
 import re
-import select
 import shutil
 import signal
 import stat
 import subprocess
 import sys
 import threading
-from collections import deque
 from contextlib import ExitStack, contextmanager
 from datetime import date, datetime, time
+from functools import partial
 from typing import List
 
 import argcomplete
-import yaml
 
-from .dumper import get_dumper
+from .dumper import dump_yaml_document, get_dumper
 from .loader import YAMLExpansionError, get_loader
 from .parser import get_parser, jq_output_arg_spec
+from .stream_wrappers import InputBytesStreamWrapper, JSONInputStreamWrapper, YAMLInputStreamWrapper, wrap_input_stream
 from .toml_support import tomlkit_from_json, tomlkit_to_json
 
 try:
@@ -46,110 +45,6 @@ class JSONDateTimeEncoder(json.JSONEncoder):
         if isinstance(o, (datetime, date, time)):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
-
-
-class JSONInputStreamWrapper:
-    """Read the complete JSON records emitted by jq's compact output mode."""
-
-    def __init__(self, stream, decoder):
-        self.stream = stream
-        self.decoder = decoder
-
-    def __iter__(self):
-        return self
-
-    def has_next(self):
-        return bool(self.stream.peek(1))
-
-    def __next__(self):
-        text = self.stream.readline().decode("utf-8")
-        if not text:
-            raise StopIteration
-        if not text.endswith("\n"):
-            # A terminated record distinguishes a complete number from a prefix
-            # left behind when jq is interrupted during serialization.
-            raise json.JSONDecodeError("Missing newline after jq output", text, len(text))
-        return self.decoder.decode(text)
-
-
-class YAMLInputStreamWrapper:
-    """Replay only the prefix consumed while inspecting the leading marker."""
-
-    def __init__(self, stream, flush=None):
-        self.stream = stream
-        self.flush = flush
-        try:
-            self.name = stream.name
-        except AttributeError:
-            self.name = "<file>"
-        self.prefix: deque[str | bytes] = deque()
-        self.offset = 0
-        self.recording = False
-
-    def read(self, size):
-        if self.prefix and not self.recording:
-            text = self.prefix[0][self.offset : self.offset + size]
-            self.offset += len(text)
-            if self.offset == len(self.prefix[0]):
-                self.prefix.popleft()
-                self.offset = 0
-            return text
-        # Deliver completed input to jq before a read can wait for more data.
-        # Between reads, TextIOWrapper can batch writes from small documents.
-        if self.flush is not None:
-            self.flush()
-        text = self.stream.read(size)
-        if self.recording and text:
-            self.prefix.append(text)
-        return text
-
-    def read_explicit_yaml_start(self, loader_class):
-        # Use a separate parser because the C and Python composers consume start
-        # events differently. Replay their bounded read-ahead even on nonseekable input.
-        self.recording = True
-        events = yaml.parse(self, Loader=loader_class)
-        try:
-            next(events)  # StreamStartEvent
-            event = next(events)
-            return isinstance(event, yaml.events.DocumentStartEvent) and event.explicit
-        finally:
-            events.close()
-            self.recording = False
-
-
-class InputBytesStreamWrapper(io.RawIOBase):
-    """Wait for readable input while checking whether jq has already exited."""
-
-    def __init__(self, stream, jq):
-        self.source = stream
-        self.stream = stream.buffer
-        self.jq = jq
-        self.name = stream.name
-        self.wait_for_input = os.name == "posix" and not stat.S_ISREG(os.fstat(stream.fileno()).st_mode)
-
-    def readable(self):
-        return True
-
-    def read(self, size=-1):
-        if size == 0:
-            return b""
-        if size < 0:
-            return self.readall()
-        while True:
-            # The main thread waits for jq before joining the input worker.
-            if self.jq is not None and self.jq.returncode is not None:
-                raise BrokenPipeError
-            if not self.wait_for_input or select.select([self.stream], [], [], 0.1)[0]:
-                # read1 returns available bytes without waiting to fill size.
-                return self.stream.read1(size)
-
-    read1 = read
-
-
-def wrap_input_stream(stream, jq):
-    return io.TextIOWrapper(
-        InputBytesStreamWrapper(stream, jq), encoding=stream.encoding, errors=stream.errors, newline=""
-    )
 
 
 @contextmanager
@@ -170,6 +65,20 @@ def silence_broken_stdout():
     if isinstance(sys.stdout, io.TextIOWrapper):
         with open(os.devnull, "w") as sink:
             os.dup2(sink.fileno(), sys.stdout.fileno())
+
+
+def cleanup_jq(*, jq, input_thread):
+    # Stop jq before joining the input worker so blocked pipe I/O can unwind.
+    with ignore_sigint():
+        if jq.poll() is None:
+            jq.kill()
+        jq.wait()
+        if input_thread.ident is not None:
+            input_thread.join()
+        elif jq.stdin is not None:
+            jq.stdin.close()
+        if jq.stdout is not None:
+            jq.stdout.close()
 
 
 def get_toml_loader():
@@ -196,7 +105,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
     # failures and unraisable exceptions during interpreter shutdown.
     sys.tracebacklimit = 0
     try:
-        _cli(args, input_format, program_name)
+        parse_cli_args_and_run_yq(args, input_format, program_name)
     except KeyboardInterrupt:
         silence_broken_stdout()
         sys.exit(130)
@@ -211,7 +120,7 @@ def cli(args=None, input_format="yaml", program_name="yq"):
         sys.exit(f"{program_name}: {type(error).__name__}: {error}")
 
 
-def _cli(args, input_format, program_name):
+def parse_cli_args_and_run_yq(args, input_format, program_name):
     parser = get_parser(program_name, __doc__)
     argcomplete.autocomplete(parser)
     args, jq_args = parser.parse_known_intermixed_args(args=args)
@@ -253,16 +162,17 @@ def _cli(args, input_format, program_name):
                 msg = "{}: -i/--in-place can only be used with filename arguments, not on standard input"
                 sys.exit(msg.format(program_name))
 
-            def exit_handler(arg=None):
-                if arg:
-                    sys.exit(arg)
-
-            yq_args["exit_func"] = exit_handler
+            yq_args["exit_func"] = exit_on_error
 
             for path in input_streams:
                 edit_in_place(path, yq_args)
         else:
             yq(**yq_args)
+
+
+def exit_on_error(arg=None):
+    if arg:
+        sys.exit(arg)
 
 
 def edit_in_place(path, yq_args):
@@ -296,15 +206,13 @@ def write_all(stream, data):
         remaining = remaining[size:]
 
 
-def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor, exit_func, prog, on_document=None):
+def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor, exit_func, prog):
     loader = loader_class(in_stream)
 
     last_loader_pos = 0
     doc_count = 0
     try:
         while loader.check_node():
-            if on_document is not None:
-                on_document()
             node = loader.get_node()
             loader_pos = node.end_mark.index
             doc_len = loader_pos - last_loader_pos
@@ -331,6 +239,13 @@ def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor
     finally:
         loader.dispose()
     return doc_count
+
+
+def emit_xml_entry(path, entry, *, out_stream):
+    json.dump(entry, out_stream, cls=JSONDateTimeEncoder)
+    out_stream.write("\n")
+    out_stream.flush()
+    return True
 
 
 def read_yaml_frontmatter(stream):
@@ -396,7 +311,6 @@ def yq(
                 stream.reconfigure(newline="")
 
     use_annotations = output_format == "annotated_yaml"
-    input_doc_count = 0
     yaml_boundary = ""
     frontmatter_body = None
     input_done = threading.Event()
@@ -446,12 +360,9 @@ def yq(
         if previous_source is not None:
             previous_source.close()
 
-    def note_yaml_document():
-        nonlocal input_doc_count
-        input_doc_count += 1
-
     def write_input():
         nonlocal yaml_boundary, explicit_start, frontmatter_body
+        input_doc_count = 0
         assert jq.stdin is not None
         if input_format == "yaml":
             loader_class = get_loader(
@@ -474,7 +385,7 @@ def yq(
                 yaml_stream = YAMLInputStreamWrapper(yaml_stream, flush=jq.stdin.flush)
                 if output_format in {"yaml", "annotated_yaml"} and not input_doc_count:
                     explicit_start = yaml_stream.read_explicit_yaml_start(loader_class) or explicit_start
-                load_yaml_docs(
+                input_doc_count += load_yaml_docs(
                     in_stream=yaml_stream,
                     out_stream=jq.stdin,
                     jq=jq,
@@ -482,7 +393,6 @@ def yq(
                     max_expansion_factor=max_expansion_factor,
                     exit_func=exit_func,
                     prog=program_name,
-                    on_document=note_yaml_document,
                 )
                 jq.stdin.flush()
                 del yaml_stream
@@ -492,13 +402,7 @@ def yq(
             if converting_output and xml_item_depth != 0:
                 raise ValueError("xml_item_depth is not supported with xq -x")
 
-            def emit_entry(path, entry):
-                assert jq.stdin is not None
-                json.dump(entry, jq.stdin, cls=JSONDateTimeEncoder)
-                jq.stdin.write("\n")
-                jq.stdin.flush()
-                return True
-
+            emit_entry = partial(emit_xml_entry, out_stream=jq.stdin)
             for input_stream in read_inputs():
                 xml_doc = xmltodict.parse(
                     input_stream.buffer if isinstance(input_stream, io.TextIOWrapper) else input_stream.read(),
@@ -556,16 +460,7 @@ def yq(
                 default_flow_style=False,
                 explicit_end=explicit_end and not (yaml_frontmatter and yaml_boundary.startswith("...")),
             )
-            try:
-                dumper.open()
-                dumper.represent(doc)
-                # Only StreamEnd can add an implicit scalar end marker. Defer
-                # that marker; the next '---' or frontmatter fence can end it.
-                pending_end = dumper.open_ended
-                dumper.open_ended = False
-                dumper.close()
-            finally:
-                dumper.dispose()
+            pending_end = dump_yaml_document(doc=doc, dumper=dumper)
             del doc
             output_stream.flush()
             doc_count += 1
@@ -688,16 +583,7 @@ def yq(
             except (Exception, SystemExit) as error:
                 output_error = error
         finally:
-            with ignore_sigint():
-                if jq.poll() is None:
-                    jq.kill()
-                jq.wait()
-                if input_thread.ident is not None:
-                    input_thread.join()
-                elif jq.stdin is not None:
-                    jq.stdin.close()
-                if jq.stdout is not None:
-                    jq.stdout.close()
+            cleanup_jq(jq=jq, input_thread=input_thread)
         if input_errors:
             stage = f"reading {input_format.upper()} input ({input_name})"
             raise input_errors[0]
