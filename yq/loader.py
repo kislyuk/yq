@@ -289,16 +289,24 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
             comments = consume_comments_for_node(loader, k_node, v_node)
             if not isinstance(key, (str, bytes)):
                 continue
+            tag = None
+            if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
+                tag = v_node.tag
+            style = None
+            if isinstance(v_node, yaml.nodes.ScalarNode):
+                style = v_node.style
+            elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
+                style = "flow"
+            if not (tag or style or comments[COMMENT_PLACEMENT_BEFORE] or comments[COMMENT_PLACEMENT_INLINE]):
+                continue
             hashed_key = hash_key(key)
             for placement, values in comments.items():
                 if values:
                     pairs.append((make_mapping_comment_key(placement, hashed_key), values))
-            if v_node.tag and v_node.tag.startswith("!") and not v_node.tag.startswith("!!") and len(v_node.tag) > 1:
-                pairs.append((f"__yq_tag_{hashed_key}__", v_node.tag))
-            if isinstance(v_node, yaml.nodes.ScalarNode) and v_node.style:
-                pairs.append((f"__yq_style_{hashed_key}__", v_node.style))
-            elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
-                pairs.append((f"__yq_style_{hashed_key}__", "flow"))
+            if tag:
+                pairs.append((f"__yq_tag_{hashed_key}__", tag))
+            if style:
+                pairs.append((f"__yq_style_{hashed_key}__", style))
         return dict(pairs)
 
     def parse_unknown_tags(loader, tag_suffix, node):

@@ -90,7 +90,7 @@ def get_dumper(use_annotations=False, indentless=False, grammar_version="1.1"):
                     continue
             pairs.append((k, v))
         mapping = dumper.represent_mapping("tag:yaml.org,2002:map", pairs)
-        if use_annotations:
+        if custom_styles or custom_tags or custom_comments:
             for k, v in mapping.value:
                 hashed_key = hash_key(k.value)
                 comments = custom_comments.get(hashed_key, {})
