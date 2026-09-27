@@ -204,5 +204,5 @@ def get_parser(program_name, description):
         parser.add_argument(arg, nargs=nargs, dest="jq_options", action=JQArgumentAction, help=argparse.SUPPRESS)
 
     parser.add_argument("jq_filter", nargs="?")
-    parser.add_argument("input_streams", nargs="*", type=argparse.FileType(), metavar="files", default=[])
+    parser.add_argument("input_streams", nargs="*", metavar="files", default=[])
     return parser
