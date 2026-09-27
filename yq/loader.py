@@ -7,6 +7,7 @@ from typing import Any, Pattern, TypedDict
 
 import yaml
 from yaml.constructor import SafeConstructor
+from yaml.reader import Reader
 from yaml.tokens import (
     AliasToken,
     AnchorToken,
@@ -168,6 +169,18 @@ class YAMLExpansionError(ValueError):
     pass
 
 
+class _StreamingReader(Reader):
+    _deferred_read_position: int | None = None
+
+    def update_raw(self, size=4096):
+        # Let PyYAML decode buffered input before reading more. Defer at most
+        # once per stream position so partial characters can request more bytes.
+        if self.raw_buffer and self.stream_pointer != self._deferred_read_position:
+            self._deferred_read_position = self.stream_pointer
+            return
+        super().update_raw(size)
+
+
 class _MergeKeyExpansionGuard(SafeConstructor):
     max_merge_expansion: int | None = None
     merge_expansion = 0
@@ -301,7 +314,10 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
         loader_class = CommentPreservingLoader if expand_aliases else CommentPreservingCustomLoader
     else:
         loader_class = default_loader if expand_aliases else CustomLoader
-    loader_class = type("YqLoader", (_MergeKeyExpansionGuard, loader_class), {})
+    loader_bases: tuple[type, ...] = (_MergeKeyExpansionGuard, loader_class)
+    if issubclass(loader_class, Reader):
+        loader_bases = (_StreamingReader, *loader_bases)
+    loader_class = type("YqLoader", loader_bases, {})
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
     loader_class.add_constructor(yaml.resolver.BaseResolver.DEFAULT_SEQUENCE_TAG, construct_sequence)
     loader_class.add_constructor("tag:yaml.org,2002:int", construct_yaml_1_2_int)

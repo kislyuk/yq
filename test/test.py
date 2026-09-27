@@ -461,22 +461,46 @@ class TestYq(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "posix", "POSIX cancellable pipe input")
     def test_jq_early_exit_before_input_eof(self):
-        with subprocess.Popen(
-            self.yq_command("-y", "-n", "first(inputs)", "-"),
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        ) as process:
-            try:
-                process.stdin.write(b"a: 1\n...\n")
-                process.stdin.flush()
-                # Keep stdin open until yq exits, including its input worker.
-                self.assertEqual(process.wait(timeout=5), 0)
-                stdout, stderr = process.communicate(timeout=5)
-                self.assertEqual((stdout, stderr), (b"a: 1\n", b""))
-            finally:
-                if process.poll() is None:
-                    process.kill()
+        for options in ["-y"], ["-Y"], ["-y", "--no-expand-aliases"], ["-Y", "--no-expand-aliases"]:
+            with self.subTest(options=options), subprocess.Popen(
+                self.yq_command(*options, "-n", "first(inputs)", "-"),
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ) as process:
+                try:
+                    process.stdin.write(b"a: 1\n...\n")
+                    process.stdin.flush()
+                    # Keep stdin open until yq exits, including its input worker.
+                    self.assertEqual(process.wait(timeout=5), 0)
+                    stdout, stderr = process.communicate(timeout=5)
+                    self.assertEqual((stdout, stderr), (b"a: 1\n", b""))
+                finally:
+                    if process.poll() is None:
+                        process.kill()
+
+    def test_yaml_reader_split_characters(self):
+        import codecs
+
+        from yq.loader import get_loader
+
+        class ShortReads(io.BytesIO):
+            def read(self, size=-1):
+                return super().read(min(size, 1))
+
+        source = "value: café ☃ 😀\n...\n---\nvalue: final\n"
+        encodings = [("utf-8", b""), ("utf-16-le", codecs.BOM_UTF16_LE), ("utf-16-be", codecs.BOM_UTF16_BE)]
+        for annotations in False, True:
+            loader = get_loader(use_annotations=annotations)
+            for encoding, prefix in encodings:
+                with self.subTest(annotations=annotations, encoding=encoding):
+                    stream = ShortReads(prefix + source.encode(encoding))
+                    self.assertEqual(
+                        list(yaml.load_all(stream, Loader=loader)), [{"value": "café ☃ 😀"}, {"value": "final"}]
+                    )
+            for invalid in b"value: \xff", b"value: \xe2\x98", b"value: \x00":
+                with self.subTest(annotations=annotations, source=invalid), self.assertRaises(yaml.reader.ReaderError):
+                    list(yaml.load_all(ShortReads(invalid), Loader=loader))
 
     @unittest.skipUnless(os.name == "posix", "POSIX pipe readiness and signals")
     def test_generated_documents_before_nonterminating_query(self):
