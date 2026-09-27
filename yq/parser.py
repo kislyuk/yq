@@ -9,12 +9,42 @@ try:
 except ImportError:
     __version__ = "0.0.0"
 
-# jq arguments that consume positionals must be listed here to avoid our parser mistaking them for our positionals
-jq_arg_spec: dict[str, int | str] = {
+# These output options conflict with the JSON records used for conversion.
+jq_output_arg_spec = {
     "--indent": 1,
-    "-f": 1,
-    "--from-file": 1,
+    "--tab": 0,
+    "--seq": 0,
+    "--raw-output0": 0,
+    "--raw-output": 0,
+    "-r": 0,
+    "--join-output": 0,
+    "-j": 0,
+    "--color-output": 0,
+    "-C": 0,
+}
+
+# Argparse needs the other short options to handle mixed clusters such as -rc;
+# unrelated long options pass through. Options with operands must be known to
+# avoid mistaking their values for our positionals.
+jq_arg_spec: dict[str, int | str] = {
+    **jq_output_arg_spec,
+    "--compact-output": 0,
+    "-c": 0,
+    "--monochrome-output": 0,
+    "-M": 0,
+    "-S": 0,
+    "-a": 0,
+    "--null-input": 0,
+    "-n": 0,
+    "-R": 0,
+    "-s": 0,
+    "-e": 0,
+    "-b": 0,
+    "-V": 0,
+    "-f": 0,
+    "--from-file": 0,
     "-L": 1,
+    "--library-path": 1,
     "--arg": 2,
     "--argjson": 2,
     "--slurpfile": 2,
@@ -23,6 +53,15 @@ jq_arg_spec: dict[str, int | str] = {
     "--args": argparse.REMAINDER,
     "--jsonargs": argparse.REMAINDER,
 }
+
+
+class JQArgumentAction(argparse.Action):
+    """Keep jq options and their operands in command-line order."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if namespace.jq_options is None:
+            namespace.jq_options = []
+        namespace.jq_options.append((option_string, values))
 
 
 class Parser(argparse.ArgumentParser):
@@ -162,7 +201,7 @@ def get_parser(program_name, description):
     )
 
     for arg, nargs in jq_arg_spec.items():
-        parser.add_argument(arg, nargs=nargs, dest=arg, action="append", help=argparse.SUPPRESS)
+        parser.add_argument(arg, nargs=nargs, dest="jq_options", action=JQArgumentAction, help=argparse.SUPPRESS)
 
     parser.add_argument("jq_filter", nargs="?")
     parser.add_argument("input_streams", nargs="*", type=argparse.FileType(), metavar="files", default=[])

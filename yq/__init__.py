@@ -27,7 +27,7 @@ import yaml
 
 from .dumper import get_dumper
 from .loader import YAMLExpansionError, get_loader
-from .parser import get_parser, jq_arg_spec
+from .parser import get_parser, jq_output_arg_spec
 from .toml_support import tomlkit_from_json, tomlkit_to_json
 
 try:
@@ -72,64 +72,26 @@ def tq_cli():
 def cli(args=None, input_format="yaml", program_name="yq"):
     parser = get_parser(program_name, __doc__)
     argcomplete.autocomplete(parser)
-    args, jq_args = parser.parse_known_args(args=args)
+    args, jq_args = parser.parse_known_intermixed_args(args=args)
     null_input = False
 
-    for i, arg in enumerate(jq_args):
-        if arg == "--null-input":
+    for arg, values in vars(args).pop("jq_options") or []:
+        if arg in {"--null-input", "-n"}:
             null_input = True
-        if arg.startswith("-") and not arg.startswith("--"):
-            if "n" in arg:
-                null_input = True
-            if "i" in arg:
-                args.in_place = True
-            if "F" in arg:
-                args.yaml_frontmatter = True
-            if "y" in arg:
-                args.output_format = "yaml"
-            elif "Y" in arg:
-                args.output_format = "annotated_yaml"
-            elif "t" in arg:
-                args.output_format = "toml"
-            elif "T" in arg:
-                args.output_format = "annotated_toml"
-            elif "x" in arg:
-                args.output_format = "xml"
-            jq_args[i] = (
-                arg.replace("i", "")
-                .replace("x", "")
-                .replace("y", "")
-                .replace("Y", "")
-                .replace("t", "")
-                .replace("T", "")
-                .replace("F", "")
-            )
-        if args.output_format != "json":
-            jq_args[i] = jq_args[i].replace("C", "")
-            if jq_args[i] == "-":
-                jq_args[i] = None
-
-    jq_args = [arg for arg in jq_args if arg is not None]
-
-    for arg in jq_arg_spec:
-        values = vars(args).pop(arg)
-        if values is not None:
-            for value_group in values:
-                jq_args.append(arg)
-                jq_args.extend(value_group)
+        if args.output_format != "json" and arg in jq_output_arg_spec:
+            continue
+        jq_args.append(arg)
+        jq_args.extend(values)
     with ExitStack() as input_stack:
         if args.jq_filter is not None:
-            if "--from-file" in jq_args or "-f" in jq_args:
-                args.input_streams.insert(0, argparse.FileType()(args.jq_filter))
-            else:
-                jq_filter_arg_loc = len(jq_args)
-                if "--args" in jq_args:
-                    jq_filter_arg_loc = jq_args.index("--args") + 1
-                elif "--jsonargs" in jq_args:
-                    jq_filter_arg_loc = jq_args.index("--jsonargs") + 1
-                jq_args.insert(jq_filter_arg_loc, args.jq_filter)
-                if null_input:
-                    args.input_streams.insert(0, input_stack.enter_context(open(os.devnull)))
+            jq_filter_arg_loc = len(jq_args)
+            if "--args" in jq_args:
+                jq_filter_arg_loc = jq_args.index("--args") + 1
+            elif "--jsonargs" in jq_args:
+                jq_filter_arg_loc = jq_args.index("--jsonargs") + 1
+            jq_args.insert(jq_filter_arg_loc, args.jq_filter)
+            if null_input:
+                args.input_streams.insert(0, input_stack.enter_context(open(os.devnull)))
         delattr(args, "jq_filter")
         in_place = args.in_place
         delattr(args, "in_place")

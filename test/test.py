@@ -159,6 +159,119 @@ class TestYq(unittest.TestCase):
 
         self.assertEqual(self.run_yq(unusable_tty_input, ["--null-input", "-y", "."]), "null\n...\n")
 
+    def test_from_file_option_positions(self):
+        from unittest import mock
+
+        with tempfile.TemporaryDirectory() as directory:
+            query, first, second = [os.path.join(directory, name) for name in ("filter.jq", "first.yml", "second.yml")]
+            for path, text in [(query, ".a"), (first, "a: 1\n"), (second, "a: 2\n")]:
+                with open(path, "w") as stream:
+                    stream.write(text)
+            arguments = [["-fc", query, first, second], ["-cf", query, first, second]]
+            for flag in "-f", "--from-file":
+                arguments.extend(
+                    [
+                        [flag, "-c", query, first, second],
+                        [query, flag, first, second],
+                        [flag, query, first, "-c", second],
+                    ]
+                )
+            for args in arguments:
+                with self.subTest(args=args):
+                    self.assertEqual(self.run_yq("", ["-y", *args]), "---\n1\n---\n2\n...\n")
+
+            tty_input = mock.Mock()
+            tty_input.isatty.return_value = True
+            self.assertEqual(self.run_yq(tty_input, ["-y", "-nf", query]), "null\n...\n")
+
+
+    @unittest.skipUnless(b"--library-path" in subprocess.check_output(["jq", "--help"]), "jq library-path option")
+    def test_jq_library_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = os.path.join(directory, "input.yml")
+            with open(os.path.join(directory, "example.jq"), "w") as stream:
+                stream.write("def next_value(n): n + 1;")
+            with open(source, "w") as stream:
+                stream.write("a: 41\n")
+            query = 'include "example"; next_value(.a)'
+            for args in [
+                ["--library-path", directory, query, source],
+                [query, "--library-path", directory, source],
+                ["-L", directory, query, source],
+            ]:
+                with self.subTest(args=args):
+                    self.assertEqual(self.run_yq("", ["-y", *args]), "42\n...\n")
+
+
+    def test_jq_version_short_option_clusters(self):
+        for flag in "-cV", "-Vc":
+            with self.subTest(flag=flag):
+                expected = subprocess.run(["jq", flag], input=b"", capture_output=True, check=True)
+                result = subprocess.run(
+                    [sys.executable, "-m", "yq", flag], input=b"", capture_output=True, timeout=5, check=True
+                )
+                self.assertEqual(result.stdout, expected.stdout)
+                self.assertEqual(result.stderr, b"")
+
+
+    def test_jq_output_options_during_conversion(self):
+        options = [
+            ["-r"],
+            ["--raw-output"],
+            ["-j"],
+            ["--join-output"],
+            ["--raw-output0"],
+            ["-CrjcS"],
+            ["--color-output"],
+            ["--tab"],
+            ["--indent", "4"],
+            ["--indent=4"],
+            ["--seq"],
+        ]
+        source = '{"a":"123","b":"Unicode: α, newline:\\n"}'
+        for mode in "-y", "-Y", "-x", "-t", "-T":
+            expected = self.run_yq(source, [mode, "., ."])
+            for flags in options:
+                with self.subTest(mode=mode, flags=flags):
+                    self.assertEqual(self.run_yq(source, [mode, *flags, "., ."]), expected)
+
+        import yaml
+
+        for flag in "-r", "-j", "--raw-output0":
+            result = self.run_yq("{}", ["-y", flag, '"123",123,"null",null,"a\\u0000b"'])
+            self.assertEqual(list(yaml.safe_load_all(result)), ["123", 123, "null", None, "a\x00b"])
+
+
+    def test_jq_output_options_passthrough(self):
+        source = b'{"a":1,"s":"hello"}\n'
+        for flags in (
+            ["-r"],
+            ["--raw-output"],
+            ["-j"],
+            ["--join-output"],
+            ["-Crj"],
+            ["--tab"],
+            ["--indent", "4"],
+            ["--indent", "4", "-c"],
+            ["-c", "--indent", "4"],
+            ["--tab", "-c"],
+            ["-c", "--tab"],
+            ["--indent", "4", "-c", "--indent", "1"],
+        ):
+            with self.subTest(flags=flags):
+                query = ".s, ."
+                expected = subprocess.run(["jq", *flags, query], input=source, capture_output=True, check=True)
+                result = subprocess.run(
+                    [sys.executable, "-m", "yq", *flags, query],
+                    input=source,
+                    capture_output=True,
+                    timeout=5,
+                    check=True,
+                )
+                self.assertEqual(result.stdout, expected.stdout)
+                self.assertEqual(result.stderr, b"")
+
+
     def test_null_input_closed_on_error(self):
         from unittest import mock
 
@@ -175,7 +288,7 @@ class TestYq(unittest.TestCase):
         self.assertEqual(self.run_yq("{}", [".", "--jsonargs", "{}", "{}"]), "")
 
     def test_short_option_separation(self):
-        # self.assertEqual(self.run_yq('{"a": 1}', ["-yCcC", "."]), "a: 1\n") - Fails on 2.7 and 3.8
+        self.assertEqual(self.run_yq('{"a": 1}', ["-yCcC", "."]), "a: 1\n")
         self.assertEqual(self.run_yq('{"a": 1}', ["-CcCy", "."]), "a: 1\n")
         self.assertEqual(self.run_yq('{"a": 1}', ["-y", "-CS", "."]), "a: 1\n")
         self.assertEqual(self.run_yq('{"a": 1}', ["-y", "-CC", "."]), "a: 1\n")
