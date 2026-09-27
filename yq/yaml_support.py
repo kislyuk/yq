@@ -3,8 +3,7 @@ from __future__ import annotations
 import base64
 import re
 from collections import deque
-from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 
 import yaml
 from yaml.emitter import Emitter
@@ -26,8 +25,7 @@ yaml_item_comment_annotation_re = re.compile(
 )
 
 
-@dataclass
-class YamlComment:
+class YamlComment(NamedTuple):
     value: str
     line: int
 
