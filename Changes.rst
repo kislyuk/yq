@@ -1,3 +1,16 @@
+Changes for v4.4.0 (2026-09-27)
+===============================
+
+-  Avoid quadratic performance on YAML comment roundtripping
+
+-  Implement document streaming
+
+-  Reuse filehandle for in-place editing to avoid file substitution race
+
+-  Miscellaneous argument parsing fixes
+
+-  Miscellaneous small performance fixes
+
 Changes for v4.3.0 (2026-09-26)
 ===============================
 
