@@ -8,6 +8,8 @@ import sys
 import tempfile
 import unittest
 
+import yaml
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from yq import cli, yq
 
@@ -49,6 +51,24 @@ lol10: &lol10 [*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9,*lol9]
 
 
 class TestYq(unittest.TestCase):
+    loader = yaml.SafeLoader
+
+    @classmethod
+    def setUpClass(cls):
+        from unittest import mock
+
+        patch = mock.patch("yq.loader.default_loader", cls.loader)
+        cls.addClassCleanup(patch.stop)
+        patch.start()
+
+    def python_command(self, script, *args):
+        # Subprocesses need the same loader as calls made in this process.
+        setup = f"import yaml, yq.loader; yq.loader.default_loader = yaml.{self.loader.__name__}\n"
+        return [sys.executable, "-c", setup + script, *args]
+
+    def yq_command(self, *args):
+        return self.python_command("import runpy; runpy.run_module('yq', run_name='__main__')", *args)
+
     def run_yq(self, input_data, args, expect_exit_codes=None, input_format="yaml"):
         if expect_exit_codes is None:
             expect_exit_codes = {os.EX_OK}
@@ -205,9 +225,7 @@ class TestYq(unittest.TestCase):
         for flag in "-cV", "-Vc":
             with self.subTest(flag=flag):
                 expected = subprocess.run(["jq", flag], input=b"", capture_output=True, check=True)
-                result = subprocess.run(
-                    [sys.executable, "-m", "yq", flag], input=b"", capture_output=True, timeout=5, check=True
-                )
+                result = subprocess.run(self.yq_command(flag), input=b"", capture_output=True, timeout=5, check=True)
                 self.assertEqual(result.stdout, expected.stdout)
                 self.assertEqual(result.stderr, b"")
 
@@ -286,7 +304,7 @@ class TestYq(unittest.TestCase):
                 query = ".s, ."
                 expected = subprocess.run(["jq", *flags, query], input=source, capture_output=True, check=True)
                 result = subprocess.run(
-                    [sys.executable, "-m", "yq", *flags, query],
+                    self.yq_command(*flags, query),
                     input=source,
                     capture_output=True,
                     timeout=5,
@@ -404,7 +422,7 @@ class TestYq(unittest.TestCase):
         expected = b"---\na: " + value + b"\n"
         for options in ["--indent", "2"], ["--tab"], ["--raw-output0"], ["-rjC"]:
             with self.subTest(options=options), subprocess.Popen(
-                [sys.executable, "-m", "yq", "-y", *options, "."],
+                self.yq_command("-y", *options, "."),
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -430,7 +448,7 @@ class TestYq(unittest.TestCase):
 
     def test_completed_yaml_survives_jq_error(self):
         result = subprocess.run(
-            [sys.executable, "-m", "yq", "-y", '{a:"first"}, error("later failure")'],
+            self.yq_command("-y", '{a:"first"}, error("later failure")'),
             input=b"---\n{}\n",
             capture_output=True,
             timeout=5,
@@ -444,7 +462,7 @@ class TestYq(unittest.TestCase):
     @unittest.skipUnless(os.name == "posix", "POSIX cancellable pipe input")
     def test_jq_early_exit_before_input_eof(self):
         with subprocess.Popen(
-            [sys.executable, "-m", "yq", "-y", "-n", "first(inputs)", "-"],
+            self.yq_command("-y", "-n", "first(inputs)", "-"),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -468,7 +486,7 @@ class TestYq(unittest.TestCase):
 
         query = "{n:0}, (while(true; .) | empty)"
         with subprocess.Popen(
-            [sys.executable, "-m", "yq", "-y", "--null-input", query],
+            self.yq_command("-y", "--null-input", query),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -504,7 +522,7 @@ class TestYq(unittest.TestCase):
                 "output_format='yaml', jq_args=['.'])\n"
             )
             with self.subTest(source=source), subprocess.Popen(
-                [sys.executable, "-c", script],
+                self.python_command(script),
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -520,7 +538,7 @@ class TestYq(unittest.TestCase):
 
     def test_completed_yaml_survives_invalid_next_input(self):
         result = subprocess.run(
-            [sys.executable, "-m", "yq", "-y", "."],
+            self.yq_command("-y", "."),
             input=b"---\na: first\n---\nbroken: [\n",
             capture_output=True,
             timeout=5,
@@ -577,7 +595,7 @@ class TestYq(unittest.TestCase):
             source.flush()
             for mode in "-y", "-Y":
                 result = subprocess.run(
-                    [sys.executable, "-m", "yq", mode, ".", source.name], capture_output=True, timeout=5, check=False
+                    self.yq_command(mode, ".", source.name), capture_output=True, timeout=5, check=False
                 )
                 self.assertEqual(result.returncode, 1)
                 self.assertIn(source.name.encode(), result.stderr)
@@ -587,7 +605,7 @@ class TestYq(unittest.TestCase):
     def test_jq_failure_with_open_stdin(self):
         for options in [], ["-y"]:
             with self.subTest(options=options), subprocess.Popen(
-                [sys.executable, "-m", "yq", *options, "["],
+                self.yq_command(*options, "["),
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -603,7 +621,7 @@ class TestYq(unittest.TestCase):
 
     def test_closed_output_pipe(self):
         with subprocess.Popen(
-            [sys.executable, "-m", "yq", "-y", "-n", "range(0;100000)"],
+            self.yq_command("-y", "-n", "range(0;100000)"),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -627,7 +645,7 @@ class TestYq(unittest.TestCase):
                 f"with mock.patch('yq._cli', side_effect={error}):\n"
                 "    cli()\n"
             )
-            result = subprocess.run([sys.executable, "-c", script], capture_output=True, timeout=5, check=False)
+            result = subprocess.run(self.python_command(script), capture_output=True, timeout=5, check=False)
             self.assertEqual(result.returncode, 1)
             self.assertEqual(result.stdout, b"")
             self.assertIn(b"yq: ", result.stderr)
@@ -654,7 +672,7 @@ def run(*args):
 with mock.patch("yq._cli", run):
     cli()
 """
-        result = subprocess.run([sys.executable, "-c", script], capture_output=True, timeout=5, check=False)
+        result = subprocess.run(self.python_command(script), capture_output=True, timeout=5, check=False)
         self.assertIn(b"injected failure", result.stderr)
         self.assertNotIn(b"Traceback", result.stderr)
         self.assertNotIn(b'File "', result.stderr)
@@ -715,7 +733,7 @@ with mock.patch("yq._cli", run):
             os.mkfifo(first)
             os.mkfifo(second)
             with subprocess.Popen(
-                [sys.executable, "-m", "yq", "-y", ".", first, second],
+                self.yq_command("-y", ".", first, second),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             ) as process:
@@ -748,7 +766,7 @@ with mock.patch("yq._cli", run):
             (["-y", "-n", 'range(0;1000000) | {a:("x" * 4096)}'], "pipe_write"),
         ]:
             with self.subTest(arguments=arguments), subprocess.Popen(
-                [sys.executable, "-m", "yq", *arguments],
+                self.yq_command(*arguments),
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -1118,7 +1136,7 @@ with mock.patch("yq._cli", run):
         for args, code in cases:
             with self.subTest(args=args):
                 result = subprocess.run(
-                    [sys.executable, "-m", "yq", *args],
+                    self.yq_command(*args),
                     input=source.encode(),
                     capture_output=True,
                     timeout=20,
@@ -1126,7 +1144,7 @@ with mock.patch("yq._cli", run):
                 )
                 self.assertEqual(result.returncode, code, result.stderr.decode())
         result = subprocess.run(
-            [sys.executable, "-m", "yq", "-y", "."],
+            self.yq_command("-y", "."),
             input=(source + "---\ninvalid: [").encode(),
             capture_output=True,
             timeout=20,
@@ -1231,7 +1249,7 @@ with mock.patch("yq._cli", run):
 
     def test_yaml_frontmatter_json(self):
         result = subprocess.check_output(
-            [sys.executable, "-m", "yq", "-F", "-r", ".title"],
+            self.yq_command("-F", "-r", ".title"),
             input=b"---\ntitle: Hello\n---\n# body\n[invalid YAML",
         )
         self.assertEqual(result, b"Hello\n")
@@ -1700,6 +1718,12 @@ with mock.patch("yq._cli", run):
 
         self.assertEqual(self.run_yq("octal: 0o10", ["-y", "--yml-out-ver=1.2", "."]), "octal: 8\n")
         self.assertEqual(self.run_yq("'08'", ["-y", "--yml-out-ver=1.2", "."]), "'08'\n")
+
+
+if yaml.__with_libyaml__:
+
+    class TestYqLibYaml(TestYq):
+        loader = yaml.CSafeLoader
 
 
 if __name__ == "__main__":
