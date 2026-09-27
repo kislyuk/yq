@@ -32,7 +32,6 @@ from .dumper import dump_yaml_document, get_dumper
 from .loader import YAMLExpansionError, get_loader
 from .parser import get_parser, jq_output_arg_spec
 from .stream_wrappers import InputBytesStreamWrapper, JSONInputStreamWrapper, YAMLInputStreamWrapper, wrap_input_stream
-from .toml_support import tomlkit_from_json, tomlkit_to_json
 
 try:
     from .version import version as __version__
@@ -416,10 +415,13 @@ def yq(
                 del xml_doc
         elif input_format == "toml":
             toml_loader = get_toml_loader()
+            if converting_output:
+                import tomlkit
+
+                from .toml_support import tomlkit_to_json
+
             for input_stream in read_inputs():
                 if converting_output:
-                    import tomlkit
-
                     toml_doc = tomlkit.load(input_stream)
                     json.dump(
                         tomlkit_to_json(toml_doc, use_annotations=output_format == "annotated_toml"),
@@ -515,6 +517,8 @@ def yq(
                 del doc
         elif output_format in {"toml", "annotated_toml"}:
             import tomlkit
+
+            from .toml_support import tomlkit_from_json
 
             for doc in docs:
                 if not isinstance(doc, dict):
