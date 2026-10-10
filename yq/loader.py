@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from base64 import b64encode
-from hashlib import sha224
 from typing import Any, Pattern, TypedDict
 
 import yaml
@@ -162,7 +161,9 @@ def construct_yaml_1_2_int(loader, node):
 
 
 def hash_key(key):
-    return b64encode(sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
+    import hashlib
+
+    return b64encode(hashlib.sha224(key.encode() if isinstance(key, str) else key).digest()).decode()
 
 
 class YAMLExpansionError(ValueError):
