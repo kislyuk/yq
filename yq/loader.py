@@ -41,7 +41,7 @@ core_resolvers: dict[str, list[ResolverSpec]] = {
         {
             "tag": "tag:yaml.org,2002:bool",
             "regexp": re.compile(
-                r"""^(?:yes|Yes|YES|no|No|NO
+                r"""^(?:y|Y|yes|Yes|YES|n|N|no|No|NO
             |true|True|TRUE|false|False|FALSE
             |on|On|ON|off|Off|OFF)$""",
                 re.VERBOSE,

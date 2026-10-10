@@ -157,7 +157,7 @@ class TestYq(unittest.TestCase):
     def test_yq_arg_passthrough(self):
         self.assertEqual(self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "--indent", "4", "."]), "")
         self.assertEqual(
-            self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "-y", "--indent", "4", ".x=$x"]), "x: y\n"
+            self.run_yq("{}", ["--arg", "foo", "bar", "--arg", "x", "y", "-y", "--indent", "4", ".x=$x"]), "x: 'y'\n"
         )
         err = "yq: Error running jq: BrokenPipeError: [Errno 32] Broken pipe" + (": '<fdopen>'." if USING_PYPY else ".")
         self.run_yq("{}", ["--indent", "9", "."], expect_exit_codes={err, 2})
@@ -516,7 +516,7 @@ class TestYq(unittest.TestCase):
             stderr=subprocess.PIPE,
         ) as process:
             try:
-                expected = b"n: 0\n"
+                expected = b"'n': 0\n"
                 result = b""
                 deadline = time.monotonic() + 5
                 while len(result) < len(expected):
@@ -1752,6 +1752,32 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
         ]
         yaml_doc = "".join(f"- '{value}'\n" for value in numeric_strings)
         self.assertEqual(self.run_yq(yaml_doc, ["-y", "."]), yaml_doc)
+
+    def test_yaml_single_letter_boolean_strings(self):
+        values = ["y", "Y", "n", "N"]
+        source = "".join(f"{value}: {value}\n" for value in values)
+        source += "items:\n" + "".join(f"  - {value}\n" for value in values) + "  - true\n  - false\n"
+        quoted = "".join(f"'{value}': '{value}'\n" for value in values)
+        quoted += "items:\n" + "".join(f"  - '{value}'\n" for value in values) + "  - true\n  - false\n"
+        jq_filter = '{y: "y", Y: "Y", n: "n", N: "N", items: ["y", "Y", "n", "N", true, false]}'
+
+        for output_arg in "-y", "-Y":
+            for grammar_args, expected in (
+                ([], quoted),
+                (["--yml-out-ver=1.1"], quoted),
+                (["--yml-out-ver=1.2"], source),
+            ):
+                with self.subTest(output_arg=output_arg, grammar_args=grammar_args):
+                    self.assertEqual(self.run_yq(source, [output_arg, *grammar_args, "."]), expected)
+                    self.assertEqual(self.run_yq("", [output_arg, *grammar_args, "-n", jq_filter]), expected)
+
+    def test_yaml_single_letter_boolean_scalars(self):
+        for output_arg in "-y", "-Y":
+            for value in "y", "Y", "n", "N":
+                with self.subTest(output_arg=output_arg, value=value):
+                    self.assertEqual(self.run_yq(value, [output_arg, "."]), f"'{value}'\n")
+                    self.assertEqual(self.run_yq(value, [output_arg, "--explicit-end", "."]), f"'{value}'\n...\n")
+                    self.assertEqual(self.run_yq(value, [output_arg, "--yml-out-ver=1.2", "."]), f"{value}\n...\n")
 
     def test_yaml_1_2_leading_zero_integers(self):
         self.assertEqual(self.run_yq("on: -012345", ["-y", "--yml-out-ver=1.2", "."]), "on: -12345\n")
