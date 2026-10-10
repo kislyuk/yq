@@ -1,3 +1,10 @@
+Changes for v4.4.2 (2026-10-10)
+===============================
+
+-  Use consistent quoting for y, Y, n, N literals
+
+-  Docs: fix YAML styles specification link
+
 Changes for v4.4.1 (2026-10-10)
 ===============================
 
