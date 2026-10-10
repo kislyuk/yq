@@ -24,10 +24,7 @@ import threading
 from contextlib import ExitStack, contextmanager
 from datetime import date, datetime, time
 from functools import partial
-from typing import List
 
-from .dumper import dump_yaml_document, get_dumper
-from .loader import YAMLExpansionError, get_loader
 from .parser import get_parser, jq_output_arg_spec
 from .stream_wrappers import InputBytesStreamWrapper, JSONInputStreamWrapper, YAMLInputStreamWrapper, wrap_input_stream
 
@@ -207,6 +204,8 @@ def write_all(stream, data):
 
 
 def load_yaml_docs(in_stream, out_stream, jq, loader_class, max_expansion_factor, exit_func, prog):
+    from .loader import YAMLExpansionError
+
     loader = loader_class(in_stream)
 
     last_loader_pos = 0
@@ -317,7 +316,7 @@ def yq(
     input_stack = ExitStack()
     input_name = "<stdin>"
 
-    def read_inputs():
+    def read_yq_inputs():
         nonlocal input_name
         previous_source = None
         for source in input_streams:
@@ -360,7 +359,7 @@ def yq(
         if previous_source is not None:
             previous_source.close()
 
-    def write_input():
+    def write_jq_input():
         nonlocal yaml_boundary, explicit_start, frontmatter_body
         input_doc_count = 0
         assert jq.stdin is not None
@@ -368,21 +367,28 @@ def yq(
             loader_class = get_loader(
                 use_annotations=use_annotations, expand_aliases=expand_aliases, expand_merge_keys=expand_merge_keys
             )
-            for input_stream in read_inputs():
+            for input_stream in read_yq_inputs():
                 # PyYAML decodes byte streams itself. Passing the native text
                 # reader here would wait to fill its read(n) on an open FIFO.
                 yaml_stream = input_stream
+                input_is_regular_file = False
                 if isinstance(input_stream, io.TextIOWrapper) and isinstance(
                     input_stream.buffer, InputBytesStreamWrapper
                 ):
                     yaml_stream = input_stream.buffer
+                    input_is_regular_file = yaml_stream.is_regular_file
                 if yaml_frontmatter:
+                    jq.stdin.flush()
                     header, yaml_boundary = read_yaml_frontmatter(input_stream)
                     yaml_stream = io.StringIO(header)
                     yaml_stream.name = input_name
                     frontmatter_body = input_stream
                     del header
-                yaml_stream = YAMLInputStreamWrapper(yaml_stream, flush=jq.stdin.flush)
+                # Batch regular files in jq's bounded input buffer. Other
+                # streams must flush before a read can wait for more data.
+                yaml_stream = YAMLInputStreamWrapper(
+                    yaml_stream, flush=None if input_is_regular_file else jq.stdin.flush
+                )
                 if output_format in {"yaml", "annotated_yaml"} and not input_doc_count:
                     explicit_start = yaml_stream.read_explicit_yaml_start(loader_class) or explicit_start
                 input_doc_count += load_yaml_docs(
@@ -394,7 +400,8 @@ def yq(
                     exit_func=exit_func,
                     prog=program_name,
                 )
-                jq.stdin.flush()
+                if not input_is_regular_file:
+                    jq.stdin.flush()
                 del yaml_stream
         elif input_format == "xml":
             import xmltodict
@@ -403,7 +410,7 @@ def yq(
                 raise ValueError("xml_item_depth is not supported with xq -x")
 
             emit_entry = partial(emit_xml_entry, out_stream=jq.stdin)
-            for input_stream in read_inputs():
+            for input_stream in read_yq_inputs():
                 xml_doc = xmltodict.parse(
                     input_stream.buffer if isinstance(input_stream, io.TextIOWrapper) else input_stream.read(),
                     disable_entities=True,
@@ -421,7 +428,7 @@ def yq(
 
                 from .toml_support import tomlkit_to_json
 
-            for input_stream in read_inputs():
+            for input_stream in read_yq_inputs():
                 if converting_output:
                     toml_doc = tomlkit.load(input_stream)
                     json.dump(
@@ -537,7 +544,7 @@ def yq(
 
     def produce_input():
         try:
-            write_input()
+            write_jq_input()
         except BrokenPipeError:
             # first(inputs), halt and compile errors can stop input early.
             pass
@@ -567,6 +574,7 @@ def yq(
             stdout=subprocess.PIPE if converting_output else None,
             close_fds=False,
             universal_newlines=True,
+            bufsize=64 * 1024,
         )
     except OSError as e:
         msg = "{}: Error starting jq: {}: {}. Is jq installed and available on PATH?"
@@ -577,9 +585,17 @@ def yq(
     # stdout write. Input reads and jq stdin writes stop when jq is killed.
     input_thread = threading.Thread(target=produce_input)
     output_error = None
-    stage = f"converting jq output to {output_format.upper()}"
+    stage = "initializing YAML support"
     try:
         try:
+            # Initialize on the main thread while jq starts, before the input
+            # worker can import YAML. Non-YAML commands skip these imports.
+            if input_format == "yaml":
+                from .loader import get_loader
+            if output_format in {"yaml", "annotated_yaml"}:
+                from .dumper import dump_yaml_document, get_dumper
+
+            stage = f"converting jq output to {output_format.upper()}"
             input_thread.start()
             try:
                 if converting_output:

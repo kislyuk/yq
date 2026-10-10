@@ -122,6 +122,70 @@ class TestYq(unittest.TestCase):
                 "yq 1.2.3\njq version could not be determined: jq not found\n",
             )
 
+    def test_non_yaml_commands_skip_yaml_imports(self):
+        script = """
+import sys
+from yq import cli
+try:
+    cli(sys.argv[2:], input_format=sys.argv[1])
+finally:
+    assert not any(name == 'yaml' or name.startswith('yaml.') for name in sys.modules)
+    assert not {'yq.loader', 'yq.dumper', 'yq.yaml_support'} & sys.modules.keys()
+"""
+        for input_format, args, source in [
+            ("yaml", ["--help"], ""),
+            ("yaml", ["--version"], ""),
+            ("xml", ["."], "<a>1</a>"),
+            ("xml", ["-x", "."], "<a>1</a>"),
+            ("toml", ["."], "a = 1\n"),
+            ("toml", ["-t", "."], "a = 1\n"),
+            ("toml", ["-T", "."], "a = 1\n"),
+        ]:
+            with self.subTest(input_format=input_format, args=args):
+                # Do not use python_command: it preloads YAML to select a loader.
+                result = subprocess.run(
+                    [sys.executable, "-c", script, input_format, *args],
+                    input=source,
+                    text=True,
+                    capture_output=True,
+                    timeout=10,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(result.stdout)
+
+    def test_yaml_initialization_failure_reaps_jq(self):
+        import threading
+        from unittest import mock
+
+        original_import = __import__
+        for module, input_format in [("loader", "yaml"), ("dumper", "xml")]:
+            for error in [ImportError("YAML unavailable"), KeyboardInterrupt()]:
+
+                def fail_import(name, globals=None, locals=None, fromlist=(), level=0, *, module=module, error=error):
+                    if name == module and level == 1:
+                        self.assertIs(threading.current_thread(), threading.main_thread())
+                        raise error
+                    return original_import(name, globals, locals, fromlist, level)
+
+                with self.subTest(module=module, error=type(error).__name__), subprocess.Popen(
+                    ["jq", "."], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
+                ) as jq, mock.patch("yq.subprocess.Popen", return_value=jq) as popen, mock.patch(
+                    "builtins.__import__", fail_import
+                ):
+                    expected = (
+                        130
+                        if isinstance(error, KeyboardInterrupt)
+                        else "yq: Error initializing YAML support: ImportError: YAML unavailable."
+                    )
+                    self.assertEqual(
+                        self.run_yq("", ["-y", "."], input_format=input_format, expect_exit_codes={expected}), ""
+                    )
+                    popen.assert_called_once()
+                    self.assertIsNotNone(jq.returncode)
+                    self.assertTrue(jq.stdin.closed)
+                    self.assertTrue(jq.stdout.closed)
+
     def test_yq_err(self):
         err = (
             "yq: Error reading YAML input (<file>): ScannerError: while scanning for the next token\nfound character '%' that "
@@ -572,6 +636,47 @@ class TestYq(unittest.TestCase):
         self.assertEqual(result.stdout, b"---\na: first\n")
         self.assertIn(b"Error reading YAML input", result.stderr)
 
+    def test_buffered_yaml_survives_next_file_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            valid, invalid, missing = [os.path.join(directory, name) for name in ("valid", "invalid", "missing")]
+            with open(valid, "w") as source:
+                source.write("a: first\n")
+            with open(invalid, "w") as source:
+                source.write("broken: [\n")
+            for path in invalid, missing:
+                with self.subTest(path=path):
+                    result = subprocess.run(
+                        self.yq_command("-y", ".", valid, path), capture_output=True, timeout=5, check=False
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertEqual(result.stdout, b"a: first\n")
+                    self.assertIn(b"Error reading YAML input", result.stderr)
+                    self.assertNotIn(b"Traceback", result.stderr)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX pipe readiness")
+    def test_buffered_yaml_before_live_frontmatter(self):
+        import json
+        import select
+
+        with tempfile.NamedTemporaryFile() as source:
+            source.write(b"---\na: first\n---\nbody\n")
+            source.flush()
+            with subprocess.Popen(
+                self.yq_command("--yaml-frontmatter", "--unbuffered", ".", source.name, "-"),
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ) as process:
+                try:
+                    self.assertTrue(select.select([process.stdout], [], [], 5)[0], "First file was not printed")
+                    self.assertEqual(json.loads(os.read(process.stdout.fileno(), 4096)), {"a": "first"})
+                    stdout, stderr = process.communicate(b"---\na: second\n---\nbody\n", timeout=5)
+                    self.assertEqual(json.loads(stdout), {"a": "second"})
+                    self.assertEqual((stderr, process.returncode), (b"", 0))
+                finally:
+                    if process.poll() is None:
+                        process.kill()
+
     def test_output_flushed_before_next_document(self):
         import json
         from unittest import mock
@@ -754,28 +859,34 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
 
         with tempfile.TemporaryDirectory() as directory:
             first, second = [os.path.join(directory, name) for name in ("first", "second")]
+            regular = os.path.join(directory, "regular")
+            with open(regular, "w") as source:
+                source.write("---\na: regular\n")
             os.mkfifo(first)
             os.mkfifo(second)
-            with subprocess.Popen(
-                self.yq_command("-y", ".", first, second),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ) as process:
-                try:
-                    with open_writer(first) as writer:
-                        for text in (b"---\na: first\n...\n---\n", b"a: second\n...\n---\n"):
-                            writer.write(text)
-                            expected = b"---\na: first\n" if b"first" in text else b"---\na: second\n"
-                            read_output(expected)
-                        writer.write(b"a: third\n")
-                    read_output(b"---\na: third\n")
-                    with open_writer(second) as writer:
-                        writer.write(b"a: last\n")
-                    stdout, stderr = process.communicate(timeout=5)
-                    self.assertEqual((stdout, stderr, process.returncode), (b"---\na: last\n", b"", 0))
-                finally:
-                    if process.poll() is None:
-                        process.kill()
+            for inputs in [first, second], [regular, first, second]:
+                with self.subTest(inputs=inputs), subprocess.Popen(
+                    self.yq_command("-y", ".", *inputs),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as process:
+                    try:
+                        if inputs[0] == regular:
+                            read_output(b"---\na: regular\n")
+                        with open_writer(first) as writer:
+                            for text in (b"---\na: first\n...\n---\n", b"a: second\n...\n---\n"):
+                                writer.write(text)
+                                expected = b"---\na: first\n" if b"first" in text else b"---\na: second\n"
+                                read_output(expected)
+                            writer.write(b"a: third\n")
+                        read_output(b"---\na: third\n")
+                        with open_writer(second) as writer:
+                            writer.write(b"a: last\n")
+                        stdout, stderr = process.communicate(timeout=5)
+                        self.assertEqual((stdout, stderr, process.returncode), (b"---\na: last\n", b"", 0))
+                    finally:
+                        if process.poll() is None:
+                            process.kill()
 
     @unittest.skipUnless(sys.platform.startswith("linux"), "Linux process state checks")
     def test_interrupt_reaps_jq(self):
@@ -1001,7 +1112,7 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
 
                 return Loader
 
-            with self.subTest(output_args=output_args), mock.patch("yq.get_loader", tracked_loader):
+            with self.subTest(output_args=output_args), mock.patch("yq.loader.get_loader", tracked_loader):
                 self.run_yq("# first\na: 1\n---\na: 2\n---\na: 3\n", [*output_args, "."])
                 self.assertEqual(len(document_refs), 3)
                 gc.collect()
@@ -1086,7 +1197,7 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
 
             with self.subTest(mode=mode), mock.patch(
                 "yq.json.JSONDecoder", lambda: decoder_class(object_hook=document_hook)
-            ), mock.patch("yq.get_dumper", tracked_dumper):
+            ), mock.patch("yq.dumper.get_dumper", tracked_dumper):
                 self.run_yq("a: 1\n---\na: 2\n---\na: 3\n", [mode, "."])
                 self.assertEqual(len(refs), 3)
                 gc.collect()

@@ -7,8 +7,6 @@ import select
 import stat
 from collections import deque
 
-import yaml
-
 
 class JSONInputStreamWrapper:
     """Read the complete JSON records emitted by jq's compact output mode."""
@@ -66,6 +64,8 @@ class YAMLInputStreamWrapper:
         return text
 
     def read_explicit_yaml_start(self, loader_class):
+        import yaml
+
         # Use a separate parser because the C and Python composers consume start
         # events differently. Replay their bounded read-ahead even on nonseekable input.
         self.recording = True
@@ -87,7 +87,8 @@ class InputBytesStreamWrapper(io.RawIOBase):
         self.stream = stream.buffer
         self.jq = jq
         self.name = stream.name
-        self.wait_for_input = os.name == "posix" and not stat.S_ISREG(os.fstat(stream.fileno()).st_mode)
+        self.is_regular_file = stat.S_ISREG(os.fstat(stream.fileno()).st_mode)
+        self.wait_for_input = os.name == "posix" and not self.is_regular_file
 
     def readable(self):
         return True
