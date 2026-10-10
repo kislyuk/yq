@@ -26,8 +26,6 @@ from datetime import date, datetime, time
 from functools import partial
 from typing import List
 
-import argcomplete
-
 from .dumper import dump_yaml_document, get_dumper
 from .loader import YAMLExpansionError, get_loader
 from .parser import get_parser, jq_output_arg_spec
@@ -121,7 +119,10 @@ def cli(args=None, input_format="yaml", program_name="yq"):
 
 def parse_cli_args_and_run_yq(args, input_format, program_name):
     parser = get_parser(program_name, __doc__)
-    argcomplete.autocomplete(parser)
+    if "_ARGCOMPLETE" in os.environ:
+        import argcomplete
+
+        argcomplete.autocomplete(parser)
     args, jq_args = parser.parse_known_intermixed_args(args=args)
     null_input = False
 
