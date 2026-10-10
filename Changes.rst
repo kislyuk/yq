@@ -1,3 +1,9 @@
+Changes for v4.4.1 (2026-10-10)
+===============================
+
+-  Defer hashlib import until YAML annotations need it
+-  Import argcomplete only during shell completion
+
 Changes for v4.4.0 (2026-09-27)
 ===============================
 
