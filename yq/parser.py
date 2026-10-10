@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from functools import partial
 
 try:
     from .version import version as __version__
@@ -131,7 +132,12 @@ def get_parser(program_name, description):
         raise ValueError("Unknown program name")
 
     description = description.replace("yq", program_name).replace("YAML", current_language)
-    parser_args = {"prog": program_name, "description": description, "formatter_class": argparse.RawTextHelpFormatter}
+    # Argument registration constructs formatters; defer terminal-size lookup until help is needed.
+    parser_args = {
+        "prog": program_name,
+        "description": description,
+        "formatter_class": partial(argparse.RawTextHelpFormatter, width=80),
+    }
     parser_args.update(allow_abbrev=False)  # required to disambiguate options listed in jq_arg_spec
     parser = Parser(**parser_args)
     parser.add_argument("--output-format", default="json", help=argparse.SUPPRESS)
@@ -205,4 +211,5 @@ def get_parser(program_name, description):
 
     parser.add_argument("jq_filter", nargs="?")
     parser.add_argument("input_streams", nargs="*", metavar="files", default=[])
+    parser.formatter_class = argparse.RawTextHelpFormatter
     return parser

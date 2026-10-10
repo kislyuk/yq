@@ -15,7 +15,6 @@ import json
 import locale
 import os
 import re
-import shutil
 import signal
 import stat
 import subprocess
@@ -617,6 +616,8 @@ def yq(
                 frontmatter_body.buffer, InputBytesStreamWrapper
             ):
                 frontmatter_body.buffer.jq = None
+            import shutil
+
             shutil.copyfileobj(frontmatter_body, output_stream, length=64 * 1024)
             output_stream.flush()
         exit_func(128 - jq.returncode if jq.returncode < 0 else jq.returncode)
