@@ -1,3 +1,8 @@
+Changes for v4.4.3 (2026-10-10)
+===============================
+
+-  Improve startup time (25%) and YAML streaming throughput (5-25%)
+
 Changes for v4.4.2 (2026-10-10)
 ===============================
 
