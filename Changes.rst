@@ -1,3 +1,8 @@
+Changes for v4.4.5 (2026-10-10)
+===============================
+
+-  Preserve YAML comment placement and spacing in roundtrip mode
+
 Changes for v4.4.4 (2026-10-10)
 ===============================
 
