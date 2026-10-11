@@ -21,6 +21,7 @@ from .yaml_support import (
     COMMENT_PLACEMENT_BEFORE,
     COMMENT_PLACEMENT_INLINE,
     CommentPreservingLoader,
+    consume_comments_before_node,
     consume_comments_for_node,
     make_mapping_comment_key,
     make_sequence_comment_annotation,
@@ -261,11 +262,13 @@ class CommentPreservingCustomLoader(CommentPreservingLoader):
 
 def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=True):
     def construct_sequence(loader, node):
-        annotations = []
+        if not use_annotations:
+            return [loader.construct_object(i) for i in node.value]
+        values, annotations = [], []
         for i, v_node in enumerate(node.value):
-            if not use_annotations:
-                break
-            comments = consume_comments_for_node(loader, v_node)
+            before_comments = consume_comments_before_node(loader, v_node)
+            values.append(loader.construct_object(v_node))
+            comments = consume_comments_for_node(loader, v_node, before_comments=before_comments)
             for comment in comments[COMMENT_PLACEMENT_BEFORE]:
                 annotations.append(make_sequence_comment_annotation(COMMENT_PLACEMENT_BEFORE, i, comment))
             for comment in comments[COMMENT_PLACEMENT_INLINE]:
@@ -276,18 +279,20 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
                 annotations.append(f"__yq_style_{i}_{v_node.style}__")
             elif isinstance(v_node, (yaml.nodes.SequenceNode, yaml.nodes.MappingNode)) and v_node.flow_style is True:
                 annotations.append("__yq_style_{}_{}__".format(i, "flow"))
-        return [loader.construct_object(i) for i in node.value] + annotations
+        return values + annotations
 
     def construct_mapping(loader, node):
         loader.flatten_mapping(node)  # TODO: is this needed?
         mapping = {}
         for k_node, v_node in node.value:
             key = loader.construct_object(k_node)
+            if use_annotations:
+                before_comments = consume_comments_before_node(loader, k_node)
             value = loader.construct_object(v_node)
             mapping[key] = value
             if not use_annotations:
                 continue
-            comments = consume_comments_for_node(loader, k_node, v_node)
+            comments = consume_comments_for_node(loader, k_node, v_node, before_comments=before_comments)
             if not isinstance(key, (str, bytes)):
                 continue
             tag = None

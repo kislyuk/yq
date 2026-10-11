@@ -53,18 +53,31 @@ def normalize_comment_values(value: Any) -> list[str]:
     return [str(value)]
 
 
-def consume_comments_for_node(
-    loader: CommentPreservingLoader, anchor_node: Any, value_node: Any | None = None
-) -> dict[str, list[str]]:
-    result: dict[str, list[str]] = {COMMENT_PLACEMENT_BEFORE: [], COMMENT_PLACEMENT_INLINE: []}
+def consume_comments_before_node(loader: CommentPreservingLoader, anchor_node: Any) -> list[str]:
+    result = []
     comments = loader.yaml_comments_before
-    if not (comments or loader.yaml_comments_inline):
-        return result
-
-    # Construction can revisit earlier source lines (for example through aliases).
-    # Only consume preceding comments that have not already been attached.
+    # Claim leading comments before constructing children. Aliases can revisit
+    # earlier source lines; already attached comments must not be consumed again.
     while comments and comments[0].line < anchor_node.start_mark.line:
-        result[COMMENT_PLACEMENT_BEFORE].append(comments.popleft().value)
+        result.append(comments.popleft().value)
+    return result
+
+
+def consume_comments_for_node(
+    loader: CommentPreservingLoader,
+    anchor_node: Any,
+    value_node: Any | None = None,
+    *,
+    before_comments: list[str] | None = None,
+) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {
+        COMMENT_PLACEMENT_BEFORE: (
+            consume_comments_before_node(loader, anchor_node) if before_comments is None else before_comments
+        ),
+        COMMENT_PLACEMENT_INLINE: [],
+    }
+    if not loader.yaml_comments_inline:
+        return result
 
     inline_lines = {anchor_node.end_mark.line}
     if value_node is not None:
@@ -196,8 +209,6 @@ class CommentPreservingDumperMixin(Emitter):
 
     def write_comment(self, comment: str) -> None:
         emitter = cast(Any, self)
-        if comment and not comment.startswith(" "):
-            comment = " " + comment
         data: Any = "#" + comment
         if emitter.column and not emitter.whitespace:
             data = " " + data

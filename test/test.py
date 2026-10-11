@@ -1484,6 +1484,48 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
         self.assertNotIn(CommentPreservingLoader, get_loader(use_annotations=False).__mro__)
         self.assertIn(CommentPreservingLoader, get_loader(use_annotations=True).__mro__)
 
+    def test_yaml_comment_nested_collections_roundtrip(self):
+        source = (
+            "resources:\n"
+            "  - ../../overlays/azure\n"
+            "# Patch ingress host\n"
+            "patches:\n"
+            "  - target:\n"
+            "      #important\n"
+            "      group: networking.k8s.io\n"
+            "      version: v1 #there\n"
+            "      kind: Ingress # here\n"
+            "    path: patch_ingress.yaml\n"
+            "  # between list element\n"
+            "  - target:\n"
+            "      group: networking.k8s.io\n"
+            "      version: v1\n"
+            "    path: patch_tls_ingress.yaml\n"
+        )
+        self.assertEqual(self.run_yq(source, ["-Y", "."]), source)
+        jq_filter = '.resources += ["resourcegroup.yaml"]'
+        expected = source.replace("  - ../../overlays/azure\n", "  - ../../overlays/azure\n  - resourcegroup.yaml\n")
+        self.assertEqual(self.run_yq(source, ["-Y", jq_filter]), expected)
+        with tempfile.NamedTemporaryFile() as target:
+            target.write(source.encode())
+            target.flush()
+            self.run_yq("", ["-Yi", jq_filter, target.name])
+            target.seek(0)
+            self.assertEqual(target.read().decode(), expected)
+
+    def test_yaml_comment_spacing_roundtrip(self):
+        source = "#\n#no-space\n#  two spaces\n#\ttab\nvalue: x #inline\nother: z #  two spaces\n"
+        self.assertEqual(self.run_yq(source, ["-Y", "."]), source)
+
+    def test_yaml_nested_flow_comment_ownership(self):
+        from yq.loader import get_loader, hash_key
+        from yq.yaml_support import make_mapping_comment_key
+
+        source = "parent: {child: value #inside\n}\n"
+        document = yaml.load(source, Loader=get_loader(use_annotations=True))
+        self.assertEqual(document["parent"][make_mapping_comment_key("inline", hash_key("child"))], ["inside"])
+        self.assertNotIn(make_mapping_comment_key("inline", hash_key("parent")), document)
+
     def test_yaml_comment_consumption_out_of_source_order(self):
         from yq.loader import get_loader
         from yq.yaml_support import consume_comments_for_node
