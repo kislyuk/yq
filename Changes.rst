@@ -1,3 +1,8 @@
+Changes for v4.4.4 (2026-10-10)
+===============================
+
+-  YAML parse: build dictionary without using pairs
+
 Changes for v4.4.3 (2026-10-10)
 ===============================
 
