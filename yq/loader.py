@@ -280,11 +280,11 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
 
     def construct_mapping(loader, node):
         loader.flatten_mapping(node)  # TODO: is this needed?
-        pairs = []
+        mapping = {}
         for k_node, v_node in node.value:
             key = loader.construct_object(k_node)
             value = loader.construct_object(v_node)
-            pairs.append((key, value))
+            mapping[key] = value
             if not use_annotations:
                 continue
             comments = consume_comments_for_node(loader, k_node, v_node)
@@ -303,12 +303,12 @@ def get_loader(use_annotations=False, expand_aliases=True, expand_merge_keys=Tru
             hashed_key = hash_key(key)
             for placement, values in comments.items():
                 if values:
-                    pairs.append((make_mapping_comment_key(placement, hashed_key), values))
+                    mapping[make_mapping_comment_key(placement, hashed_key)] = values
             if tag:
-                pairs.append((f"__yq_tag_{hashed_key}__", tag))
+                mapping[f"__yq_tag_{hashed_key}__"] = tag
             if style:
-                pairs.append((f"__yq_style_{hashed_key}__", style))
-        return dict(pairs)
+                mapping[f"__yq_style_{hashed_key}__"] = style
+        return mapping
 
     def parse_unknown_tags(loader, tag_suffix, node):
         if isinstance(node, yaml.nodes.ScalarNode):
