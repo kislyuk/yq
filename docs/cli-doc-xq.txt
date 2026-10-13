@@ -13,7 +13,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --xml-output, -x      Transcode jq JSON output back into XML and emit it
+  --xml-output, -x      Transcode jq JSON output back into XML with two-space indentation (jq's --tab has no effect)
   --xml-item-depth 123  Specify depth of items to emit (default 0; use a positive integer to stream large docs)
   --xml-dtd             Preserve XML Document Type Definition (disables streaming of multiple docs)
   --xml-root XML_ROOT   When transcoding back to XML, envelope the output in an element with this name

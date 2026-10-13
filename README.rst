@@ -135,6 +135,9 @@ the full doc into memory (for example, stream a `Wikipedia database dump <https:
 ``cat enwiki-*.xml.bz2 | bunzip2 | xq . --xml-item-depth=2``). Entity expansion and DTD resolution is disabled to avoid
 XML parsing vulnerabilities. Use ``python -m yq.xq`` if you want to ensure a specific Python runtime.
 
+With ``--xml-output``, XML is indented with two spaces. The ``--tab`` option is a jq option: it controls indentation
+when emitting JSON, but has no effect on XML output.
+
 TOML support
 ------------
 ``yq`` supports `TOML <https://toml.io/>`_ as well. The ``yq`` package installs an executable, ``tomlq``, which uses the

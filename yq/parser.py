@@ -115,7 +115,7 @@ def get_parser(program_name, description):
         explicit_end_help = 'When using --yaml-output, always emit explicit document end ("...")'
     elif program_name == "xq":
         current_language = "XML"
-        xml_output_help = "Transcode jq JSON output back into XML and emit it"
+        xml_output_help = "Transcode jq JSON output back into XML with two-space indentation (jq's --tab has no effect)"
         xml_item_depth_help = "Specify depth of items to emit (default 0; use a positive integer to stream large docs)"
         xml_dtd_help = "Preserve XML Document Type Definition (disables streaming of multiple docs)"
         xml_root_help = "When transcoding back to XML, envelope the output in an element with this name"
