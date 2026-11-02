@@ -1650,6 +1650,138 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
             self.assertEqual(tf.read(), b"foo\n...\n")
             self.assertEqual(tf2.read(), b"foo\n...\n")
 
+    def test_in_place_yaml_encodings(self):
+        import codecs
+
+        encodings = [
+            ("utf-8", b""),
+            ("utf-8", codecs.BOM_UTF8),
+            ("utf-16-le", codecs.BOM_UTF16_LE),
+            ("utf-16-be", codecs.BOM_UTF16_BE),
+        ]
+        for encoding, prefix in encodings:
+            for output_arg in "-y", "-Y":
+                for marker in "", "---\n":
+                    with self.subTest(
+                        encoding=encoding, prefix=prefix, output=output_arg, marker=marker
+                    ), tempfile.TemporaryDirectory() as directory:
+                        path = os.path.join(directory, "input.yml")
+                        with open(path, "wb") as stream:
+                            stream.write(prefix + (marker + 'value: "café ☃ 😀"\n').encode(encoding))
+                        result = subprocess.run(
+                            self.yq_command("-i", output_arg, '.value += "!"', path),
+                            check=False,
+                            capture_output=True,
+                            timeout=10,
+                        )
+                        self.assertEqual((result.returncode, result.stderr), (0, b""))
+                        with open(path, "rb") as stream:
+                            replacement = stream.read()
+                        self.assertEqual(
+                            replacement.startswith((codecs.BOM_UTF8, codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)),
+                            bool(prefix),
+                        )
+                        self.assertTrue(replacement.startswith(prefix))
+                        text = replacement[len(prefix) :].decode(encoding)
+                        self.assertFalse(text.startswith("\ufeff"))
+                        self.assertEqual(text.startswith("---\n"), bool(marker))
+                        self.assertEqual(yaml.safe_load(text), {"value": "café ☃ 😀!"})
+
+    def test_in_place_yaml_empty_and_multiple_documents(self):
+        import codecs
+
+        for encoding, prefix in [
+            ("utf-8", b""),
+            ("utf-8", codecs.BOM_UTF8),
+            ("utf-16-le", codecs.BOM_UTF16_LE),
+            ("utf-16-be", codecs.BOM_UTF16_BE),
+        ]:
+            for source, options, query, expected in [
+                ("", ["-nyi"], '{value: "café"}', [{"value": "café"}]),
+                ("---\nvalue: 1\n---\nvalue: 2\n", ["-iy"], ".value += 1", [{"value": 2}, {"value": 3}]),
+            ]:
+                with self.subTest(
+                    encoding=encoding, prefix=prefix, source=source
+                ), tempfile.TemporaryDirectory() as directory:
+                    path = os.path.join(directory, "input.yml")
+                    with open(path, "wb") as stream:
+                        stream.write(prefix + source.encode(encoding))
+                    result = subprocess.run(
+                        self.yq_command(*options, query, path), check=False, capture_output=True, timeout=10
+                    )
+                    self.assertEqual((result.returncode, result.stderr), (0, b""))
+                    with open(path, "rb") as stream:
+                        replacement = stream.read()
+                    self.assertTrue(replacement.startswith(prefix))
+                    self.assertEqual(list(yaml.safe_load_all(replacement)), expected)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX ASCII locale")
+    def test_in_place_yaml_uses_utf8_not_locale(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "input.yml")
+            with open(path, "wb") as stream:
+                stream.write("value: café 😀\n".encode())
+            result = subprocess.run(
+                self.yq_command("-iy", '.value += "!"', path),
+                env=dict(os.environ, LC_ALL="C", PYTHONUTF8="0", PYTHONCOERCECLOCALE="0"),
+                check=False,
+                capture_output=True,
+                timeout=10,
+            )
+            self.assertEqual((result.returncode, result.stderr), (0, b""))
+            with open(path, "rb") as stream:
+                self.assertEqual(yaml.safe_load(stream), {"value": "café 😀!"})
+
+    def test_in_place_yaml_encoding_errors_leave_file_unchanged(self):
+        import codecs
+
+        for source, query in [
+            (codecs.BOM_UTF16_LE + "value: café\n".encode("utf-16-le"), 'error("stop")'),
+            (b"value: \xff\n", "."),
+            (codecs.BOM_UTF16_BE + b"\x00", "."),
+        ]:
+            with self.subTest(source=source, query=query), tempfile.TemporaryDirectory() as directory:
+                path = os.path.join(directory, "input.yml")
+                with open(path, "wb") as stream:
+                    stream.write(source)
+                result = subprocess.run(
+                    self.yq_command("-iy", query, path), check=False, capture_output=True, timeout=10
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn(b"Traceback", result.stderr)
+                with open(path, "rb") as stream:
+                    self.assertEqual(stream.read(), source)
+
+    def test_in_place_non_yaml_keeps_locale_encoding(self):
+        from unittest import mock
+
+        for input_format, output_arg, source, query in [
+            ("xml", "-x", "<value>café</value>\n", '.value += "!"'),
+            ("toml", "-t", 'value = "café"\n', '.value += "!"'),
+            ("yaml", "-t", "value: café\n", '.value += "!"'),
+            ("yaml", "-x", "value: café\n", '.value += "!"'),
+        ]:
+            with self.subTest(input_format=input_format), tempfile.NamedTemporaryFile() as stream:
+                stream.write(source.encode("iso-8859-1"))
+                stream.flush()
+                with mock.patch("yq.locale.getpreferredencoding", return_value="iso-8859-1"):
+                    self.run_yq("", ["-i", output_arg, query, stream.name], input_format=input_format)
+                stream.seek(0)
+                self.assertIn("café!", stream.read().decode("iso-8859-1"))
+
+    def test_in_place_yaml_cross_format_does_not_preserve_bom(self):
+        import codecs
+
+        for output_arg in "-t", "-x":
+            with self.subTest(output_arg=output_arg), tempfile.NamedTemporaryFile() as stream:
+                stream.write(codecs.BOM_UTF8 + b"value: original\n")
+                stream.flush()
+                self.run_yq("", ["-i", output_arg, '.value = "updated"', stream.name])
+                stream.seek(0)
+                replacement = stream.read()
+                self.assertFalse(replacement.startswith(codecs.BOM_UTF8))
+                self.assertIn(b"updated", replacement)
+
     def test_in_place_toml(self):
         with tempfile.NamedTemporaryFile() as tf:
             tf.write(b'[GLOBAL]\nversion="1.0.0"\n')

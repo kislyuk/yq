@@ -38,6 +38,9 @@ yq can be called as a module if needed. With ``-y/-Y``, files can be edited in p
 
     python -m yq -Y --indentless --in-place '.["current-context"] = "staging-cluster"' ~/.kube/config
 
+In-place YAML editing with ``-y``/``-Y`` uses UTF-8 by default and preserves an input
+UTF-8 or UTF-16 byte order mark, including UTF-16 byte order.
+
 Use the ``--width``/``-w`` option to pass the line wrap width for string literals; ``--width 0`` disables wrapping. Use
 ``--explicit-start``/``--explicit-end`` to emit YAML start/end markers even when processing a single document.
 YAML output preserves an explicit leading ``---`` from the input and emits one for multidocument streams. All other

@@ -10,6 +10,7 @@ See https://github.com/kislyuk/yq for more information.
 from __future__ import annotations
 
 import argparse
+import codecs
 import io
 import json
 import locale
@@ -177,12 +178,31 @@ def edit_in_place(path, yq_args):
     with open(path, "r+b", buffering=0) as target:
         if not stat.S_ISREG(os.fstat(target.fileno()).st_mode):
             raise OSError(f"--in-place requires a regular file: {path}")
-        encoding = locale.getpreferredencoding(do_setlocale=False)
-        source = io.StringIO(target.read().decode(encoding))
+        data = target.read()
+        prefix = b""
+        if yq_args.get("input_format", "yaml") == "yaml" and yq_args.get("output_format", "yaml") in {
+            "yaml",
+            "annotated_yaml",
+        }:
+            # YAML defaults to UTF-8; preserve a BOM and the UTF-16 byte order.
+            encoding = "utf-8"
+            for bom, codec in (
+                (codecs.BOM_UTF8, "utf-8"),
+                (codecs.BOM_UTF16_LE, "utf-16-le"),
+                (codecs.BOM_UTF16_BE, "utf-16-be"),
+            ):
+                if data.startswith(bom):
+                    prefix, encoding = bom, codec
+                    data = data[len(bom) :]
+                    break
+        else:
+            encoding = locale.getpreferredencoding(do_setlocale=False)
+        source = io.StringIO(data.decode(encoding))
+        del data
         source.name = path
         with io.StringIO() as output:
             yq(input_streams=[source], output_stream=output, **yq_args)
-            replacement = output.getvalue().encode(encoding)
+            replacement = prefix + output.getvalue().encode(encoding)
         try:
             target.seek(0)
             write_all(target, replacement)
