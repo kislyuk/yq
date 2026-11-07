@@ -893,6 +893,11 @@ with mock.patch("yq.parse_cli_args_and_run_yq", run):
         import signal
         import time
 
+        # Some Linux kernels or sandboxes do not expose these procfs entries.
+        for path in (f"/proc/self/task/{os.getpid()}/children", "/proc/self/wchan"):
+            if not os.access(path, os.R_OK):
+                self.skipTest(f"requires readable {path}")
+
         # Cover idle input, waiting on jq, and a full stdout pipe. Only signal
         # yq: it must clean up its child without relying on group signalling.
         for arguments, state in [
